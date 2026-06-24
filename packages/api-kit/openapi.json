@@ -1,0 +1,40 @@
+{
+    "openapi": "3.0.0",
+    "paths": {
+        "/health": {
+            "get": {
+                "operationId": "HealthController_check",
+                "parameters": [],
+                "responses": {
+                    "200": {
+                        "description": "Статус сервиса"
+                    }
+                },
+                "tags": ["health"]
+            }
+        }
+    },
+    "info": {
+        "title": "BuildHub API",
+        "description": "API маркетплейса стройматериалов BuildHub",
+        "version": "1.0",
+        "contact": {}
+    },
+    "tags": [
+        {
+            "name": "health",
+            "description": ""
+        }
+    ],
+    "servers": [],
+    "components": {
+        "securitySchemes": {
+            "bearer": {
+                "scheme": "bearer",
+                "bearerFormat": "JWT",
+                "type": "http"
+            }
+        },
+        "schemas": {}
+    }
+}
