@@ -1,0 +1,19 @@
+{
+  "name": "config-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/config-kit/src",
+  "projectType": "library",
+  "targets": {
+    "build": {
+      "executor": "@nx/js:tsc",
+      "outputs": ["{options.outputPath}"],
+      "options": {
+        "outputPath": "dist/packages/config-kit",
+        "main": "packages/config-kit/src/index.ts",
+        "tsConfig": "packages/config-kit/tsconfig.lib.json",
+        "assets": ["packages/config-kit/*.md"]
+      }
+    }
+  },
+  "tags": ["type:kit", "scope:shared"]
+}

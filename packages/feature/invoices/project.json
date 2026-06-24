@@ -1,0 +1,9 @@
+{
+  "name": "invoices",
+  "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/feature/invoices/src",
+  "projectType": "library",
+  "tags": ["type:feature", "scope:server"],
+  "// targets": "to see all targets run: nx show project invoices --web",
+  "targets": {}
+}

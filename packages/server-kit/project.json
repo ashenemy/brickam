@@ -1,0 +1,9 @@
+{
+  "name": "server-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/server-kit/src",
+  "projectType": "library",
+  "tags": ["type:kit", "scope:server"],
+  "// targets": "to see all targets run: nx show project server-kit --web",
+  "targets": {}
+}

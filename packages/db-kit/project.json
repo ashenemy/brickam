@@ -1,0 +1,9 @@
+{
+  "name": "db-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/db-kit/src",
+  "projectType": "library",
+  "tags": ["type:kit", "scope:server"],
+  "// targets": "to see all targets run: nx show project db-kit --web",
+  "targets": {}
+}

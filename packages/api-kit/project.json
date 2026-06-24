@@ -1,0 +1,9 @@
+{
+  "name": "api-kit",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "packages/api-kit/src",
+  "projectType": "library",
+  "tags": ["type:kit", "scope:shared"],
+  "// targets": "to see all targets run: nx show project api-kit --web",
+  "targets": {}
+}
