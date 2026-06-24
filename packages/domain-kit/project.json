@@ -1,19 +1,19 @@
 {
-  "name": "domain-kit",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/domain-kit/src",
-  "projectType": "library",
-  "targets": {
-    "build": {
-      "executor": "@nx/js:tsc",
-      "outputs": ["{options.outputPath}"],
-      "options": {
-        "outputPath": "dist/packages/domain-kit",
-        "main": "packages/domain-kit/src/index.ts",
-        "tsConfig": "packages/domain-kit/tsconfig.lib.json",
-        "assets": ["packages/domain-kit/*.md"]
-      }
-    }
-  },
-  "tags": ["type:domain", "scope:shared"]
+    "name": "domain-kit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/domain-kit/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/domain-kit",
+                "main": "packages/domain-kit/src/index.ts",
+                "tsConfig": "packages/domain-kit/tsconfig.lib.json",
+                "assets": ["packages/domain-kit/*.md"]
+            }
+        }
+    },
+    "tags": ["type:domain", "scope:shared"]
 }

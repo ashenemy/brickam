@@ -1,3 +1,3 @@
 export function domainKit(): string {
-  return 'domain-kit';
+    return 'domain-kit';
 }
