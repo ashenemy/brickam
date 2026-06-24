@@ -1,0 +1,6 @@
+{
+    "apiBaseUrl": "http://localhost:3000/api",
+    "defaultLang": "hy",
+    "supportedLangs": ["hy", "ru", "en"],
+    "features": {}
+}

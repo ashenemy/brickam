@@ -1,10 +1,12 @@
-import {
-  ApplicationConfig,
-  provideBrowserGlobalErrorListeners,
-} from '@angular/core';
+import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
+import { provideRuntimeConfig } from '@brickam/config-kit/browser';
 import { appRoutes } from './app.routes';
 
 export const appConfig: ApplicationConfig = {
-  providers: [provideBrowserGlobalErrorListeners(), provideRouter(appRoutes)],
+    providers: [
+        provideBrowserGlobalErrorListeners(),
+        provideRouter(appRoutes),
+        ...provideRuntimeConfig(),
+    ],
 };

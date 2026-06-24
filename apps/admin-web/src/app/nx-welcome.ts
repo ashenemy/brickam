@@ -1,10 +1,10 @@
-import { Component, ViewEncapsulation } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Component, ViewEncapsulation } from '@angular/core';
 
 @Component({
-  selector: 'app-nx-welcome',
-  imports: [CommonModule],
-  template: `
+    selector: 'app-nx-welcome',
+    imports: [CommonModule],
+    template: `
     <!--
      * * * * * * * * * * * * * * * * * * * * * * * * * * * *
      This is a starter component and can be deleted.
@@ -947,7 +947,7 @@ nx g &#64;nx/angular:component ui/src/lib/button</pre>
       </div>
     </div>
   `,
-  styles: [],
-  encapsulation: ViewEncapsulation.None,
+    styles: [],
+    encapsulation: ViewEncapsulation.None,
 })
 export class NxWelcome {}
