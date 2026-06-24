@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { TokenVerifierContract } from '@brickam/domain-kit';
+import { Global, Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller';
@@ -13,6 +14,7 @@ import { TokenService } from './token.service';
  * сначала JwtAuthGuard (аутентификация), затем PermissionsGuard (авторизация).
  * UsersServiceContract инжектится из глобального users-модуля (тут не объявляется).
  */
+@Global()
 @Module({
     imports: [JwtModule.register({})],
     controllers: [AuthController],
@@ -22,7 +24,9 @@ import { TokenService } from './token.service';
         AuthService,
         { provide: APP_GUARD, useClass: JwtAuthGuard },
         { provide: APP_GUARD, useClass: PermissionsGuard },
+        // Контракт верификации токена для WS-gateway чата (граница feature).
+        { provide: TokenVerifierContract, useExisting: TokenService },
     ],
-    exports: [TokenService, AuthService],
+    exports: [TokenService, AuthService, TokenVerifierContract],
 })
 export class AuthModule {}
