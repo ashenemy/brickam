@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { OrdersServiceContract } from '@brickam/domain-kit';
+import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CartController } from './cart.controller';
 import { Cart, CartSchema } from './cart.schema';
@@ -18,6 +19,7 @@ import { VendorOrdersRepository } from './vendor-orders.repository';
  * вендоров + один платёж со splits. Каталог и платежи — только по глобальным
  * контрактам CatalogServiceContract/PaymentsServiceContract (граница feature).
  */
+@Global()
 @Module({
     imports: [
         MongooseModule.forFeature([
@@ -35,7 +37,9 @@ import { VendorOrdersRepository } from './vendor-orders.repository';
         DeliveryAddressesRepository,
         CartService,
         OrdersService,
+        // Контракт для reviews: проверка завершённого vendor_order покупателя.
+        { provide: OrdersServiceContract, useExisting: OrdersService },
     ],
-    exports: [CartService, OrdersService],
+    exports: [CartService, OrdersService, OrdersServiceContract],
 })
 export class OrdersModule {}

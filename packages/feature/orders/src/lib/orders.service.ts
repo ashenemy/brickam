@@ -11,8 +11,10 @@ import {
     type DeliveryStatus,
     type OrderLineInput,
     OrderStatus,
+    OrdersServiceContract,
     PaymentStatus,
     PaymentsServiceContract,
+    type VendorOrderForReview,
 } from '@brickam/domain-kit';
 import { Injectable } from '@nestjs/common';
 import type {
@@ -46,7 +48,7 @@ const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly OrderStatus[]>> =
  * каждого вендора + один платёж с разбивкой splits[]. Эскроу нет.
  */
 @Injectable()
-export class OrdersService {
+export class OrdersService implements OrdersServiceContract {
     constructor(
         private readonly cartsRepository: CartsRepository,
         private readonly ordersRepository: OrdersRepository,
@@ -287,6 +289,29 @@ export class OrdersService {
     /** Сохранённые адреса доставки пользователя (для подстановки в checkout). */
     listAddresses(userId: string): Promise<unknown[]> {
         return this.deliveryAddressesRepository.findByUser(userId);
+    }
+
+    /**
+     * Саб-заказ вендора для проверки права на отзыв (OrdersServiceContract).
+     * Возвращает связку vendorOrder + статус и покупателя родительского заказа.
+     */
+    async getVendorOrderForReview(vendorOrderId: string): Promise<VendorOrderForReview | null> {
+        const vendorOrder = await this.vendorOrdersRepository.findById(vendorOrderId);
+        if (!vendorOrder) {
+            return null;
+        }
+        const order = await this.ordersRepository.findById(vendorOrder.orderId);
+        if (!order) {
+            return null;
+        }
+        return {
+            id: vendorOrder.id ?? vendorOrder._id.toString(),
+            orderId: vendorOrder.orderId,
+            vendorId: vendorOrder.vendorId,
+            buyerId: order.buyerId,
+            orderStatus: order.status,
+            productIds: vendorOrder.items.map((item) => item.productId),
+        };
     }
 
     /** Постраничный список заказов покупателя. */
