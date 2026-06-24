@@ -21,7 +21,10 @@
                         "input": "apps/vendor-web/public"
                     }
                 ],
-                "styles": ["apps/vendor-web/src/styles.scss"]
+                "styles": [
+                    "packages/design-tokens/src/styles/index.css",
+                    "apps/vendor-web/src/styles.scss"
+                ]
             },
             "configurations": {
                 "production": {

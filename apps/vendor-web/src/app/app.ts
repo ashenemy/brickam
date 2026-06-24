@@ -1,14 +1,32 @@
-import { Component } from '@angular/core';
+import { Component, signal } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
-import { NxWelcome } from './nx-welcome';
+import {
+    AvatarComponent,
+    BadgeComponent,
+    ButtonComponent,
+    IconButtonComponent,
+    LogoComponent,
+    RatingComponent,
+    TagComponent,
+} from '@brickam/ui-kit';
 
 @Component({
-    imports: [NxWelcome, RouterModule, LangSwitcherComponent],
+    imports: [
+        RouterModule,
+        LangSwitcherComponent,
+        LogoComponent,
+        ButtonComponent,
+        IconButtonComponent,
+        BadgeComponent,
+        TagComponent,
+        AvatarComponent,
+        RatingComponent,
+    ],
     selector: 'app-root',
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })
 export class App {
-    protected title = 'vendor-web';
+    protected readonly filterSelected = signal(true);
 }
