@@ -17,6 +17,8 @@ export const ru: Dictionary = {
     'errors.auth.blocked': 'Аккаунт заблокирован',
     'errors.auth.phoneNotVerified': 'Номер телефона не подтверждён',
     'errors.auth.invalidPhone': 'Неверный формат телефона (+374XXXXXXXX)',
+    'errors.catalog.outOfStock': 'Недостаточно товара на складе',
+    'errors.orders.emptyCart': 'Корзина пуста',
     'common.appName': 'BuildHub',
     'lang.hy': 'Армянский',
     'lang.ru': 'Русский',

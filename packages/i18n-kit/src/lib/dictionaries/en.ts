@@ -17,6 +17,8 @@ export const en: Dictionary = {
     'errors.auth.blocked': 'Account is blocked',
     'errors.auth.phoneNotVerified': 'Phone number is not verified',
     'errors.auth.invalidPhone': 'Invalid phone number format (+374XXXXXXXX)',
+    'errors.catalog.outOfStock': 'Not enough stock for this product',
+    'errors.orders.emptyCart': 'Cart is empty',
     'common.appName': 'BuildHub',
     'lang.hy': 'Armenian',
     'lang.ru': 'Russian',

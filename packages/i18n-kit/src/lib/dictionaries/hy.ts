@@ -17,6 +17,8 @@ export const hy: Dictionary = {
     'errors.auth.blocked': 'Հաշիվը արգելափակված է',
     'errors.auth.phoneNotVerified': 'Հեռախոսահամարը հաստատված չէ',
     'errors.auth.invalidPhone': 'Հեռախոսահամարի սխալ ձևաչափ (+374XXXXXXXX)',
+    'errors.catalog.outOfStock': 'Պահեստում ապրանքը բավարար չէ',
+    'errors.orders.emptyCart': 'Զամբյուղը դատարկ է',
     'common.appName': 'BuildHub',
     'lang.hy': 'Հայերեն',
     'lang.ru': 'Ռուսերեն',
