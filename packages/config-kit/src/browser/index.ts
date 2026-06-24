@@ -1,9 +1,11 @@
 import {
     type EnvironmentProviders,
     InjectionToken,
+    inject,
     type Provider,
     provideAppInitializer,
 } from '@angular/core';
+import { type CanActivateFn, Router, type UrlTree } from '@angular/router';
 
 /**
  * Рантайм-конфиг фронтенда. Грузится из assets/config.json на старте
@@ -66,4 +68,30 @@ export function provideRuntimeConfig(
         },
         provideAppInitializer(() => loadRuntimeConfig(url)),
     ];
+}
+
+/**
+ * Роль пользователя для гейта входа в приложение (Foundations §14).
+ * До Stage 2 (auth-kit) роль задаётся провайдером приложения (DEV/рантайм-конфиг);
+ * позже её источником станет JWT.
+ */
+export type Role = 'guest' | 'buyer' | 'vendor' | 'admin';
+
+export const CURRENT_ROLE = new InjectionToken<Role>('CURRENT_ROLE');
+
+/** Провайдит текущую роль (каждое web-приложение гейтится по своей роли). */
+export function provideRole(role: Role): Provider {
+    return { provide: CURRENT_ROLE, useValue: role };
+}
+
+/**
+ * Guard маршрута: пускает, только если текущая роль входит в allowed,
+ * иначе редиректит на /forbidden.
+ */
+export function roleGuard(allowed: Role[]): CanActivateFn {
+    return (): boolean | UrlTree => {
+        const role = inject(CURRENT_ROLE, { optional: true }) ?? 'guest';
+        const router = inject(Router);
+        return allowed.includes(role) ? true : router.parseUrl('/forbidden');
+    };
 }
