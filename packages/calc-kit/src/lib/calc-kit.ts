@@ -1,3 +1,3 @@
 export function calcKit(): string {
-  return 'calc-kit';
+    return 'calc-kit';
 }
