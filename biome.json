@@ -10,7 +10,8 @@
             "!**/node_modules",
             "!**/*.generated.ts",
             "!_input",
-            "!packages/api-kit/src/generated"
+            "!packages/api-kit/src/generated",
+            "!packages/api-kit/openapi.json"
         ]
     },
     "formatter": {
