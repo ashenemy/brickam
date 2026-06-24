@@ -6,6 +6,7 @@ describe('ProductsController', () => {
     let service: {
         search: ReturnType<typeof vi.fn>;
         getBySlug: ReturnType<typeof vi.fn>;
+        getByIds: ReturnType<typeof vi.fn>;
         create: ReturnType<typeof vi.fn>;
         update: ReturnType<typeof vi.fn>;
         remove: ReturnType<typeof vi.fn>;
@@ -16,6 +17,7 @@ describe('ProductsController', () => {
         service = {
             search: vi.fn().mockResolvedValue({ data: [], meta: {} }),
             getBySlug: vi.fn().mockResolvedValue({ id: 'p1' }),
+            getByIds: vi.fn().mockResolvedValue([{ id: 'p1' }, { id: 'p2' }]),
             create: vi.fn().mockResolvedValue({ id: 'p1' }),
             update: vi.fn().mockResolvedValue({ id: 'p1' }),
             remove: vi.fn().mockResolvedValue(undefined),
@@ -31,6 +33,19 @@ describe('ProductsController', () => {
     it('getBySlug делегирует сервису', async () => {
         await controller.getBySlug('cement');
         expect(service.getBySlug).toHaveBeenCalledWith('cement');
+    });
+
+    it('getByIds парсит csv ids и оборачивает в {success,data}', async () => {
+        const res = await controller.getByIds('p1, p2 ,,p3');
+        expect(service.getByIds).toHaveBeenCalledWith(['p1', 'p2', 'p3']);
+        expect(res).toEqual({ success: true, data: [{ id: 'p1' }, { id: 'p2' }] });
+    });
+
+    it('getByIds с пустым ids → пустой запрос', async () => {
+        service.getByIds.mockResolvedValueOnce([]);
+        const res = await controller.getByIds(undefined);
+        expect(service.getByIds).toHaveBeenCalledWith([]);
+        expect(res).toEqual({ success: true, data: [] });
     });
 
     it('create делегирует сервису', async () => {

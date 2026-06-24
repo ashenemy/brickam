@@ -44,6 +44,7 @@ describe('ProductsService', () => {
         incrementViews: ReturnType<typeof vi.fn>;
         create: ReturnType<typeof vi.fn>;
         updateById: ReturnType<typeof vi.fn>;
+        find: ReturnType<typeof vi.fn>;
     };
     let mediaValidator: { validate: ReturnType<typeof vi.fn> };
     let service: ProductsService;
@@ -55,6 +56,7 @@ describe('ProductsService', () => {
             incrementViews: vi.fn().mockResolvedValue(undefined),
             create: vi.fn(),
             updateById: vi.fn(),
+            find: vi.fn(),
         };
         mediaValidator = { validate: vi.fn().mockResolvedValue(undefined) };
         const config = {
@@ -118,6 +120,24 @@ describe('ProductsService', () => {
                 { page: 1, pageSize: 50 },
                 expect.anything(),
             );
+        });
+    });
+
+    describe('getByIds', () => {
+        it('пустой вход → пустой результат без обращения к репозиторию', async () => {
+            const result = await service.getByIds([]);
+            expect(result).toEqual([]);
+            expect(repo.find).not.toHaveBeenCalled();
+        });
+
+        it('маппит найденные документы в ProductListItem', async () => {
+            repo.find.mockResolvedValue([makeDoc(), makeDoc({ id: 'p2', slug: 'sand-25' })]);
+            const result = await service.getByIds(['p1', 'p2']);
+            expect(repo.find).toHaveBeenCalled();
+            expect(result).toHaveLength(2);
+            expect(result[0]).toMatchObject({ id: 'p1', slug: 'cement-50', finalPrice: 900 });
+            expect(result[1]).toMatchObject({ id: 'p2', slug: 'sand-25' });
+            expect('description' in result[0]!).toBe(false);
         });
     });
 

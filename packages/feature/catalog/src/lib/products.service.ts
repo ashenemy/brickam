@@ -99,6 +99,20 @@ export class ProductsService
         };
     }
 
+    /**
+     * Возвращает товары по списку id (для обогащения вишлиста). Порядок
+     * результата произвольный; отсутствующие id просто опускаются. Пустой вход —
+     * пустой результат без обращения к БД.
+     */
+    async getByIds(ids: string[]): Promise<ProductListItem[]> {
+        if (ids.length === 0) {
+            return [];
+        }
+        const docs = await this.productsRepository.find({ _id: { $in: ids } } as never);
+        const now = new Date();
+        return docs.map((doc) => this.toListItem(doc, now));
+    }
+
     /** Детальная карточка по slug (404 если нет); инкрементит счётчик просмотров. */
     async getBySlug(slug: string): Promise<ProductDetail> {
         const doc = await this.productsRepository.findBySlug(slug);

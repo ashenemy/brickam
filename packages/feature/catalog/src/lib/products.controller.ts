@@ -24,6 +24,25 @@ export class ProductsController {
         return this.productsService.search(query);
     }
 
+    /**
+     * Публичная пакетная выборка товаров по id (csv в query `ids`) — для
+     * обогащения вишлиста. Пустой/отсутствующий `ids` → пустой результат.
+     * Объявлен до `:slug`, чтобы статический сегмент не перехватывался параметром.
+     */
+    @Get('by-ids')
+    @Public()
+    @ApiOkResponse({ type: [ProductListItemDto], description: 'Товары по списку id' })
+    async getByIds(
+        @Query('ids') ids?: string,
+    ): Promise<{ success: boolean; data: ProductListItem[] }> {
+        const parsed = (ids ?? '')
+            .split(',')
+            .map((id) => id.trim())
+            .filter((id) => id.length > 0);
+        const data = await this.productsService.getByIds(parsed);
+        return { success: true, data };
+    }
+
     /** Публичная детальная карточка товара по slug. */
     @Get(':slug')
     @Public()
