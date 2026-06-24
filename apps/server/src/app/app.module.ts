@@ -9,6 +9,7 @@ import { PaymentsModule } from '@brickam/payments';
 import { ServerKitModule } from '@brickam/server-kit';
 import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
+import { WishlistModule } from '@brickam/wishlist';
 import { Module } from '@nestjs/common';
 import { HealthModule } from './health/health.module';
 
@@ -28,6 +29,7 @@ import { HealthModule } from './health/health.module';
         CatalogModule,
         PaymentsModule,
         OrdersModule,
+        WishlistModule,
         HealthModule,
     ],
 })
