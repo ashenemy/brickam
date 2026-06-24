@@ -174,6 +174,15 @@ export class ProductsService
         } as never);
     }
 
+    /** Проставляет агрегированный рейтинг товара (пересчёт в reviews, CatalogServiceContract). */
+    async setProductRating(
+        productId: string,
+        ratingAvg: number,
+        ratingCount: number,
+    ): Promise<void> {
+        await this.productsRepository.updateById(productId, { ratingAvg, ratingCount });
+    }
+
     /** Валидирует обложку и каждый элемент галереи через MediaValidator. */
     private async validateMedia(cover?: MediaDto, gallery?: MediaDto[]): Promise<void> {
         if (cover) {
