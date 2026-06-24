@@ -6,6 +6,7 @@ import { I18nKitModule } from '@brickam/i18n-kit';
 import { NotificationsModule } from '@brickam/notifications';
 import { OrdersModule } from '@brickam/orders';
 import { PaymentsModule } from '@brickam/payments';
+import { ReviewsModule } from '@brickam/reviews';
 import { ServerKitModule } from '@brickam/server-kit';
 import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
@@ -30,6 +31,7 @@ import { HealthModule } from './health/health.module';
         PaymentsModule,
         OrdersModule,
         WishlistModule,
+        ReviewsModule,
         HealthModule,
     ],
 })
