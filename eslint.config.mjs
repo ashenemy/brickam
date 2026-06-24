@@ -72,6 +72,8 @@ export default [
             'linebreak-style': 'off',
             // any допускается в дженерик-базах и тестах (Biome noExplicitAny тоже off)
             '@typescript-eslint/no-explicit-any': 'off',
+            // пустые no-op методы у фейков/абстрактных баз допустимы (Biome это не флагует)
+            '@typescript-eslint/no-empty-function': 'off',
         },
     },
 ];
