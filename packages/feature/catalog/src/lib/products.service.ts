@@ -1,5 +1,6 @@
 import { AppConfigService } from '@brickam/config-kit';
-import { NotFoundException, type Page } from '@brickam/core-kit';
+import { NotFoundException, type Page, ValidationException } from '@brickam/core-kit';
+import { CatalogServiceContract, type ProductSnapshot } from '@brickam/domain-kit';
 import { BaseCrudService } from '@brickam/server-kit';
 import { Injectable } from '@nestjs/common';
 import type { ProductDetail, ProductListItem } from '../@types';
@@ -17,7 +18,10 @@ import { ProductsRepository } from './products.repository';
  * посчитанной finalPrice; create/update валидируют медиа против лимитов платформы.
  */
 @Injectable()
-export class ProductsService extends BaseCrudService<Product, CreateProductDto, UpdateProductDto> {
+export class ProductsService
+    extends BaseCrudService<Product, CreateProductDto, UpdateProductDto>
+    implements CatalogServiceContract
+{
     constructor(
         private readonly productsRepository: ProductsRepository,
         private readonly mediaValidator: MediaValidator,
@@ -123,6 +127,37 @@ export class ProductsService extends BaseCrudService<Product, CreateProductDto, 
             throw new NotFoundException();
         }
         return this.toDetail(doc, new Date()) as unknown as Product;
+    }
+
+    /** Снимок товара для оформления заказа (CatalogServiceContract). */
+    async getProductSnapshot(productId: string): Promise<ProductSnapshot | null> {
+        const doc = await this.productsRepository.findById(productId);
+        if (!doc) {
+            return null;
+        }
+        return {
+            id: doc.id ?? doc._id.toString(),
+            vendorId: doc.vendorId,
+            title: { hy: doc.title.hy, ru: doc.title.ru, en: doc.title.en },
+            unit: doc.unit,
+            price: doc.price,
+            stock: doc.stock,
+            ...(doc.discount !== undefined ? { discount: doc.discount } : {}),
+        };
+    }
+
+    /** Списывает остаток с проверкой наличия (CatalogServiceContract). */
+    async decrementStock(productId: string, qty: number): Promise<void> {
+        const doc = await this.productsRepository.findById(productId);
+        if (!doc) {
+            throw new NotFoundException();
+        }
+        if (doc.stock < qty) {
+            throw new ValidationException('errors.catalog.outOfStock', { productId });
+        }
+        await this.productsRepository.updateById(productId, {
+            $inc: { stock: -qty },
+        } as never);
     }
 
     /** Валидирует обложку и каждый элемент галереи через MediaValidator. */

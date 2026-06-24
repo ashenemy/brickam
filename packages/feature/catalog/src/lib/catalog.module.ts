@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { CatalogServiceContract } from '@brickam/domain-kit';
+import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CategoriesController } from './categories.controller';
 import { CategoriesRepository } from './categories.repository';
@@ -16,6 +17,7 @@ import { ProductsService } from './products.service';
  * Модуль каталога (Foundations §13). Категории + товары (только продажа),
  * медиа-валидация против лимитов платформы. Зависит только от kit/domain.
  */
+@Global()
 @Module({
     imports: [
         MongooseModule.forFeature([
@@ -32,7 +34,9 @@ import { ProductsService } from './products.service';
         ProductsService,
         PlatformSettingsService,
         MediaValidator,
+        // Контракт для orders: catalog отдаёт снимок товара и списывает остаток.
+        { provide: CatalogServiceContract, useExisting: ProductsService },
     ],
-    exports: [ProductsService, CategoriesService],
+    exports: [ProductsService, CategoriesService, CatalogServiceContract],
 })
 export class CatalogModule {}
