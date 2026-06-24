@@ -19,6 +19,7 @@ export const hy: Dictionary = {
     'errors.auth.invalidPhone': 'Հեռախոսահամարի սխալ ձևաչափ (+374XXXXXXXX)',
     'errors.catalog.outOfStock': 'Պահեստում ապրանքը բավարար չէ',
     'errors.orders.emptyCart': 'Զամբյուղը դատարկ է',
+    'errors.reviews.notFound': 'Պատվերը կամ կարծիքը չի գտնվել',
     'errors.reviews.notOwner': 'Կարող եք գնահատել միայն ձեր պատվերը',
     'errors.reviews.notCompleted': 'Կարծիքը հնարավոր է միայն ավարտված պատվերի համար',
     'errors.reviews.productNotInOrder': 'Այս ապրանքը պատվերում չկա',

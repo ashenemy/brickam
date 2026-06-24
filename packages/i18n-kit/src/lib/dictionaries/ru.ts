@@ -19,6 +19,7 @@ export const ru: Dictionary = {
     'errors.auth.invalidPhone': 'Неверный формат телефона (+374XXXXXXXX)',
     'errors.catalog.outOfStock': 'Недостаточно товара на складе',
     'errors.orders.emptyCart': 'Корзина пуста',
+    'errors.reviews.notFound': 'Заказ или отзыв не найден',
     'errors.reviews.notOwner': 'Отзыв можно оставить только по своему заказу',
     'errors.reviews.notCompleted': 'Отзыв возможен только по завершённому заказу',
     'errors.reviews.productNotInOrder': 'Этого товара нет в заказе',

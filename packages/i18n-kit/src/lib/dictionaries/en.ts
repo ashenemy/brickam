@@ -19,6 +19,7 @@ export const en: Dictionary = {
     'errors.auth.invalidPhone': 'Invalid phone number format (+374XXXXXXXX)',
     'errors.catalog.outOfStock': 'Not enough stock for this product',
     'errors.orders.emptyCart': 'Cart is empty',
+    'errors.reviews.notFound': 'Order or review not found',
     'errors.reviews.notOwner': 'You can only review your own orders',
     'errors.reviews.notCompleted': 'Review is allowed only for a completed order',
     'errors.reviews.productNotInOrder': 'This product is not in the order',
