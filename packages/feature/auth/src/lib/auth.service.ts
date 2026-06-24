@@ -114,7 +114,7 @@ export class AuthService {
         }
 
         if (this.requireDeviceOtp && !this.isKnownDevice(user.id, dto.deviceId)) {
-            await this.otp.request(dto.phone, 'verify');
+            await this.otp.request(dto.phone, 'verify', user.lang);
             return { otpRequired: true };
         }
 
@@ -142,7 +142,7 @@ export class AuthService {
     async forgot(dto: ForgotDto): Promise<ForgotResult> {
         const user = await this.users.findByPhone(dto.phone);
         if (user) {
-            await this.otp.request(dto.phone, 'reset');
+            await this.otp.request(dto.phone, 'reset', user.lang);
         }
         return { otpSent: true };
     }

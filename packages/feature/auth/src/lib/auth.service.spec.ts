@@ -88,7 +88,8 @@ function otpConfig(): AppConfigService {
 
 function setup() {
     const users = new FakeUsersService();
-    const otp = new OtpService(otpConfig());
+    const notifications = { sendSms: vi.fn(), sendEmail: vi.fn() } as never;
+    const otp = new OtpService(otpConfig(), notifications);
     const tokens = new TokenService(new JwtService(), otpConfig());
     const service = new AuthService(users, otp, tokens);
     return { users, otp, tokens, service };
@@ -274,7 +275,7 @@ describe('AuthService', () => {
                 deviceId: 'new-dev',
             });
             expect(result).toEqual({ otpRequired: true });
-            expect(otpSpy).toHaveBeenCalledWith('+37412345678', 'verify');
+            expect(otpSpy).toHaveBeenCalledWith('+37412345678', 'verify', 'hy');
         });
     });
 
@@ -306,7 +307,7 @@ describe('AuthService', () => {
             });
             const result = await ctx.service.forgot({ phone: '+37412345678' });
             expect(result).toEqual({ otpSent: true });
-            expect(spy).toHaveBeenCalledWith('+37412345678', 'reset');
+            expect(spy).toHaveBeenCalledWith('+37412345678', 'reset', 'hy');
         });
 
         it('пользователя нет → otpSent без запроса OTP (не раскрывает)', async () => {

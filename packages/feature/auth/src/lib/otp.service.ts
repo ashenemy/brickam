@@ -1,6 +1,8 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { RateLimitedException, ValidationException } from '@brickam/core-kit';
-import { Injectable, Logger } from '@nestjs/common';
+import { NotificationsServiceContract } from '@brickam/domain-kit';
+import { DEFAULT_LANG } from '@brickam/i18n-kit';
+import { Injectable } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import type { OtpPurpose, OtpRecord, OtpRequestResult } from '../@types';
 
@@ -14,22 +16,34 @@ type OtpConfig = {
 
 const BCRYPT_ROUNDS = 10;
 
+/** Ключ шаблона SMS по назначению OTP (тексты — только из templates, не в коде). */
+const TEMPLATE_KEY: Record<OtpPurpose, string> = {
+    verify: 'auth.otp',
+    reset: 'auth.passwordReset',
+};
+
 /**
- * Сервис одноразовых кодов (OTP). In-memory стор, мок-SMS пишет код в лог.
- * Ключ записи: `${purpose}:${phone}`.
+ * Сервис одноразовых кодов (OTP). In-memory стор; отправка — через notifications
+ * по шаблону (Foundations §10), а не строкой в коде.
  */
 @Injectable()
 export class OtpService {
-    private readonly logger = new Logger('OTP');
     private readonly store = new Map<string, OtpRecord>();
     private readonly config: OtpConfig;
 
-    constructor(config: AppConfigService) {
+    constructor(
+        config: AppConfigService,
+        private readonly notifications: NotificationsServiceContract,
+    ) {
         this.config = config.auth.otp;
     }
 
-    /** Запрос OTP: проверка cooldown, генерация и хеш кода, мок-отправка SMS. */
-    async request(phone: string, purpose: OtpPurpose): Promise<OtpRequestResult> {
+    /** Запрос OTP: cooldown, генерация и хеш кода, отправка SMS по шаблону. */
+    async request(
+        phone: string,
+        purpose: OtpPurpose,
+        lang: string = DEFAULT_LANG,
+    ): Promise<OtpRequestResult> {
         const key = this.key(phone, purpose);
         const now = Date.now();
         const existing = this.store.get(key);
@@ -45,8 +59,11 @@ export class OtpService {
         const expiresAt = now + this.config.ttlSeconds * 1000;
         this.store.set(key, { hash, expiresAt, attempts: 0, lastSentAt: now });
 
-        // Мок-SMS: в реальной интеграции код уходит провайдеру, тут — в лог.
-        this.logger.log(`OTP for ${phone} (${purpose}): ${code}`);
+        // Текст уходит из шаблона auth.otp/auth.passwordReset; код — переменная.
+        await this.notifications.sendSms(phone, TEMPLATE_KEY[purpose], lang, {
+            code,
+            ttlMinutes: Math.max(1, Math.round(this.config.ttlSeconds / 60)),
+        });
 
         return { expiresAt, phoneMasked: this.mask(phone) };
     }
