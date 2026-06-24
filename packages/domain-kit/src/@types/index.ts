@@ -60,3 +60,81 @@ export type RenderedTemplate = {
     subject?: string;
     body: string;
 };
+
+// ───────────────────── Заказы / платежи (Foundations §11, §15) ─────────────────────
+
+/** Скидка на товар. */
+export type DiscountInput = {
+    type: 'percent' | 'amount';
+    value: number;
+    activeFrom?: string | Date | null;
+    activeTo?: string | Date | null;
+};
+
+/** Снимок товара для оформления заказа (отдаёт catalog). */
+export type ProductSnapshot = {
+    id: string;
+    vendorId: string;
+    title: LocalizedText;
+    unit: string;
+    price: number;
+    discount?: DiscountInput;
+    stock: number;
+};
+
+/** Позиция корзины/заказа на входе расчёта. */
+export type OrderLineInput = {
+    productId: string;
+    vendorId: string;
+    qty: number;
+    price: number;
+    discount?: DiscountInput;
+    titleSnapshot?: LocalizedText;
+    unit?: string;
+};
+
+/** Позиция саб-заказа вендора (после расчёта). */
+export type VendorOrderItem = {
+    productId: string;
+    titleSnapshot?: LocalizedText;
+    qty: number;
+    unitPrice: number;
+    discountApplied: number;
+    lineTotal: number;
+};
+
+/** Разбивка по вендору. */
+export type VendorBreakdown = {
+    vendorId: string;
+    items: VendorOrderItem[];
+    subtotal: number;
+    commissionPercent: number;
+    commissionAmount: number;
+    payoutAmount: number;
+};
+
+/** Сплит платежа по вендору. */
+export type VendorSplit = {
+    vendorId: string;
+    amount: number;
+    commissionAmount: number;
+    payoutAmount: number;
+};
+
+/** Результат расчёта заказа (целые AMD). */
+export type OrderCalcResult = {
+    subtotal: number;
+    productDiscountTotal: number;
+    loyaltyDiscount: number;
+    total: number;
+    vendors: VendorBreakdown[];
+    splits: VendorSplit[];
+};
+
+/** Вход создания платежа. */
+export type CreatePaymentInput = {
+    orderId: string;
+    buyerId: string;
+    amount: number;
+    splits: VendorSplit[];
+};

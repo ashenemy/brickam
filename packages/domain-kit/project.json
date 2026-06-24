@@ -13,6 +13,14 @@
                 "tsConfig": "packages/domain-kit/tsconfig.lib.json",
                 "assets": ["packages/domain-kit/*.md"]
             }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/domain-kit",
+                "command": "npx vitest run --coverage"
+            }
         }
     },
     "tags": ["type:domain", "scope:shared"]
