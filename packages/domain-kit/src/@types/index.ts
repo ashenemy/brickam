@@ -41,3 +41,22 @@ export type AuthTokens = {
     accessToken: string;
     refreshToken: string;
 };
+
+/** Мультиязычный текст (hy — дефолт). */
+export type LocalizedText = {
+    hy: string;
+    ru: string;
+    en: string;
+};
+
+/** Тип шаблона/канала. */
+export type TemplateType = 'email' | 'sms';
+
+/** Переменные для подстановки в шаблон (белый список — в самом шаблоне). */
+export type TemplateVars = Record<string, string | number | boolean>;
+
+/** Результат рендера шаблона. */
+export type RenderedTemplate = {
+    subject?: string;
+    body: string;
+};
