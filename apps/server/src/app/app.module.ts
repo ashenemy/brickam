@@ -1,4 +1,5 @@
 import { AuthModule } from '@brickam/auth';
+import { CatalogModule } from '@brickam/catalog';
 import { ConfigKitModule } from '@brickam/config-kit';
 import { DbKitModule } from '@brickam/db-kit';
 import { I18nKitModule } from '@brickam/i18n-kit';
@@ -22,6 +23,7 @@ import { HealthModule } from './health/health.module';
         NotificationsModule,
         UsersModule,
         AuthModule,
+        CatalogModule,
         HealthModule,
     ],
 })
