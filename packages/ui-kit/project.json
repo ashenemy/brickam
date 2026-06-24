@@ -2,12 +2,28 @@
     "name": "ui-kit",
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/ui-kit/src",
-    "prefix": "lib",
+    "prefix": "bh",
     "projectType": "library",
     "tags": ["type:kit", "scope:shared"],
     "targets": {
+        "build": {
+            "executor": "@angular/build:ng-packagr",
+            "outputs": ["{workspaceRoot}/dist/packages/ui-kit"],
+            "options": {
+                "project": "packages/ui-kit/ng-package.json",
+                "tsConfig": "packages/ui-kit/tsconfig.lib.json"
+            }
+        },
         "lint": {
             "executor": "@nx/eslint:lint"
+        },
+        "test": {
+            "executor": "@angular/build:unit-test",
+            "options": {
+                "buildTarget": "ui-kit:build",
+                "tsConfig": "packages/ui-kit/tsconfig.spec.json",
+                "watch": false
+            }
         }
     }
 }

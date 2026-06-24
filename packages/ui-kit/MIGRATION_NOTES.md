@@ -36,6 +36,30 @@ Button, IconButton, Badge, Tag, Avatar, Rating, Logo.
 - **Avatar/Logo**: `role="img"`/`aria-label`; инициалы как безопасный фолбэк.
 - **Rating**: `role="img"` + агрегированный `aria-label` («4.5 of 5») вместо немых SVG.
 
+## Перенесено (marketplace)
+ProductCard, RoomCard, CategoryCard, FeatureBar, Navbar, Footer (+ .spec на каждый).
+
+### Фиксы багов и решения переноса (marketplace)
+- **ProductCard**: данные товара собраны в один типизированный `input.required<Product>()`
+  ({id,title,vendor,price,oldPrice?,unit,rating?,image,badge?}) вместо россыпи строковых
+  пропсов; `rating` теперь строго `number` и рендерится через `bh-rating` (в React был сырой
+  «★ {rating}»); переиспользованы `bh-badge`/`bh-rating`; добавлен `<article>`, фолбэк «No image»,
+  `aria-label` на кнопке, focus-ring. Хардкод `var(--neutral-900)` на фоне фото заменён на `bg-white`.
+- **Hover-эффекты без JS**: убран React-`useState(hover)` — подъём тени, zoom картинки и
+  проявление «Add to cart» сделаны через Tailwind `group`/`group-hover:` + `transition` на токенах
+  (также реагируют на `focus-within`/`focus-visible` для доступности с клавиатуры).
+- **Navbar**: добавлен адаптив (mobile-first) — навигация прячется за бургер-кнопку (`signal` open),
+  строка 2 переносится на узких экранах (`md:flex-row`), без overflow; переиспользованы
+  `bh-logo`/`bh-icon-button`/`bh-search-bar`; пункты — настоящие `<a>` с `aria-label`, бейдж
+  корзины озвучен. SVG-иконки вынесены в шаблон (в React были отдельные компоненты).
+- **FeatureBar/Footer/RoomCard/CategoryCard**: `key={i}` → `track item.title`; семантика
+  `<ul>/<li>`, `<nav aria-label>`, `<a>`/`<button>` вместо кликабельных `<span>`; сетка
+  FeatureBar — `auto-fit minmax(220px,1fr)` (переносится без overflow вместо фикс. колонок);
+  «белые» цвета `#fff`/`#191C1F` заменены на `text-white`/`rgb(var(--color-text-inverse))`.
+- **a11y/типы**: добавлены `output()` для всех действий (addToCart/cardClick/nav/search/cart/
+  categories/langChange/socialClick/legalClick), focus-ring через токен accent на всех
+  интерактивных элементах. Проверено `ngc` со `strictTemplates` + `exactOptionalPropertyTypes`.
+
 ## Сверка с Figma
 - `.fig` — бинарный файл Figma (~34 MB); напрямую агентом не парсится. Источником значений
   служил **извлечённый из Figma** слой токенов и React-компоненты (так и задумано в кит-ридми:
