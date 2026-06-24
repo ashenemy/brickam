@@ -1,15 +1,20 @@
+import { fileURLToPath } from 'node:url';
 import swc from 'unplugin-swc';
 import tsconfigPaths from 'vite-tsconfig-paths';
 
+// Абсолютный путь к корневому tsconfig.base.json — корректен на любой глубине пакета
+// (packages/<kit> и packages/feature/<name>), без относительных предположений.
+const BASE_TSCONFIG = fileURLToPath(new URL('../../tsconfig.base.json', import.meta.url));
+
 /**
- * Общий пресет Vitest для серверных kit-пакетов.
+ * Общий пресет Vitest для серверных kit/feature-пакетов.
  * SWC включает legacy-декораторы и emit метаданных — нужно для Nest DI в тестах.
  * vite-tsconfig-paths резолвит алиасы @brickam/* из tsconfig.base.json.
  */
 export function vitestPreset(rootDir) {
     return {
         plugins: [
-            tsconfigPaths({ root: rootDir, projects: ['../../tsconfig.base.json'] }),
+            tsconfigPaths({ root: rootDir, projects: [BASE_TSCONFIG] }),
             swc.vite({
                 jsc: {
                     target: 'es2022',
