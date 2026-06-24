@@ -3,25 +3,19 @@ import { AuthModule } from '@brickam/auth';
 import { ConfigKitModule } from '@brickam/config-kit';
 import {
     type CreateUserContract,
+    NotificationsServiceContract,
     Permission,
+    type TemplateVars,
     type UserContract,
     UserStatus,
     UsersServiceContract,
 } from '@brickam/domain-kit';
 import { I18nKitModule } from '@brickam/i18n-kit';
 import { Auth, CurrentUser, ServerKitModule } from '@brickam/server-kit';
-import {
-    Controller,
-    Get,
-    Global,
-    type INestApplication,
-    Injectable,
-    Logger,
-    Module,
-} from '@nestjs/common';
+import { Controller, Get, Global, type INestApplication, Injectable, Module } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 /** In-memory реализация контракта users (e2e без Mongo). */
 @Injectable()
@@ -75,12 +69,34 @@ class InMemoryUsersService extends UsersServiceContract {
     }
 }
 
+/** Фейковые уведомления: вместо отправки SMS запоминают OTP-код по телефону. */
+@Injectable()
+class InMemoryNotifications extends NotificationsServiceContract {
+    readonly codes = new Map<string, string>();
+
+    async sendSms(
+        recipient: string,
+        _key: string,
+        _lang: string,
+        vars: TemplateVars,
+    ): Promise<void> {
+        this.codes.set(recipient, String(vars['code']));
+    }
+
+    async sendEmail(): Promise<void> {
+        // не используется в этих тестах
+    }
+}
+
 @Global()
 @Module({
-    providers: [{ provide: UsersServiceContract, useClass: InMemoryUsersService }],
-    exports: [UsersServiceContract],
+    providers: [
+        { provide: UsersServiceContract, useClass: InMemoryUsersService },
+        { provide: NotificationsServiceContract, useClass: InMemoryNotifications },
+    ],
+    exports: [UsersServiceContract, NotificationsServiceContract],
 })
-class FakeUsersModule {}
+class FakeDepsModule {}
 
 /** Защищённые маршруты для проверки guard'ов. */
 @Controller()
@@ -108,33 +124,15 @@ const testEnv = {
     JWT_REFRESH_SECRET: 'e2e-refresh-secret',
 };
 
-/** Достаёт OTP-код из мок-SMS лога OtpService. */
-function captureOtp(
-    logSpy: ReturnType<typeof vi.spyOn>,
-    phone: string,
-    purpose = 'verify',
-): string {
-    const re = new RegExp(`OTP for \\${phone} \\(${purpose}\\): (\\d+)`);
-    for (const call of logSpy.mock.calls) {
-        const msg = String(call[0]);
-        const m = re.exec(msg);
-        if (m) {
-            return m[1];
-        }
-    }
-    throw new Error(`OTP-код не найден в логах для ${phone}`);
-}
-
-describe('Auth e2e (in-process, мок-SMS, без Mongo)', () => {
+describe('Auth e2e (in-process, OTP через notifications-контракт, без Mongo)', () => {
     let app: INestApplication;
     let http: ReturnType<typeof request>;
-    let logSpy: ReturnType<typeof vi.spyOn>;
+    let notifications: InMemoryNotifications;
 
     const phone = '+37410000001';
     const password = 'Password123';
 
     beforeAll(async () => {
-        logSpy = vi.spyOn(Logger.prototype, 'log');
         const moduleRef = await Test.createTestingModule({
             imports: [
                 ConfigKitModule.forRoot({
@@ -143,7 +141,7 @@ describe('Auth e2e (in-process, мок-SMS, без Mongo)', () => {
                 }),
                 I18nKitModule,
                 ServerKitModule.forRoot(),
-                FakeUsersModule,
+                FakeDepsModule,
                 AuthModule,
                 ProbeModule,
             ],
@@ -152,41 +150,43 @@ describe('Auth e2e (in-process, мок-SMS, без Mongo)', () => {
         app.setGlobalPrefix('api');
         await app.init();
         http = request(app.getHttpServer());
+        notifications = app.get(NotificationsServiceContract);
     });
 
     afterAll(async () => {
         await app?.close();
-        logSpy?.mockRestore();
     });
 
+    const otpFor = (target: string): string => {
+        const code = notifications.codes.get(target);
+        if (!code) {
+            throw new Error(`OTP-код не отправлен для ${target}`);
+        }
+        return code;
+    };
+
     it('полный цикл: register → verify → login → refresh', async () => {
-        // register
         const reg = await http
             .post('/api/auth/register')
             .send({ phone, password, name: 'Test Buyer', role: 'buyer' });
         expect(reg.status).toBe(201);
         expect(reg.body).toEqual({ success: true, data: { otpSent: true } });
 
-        // verify
-        const code = captureOtp(logSpy, phone, 'verify');
-        const verify = await http.post('/api/auth/verify-otp').send({ phone, code });
+        const verify = await http.post('/api/auth/verify-otp').send({ phone, code: otpFor(phone) });
         expect(verify.status).toBe(200);
         expect(verify.body.data.tokens.accessToken).toBeTruthy();
         expect(verify.body.data.tokens.refreshToken).toBeTruthy();
 
-        // login
         const login = await http.post('/api/auth/login').send({ phone, password });
         expect(login.status).toBe(200);
         const refreshToken = login.body.data.tokens.refreshToken as string;
         expect(refreshToken).toBeTruthy();
 
-        // refresh (ротация)
         const refreshed = await http.post('/api/auth/refresh').send({ refreshToken });
         expect(refreshed.status).toBe(200);
         expect(refreshed.body.data.tokens.refreshToken).toBeTruthy();
         expect(refreshed.body.data.tokens.refreshToken).not.toBe(refreshToken);
 
-        // старый refresh после ротации невалиден
         const reused = await http.post('/api/auth/refresh').send({ refreshToken });
         expect(reused.status).toBe(401);
     });
@@ -240,8 +240,9 @@ describe('Auth e2e (in-process, мок-SMS, без Mongo)', () => {
         await http
             .post('/api/auth/register')
             .send({ phone: vphone, password, name: 'Vendor', role: 'vendor_owner' });
-        const code = captureOtp(logSpy, vphone, 'verify');
-        const verify = await http.post('/api/auth/verify-otp').send({ phone: vphone, code });
+        const verify = await http
+            .post('/api/auth/verify-otp')
+            .send({ phone: vphone, code: otpFor(vphone) });
         const access = verify.body.data.tokens.accessToken as string;
         const ok = await http.get('/api/vendor-only').set('Authorization', `Bearer ${access}`);
         expect(ok.status).toBe(200);
