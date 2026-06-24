@@ -2,7 +2,9 @@ import { AuthModule } from '@brickam/auth';
 import { ConfigKitModule } from '@brickam/config-kit';
 import { DbKitModule } from '@brickam/db-kit';
 import { I18nKitModule } from '@brickam/i18n-kit';
+import { NotificationsModule } from '@brickam/notifications';
 import { ServerKitModule } from '@brickam/server-kit';
+import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
 import { Module } from '@nestjs/common';
 import { HealthModule } from './health/health.module';
@@ -15,7 +17,9 @@ import { HealthModule } from './health/health.module';
         DbKitModule.forRoot(),
         // Глобальные interceptors/filter/pipe платформы.
         ServerKitModule.forRoot(),
-        // Фичи Stage 2: users (глобальный контракт) до auth (глобальные guard'ы).
+        // Фичи: templates → notifications → users → auth (контракты/guard'ы глобальные).
+        TemplatesModule,
+        NotificationsModule,
         UsersModule,
         AuthModule,
         HealthModule,
