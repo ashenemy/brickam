@@ -1,3 +1,4 @@
+import { Public } from '@brickam/auth';
 import { Controller, Get } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import { HealthService } from './health.service';
@@ -7,6 +8,7 @@ import { HealthService } from './health.service';
 export class HealthController {
     constructor(private readonly health: HealthService) {}
 
+    @Public()
     @Get()
     @ApiOkResponse({ description: 'Статус сервиса' })
     check() {
