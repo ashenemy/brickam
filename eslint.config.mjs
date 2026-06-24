@@ -22,7 +22,8 @@ export default [
             '@nx/enforce-module-boundaries': [
                 'error',
                 {
-                    enforceBuildableLibDependency: true,
+                    // Angular-библиотеки (ui-kit) консьюмятся из исходников; type-границы ниже остаются строгими.
+                    enforceBuildableLibDependency: false,
                     allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
                     depConstraints: [
                         {
