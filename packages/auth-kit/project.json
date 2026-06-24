@@ -1,9 +1,9 @@
 {
-  "name": "auth-kit",
-  "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "packages/auth-kit/src",
-  "projectType": "library",
-  "tags": ["type:kit", "scope:server"],
-  "// targets": "to see all targets run: nx show project auth-kit --web",
-  "targets": {}
+    "name": "auth-kit",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/auth-kit/src",
+    "projectType": "library",
+    "tags": ["type:kit", "scope:server"],
+    "// targets": "to see all targets run: nx show project auth-kit --web",
+    "targets": {}
 }
