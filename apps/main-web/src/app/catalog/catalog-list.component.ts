@@ -16,6 +16,7 @@ import {
     ProductCardComponent,
     SelectComponent,
 } from '@brickam/ui-kit';
+import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Category, PageMeta, ProductFilters, ProductListItem, ProductSort } from './models';
 
@@ -29,7 +30,7 @@ const PAGE_SIZE = 12;
     selector: 'app-catalog-list',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProductCardComponent, SelectComponent, ButtonComponent],
+    imports: [ProductCardComponent, SelectComponent, ButtonComponent, WishlistHeartComponent],
     template: `
         <section class="flex flex-col gap-6">
             <header class="flex flex-col gap-2">
@@ -107,11 +108,16 @@ const PAGE_SIZE = 12;
                     data-testid="product-grid"
                 >
                     @for (item of cards(); track item.slug) {
-                        <bh-product-card
-                            [product]="item.card"
-                            (cardClick)="openProduct(item.slug)"
-                            (addToCart)="openProduct(item.slug)"
-                        />
+                        <div class="relative">
+                            <div class="absolute right-2 top-2 z-10">
+                                <app-wishlist-heart [productId]="item.card.id + ''" />
+                            </div>
+                            <bh-product-card
+                                [product]="item.card"
+                                (cardClick)="openProduct(item.slug)"
+                                (addToCart)="openProduct(item.slug)"
+                            />
+                        </div>
                     }
                 </div>
 

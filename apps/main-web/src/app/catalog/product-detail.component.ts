@@ -16,6 +16,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import { BreadcrumbComponent, ButtonComponent } from '@brickam/ui-kit';
+import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Media, ProductDetail } from './models';
 
@@ -28,7 +29,7 @@ import type { Media, ProductDetail } from './models';
     selector: 'app-product-detail',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [BreadcrumbComponent, ButtonComponent],
+    imports: [BreadcrumbComponent, ButtonComponent, WishlistHeartComponent],
     template: `
         @if (loading()) {
             <div class="py-16 text-center text-text-secondary" style="font: var(--type-product)">
@@ -141,10 +142,11 @@ import type { Media, ProductDetail } from './models';
                             </dl>
                         }
 
-                        <div class="pt-2">
+                        <div class="flex items-center gap-3 pt-2">
                             <bh-button variant="primary" size="lg" (clicked)="addToCart()">
                                 {{ ph('addToCart') }}
                             </bh-button>
+                            <app-wishlist-heart [productId]="product()!.id" [size]="48" />
                         </div>
                     </div>
                 </div>

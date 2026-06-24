@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { RUNTIME_CONFIG } from '@brickam/config-kit/browser';
-import type { Observable } from 'rxjs';
+import { type Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 import type {
     ApiListResponse,
@@ -60,6 +60,19 @@ export class CatalogApiService {
                 },
             )
             .pipe(map((res) => ({ data: res.data, meta: res.meta })));
+    }
+
+    /** Товары по списку id (публичный эндпоинт). Сохраняет порядок ответа бэкенда. */
+    getProductsByIds(ids: string[]): Observable<ProductListResult['data']> {
+        if (ids.length === 0) {
+            return of([]);
+        }
+        const params = new HttpParams().set('ids', ids.join(','));
+        return this.http
+            .get<ApiResponse<ProductListResult['data']>>(`${this.base}/catalog/products/by-ids`, {
+                params,
+            })
+            .pipe(map((res) => res.data));
     }
 
     /** Детальная карточка товара по slug. */

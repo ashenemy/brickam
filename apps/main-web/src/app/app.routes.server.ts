@@ -7,6 +7,8 @@ export const serverRoutes: ServerRoute[] = [
     // Каталог и товары — SSR on-demand (список товаров неизвестен на билде).
     { path: 'catalog', renderMode: RenderMode.Server },
     { path: 'product/:slug', renderMode: RenderMode.Server },
+    // Вишлист — данные требуют токена; SSR on-demand, не пререндер.
+    { path: 'wishlist', renderMode: RenderMode.Server },
     // Остальное (включая :slug-параметры) — SSR, не пререндер.
     { path: '**', renderMode: RenderMode.Server },
 ];
