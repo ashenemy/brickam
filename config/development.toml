@@ -1,0 +1,6 @@
+[server]
+corsOrigins = ["http://localhost:4200", "http://localhost:4201", "http://localhost:4202"]
+
+[providers]
+sms = "mock"
+payment = "mock"

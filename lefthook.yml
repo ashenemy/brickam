@@ -1,0 +1,16 @@
+pre-commit:
+    parallel: false
+    commands:
+        biome:
+            run: npx @biomejs/biome check --staged --write --no-errors-on-unmatched
+            stage_fixed: true
+        eslint:
+            glob: '*.{ts,html}'
+            run: npx eslint {staged_files}
+        single-scope-guard:
+            run: node tools/hooks/single-scope-guard.mjs
+
+commit-msg:
+    commands:
+        commitlint:
+            run: npx commitlint --edit {1}

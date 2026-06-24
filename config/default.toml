@@ -1,0 +1,53 @@
+# BuildHub — деплой-тайм конфиг (без секретов; секреты — в .env)
+# Рантайм-настройки, редактируемые из админки (шаблоны, лояльность, медиа-лимиты,
+# AI-промпты, бот-UA), здесь НЕ хранятся — они в БД (platform_settings и доменных коллекциях).
+
+[server]
+port = 3000
+globalPrefix = "api"
+corsOrigins = [
+    "https://app.buildhub.am",
+    "https://vendor.buildhub.am",
+    "https://admin.buildhub.am",
+    "http://localhost:4200"
+]
+requestTimeoutMs = 30000
+
+[auth.otp]
+length = 6
+ttlSeconds = 300
+maxAttempts = 5
+resendCooldownSeconds = 60
+
+[auth.jwt]                 # сами секреты — в env
+accessTtl = "15m"
+refreshTtl = "30d"
+
+[pagination]
+defaultPageSize = 20
+maxPageSize = 100
+
+[marketplace]
+baseCurrency = "AMD"
+displayCurrencies = ["AMD", "USD", "EUR", "RUB"]
+commissionPercent = 7.5    # комиссия с продавца, на сумму после скидки, целые AMD
+
+[providers]                # выбор реализации; ключи — в env
+sms = "mock"               # twilio | infobip | vonage | mock
+llm = "anthropic"
+embeddings = "voyage"
+image = "fal"
+video = "ffmpeg"
+storage = "s3"
+payment = "mock"           # idram | telcell | arca | mock
+exchangeRates = "cba"      # cba (ЦБ Армении) | exchangerate_host
+
+[features]
+aiSearch = true
+videoCover = true
+wishlist = true
+loyalty = true
+botOnlySsr = true
+
+[queue]
+redisUrl = "env:REDIS_URL"
