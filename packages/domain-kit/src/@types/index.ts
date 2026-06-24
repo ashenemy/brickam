@@ -138,3 +138,13 @@ export type CreatePaymentInput = {
     amount: number;
     splits: VendorSplit[];
 };
+
+/** Саб-заказ вендора в форме, нужной для проверки права на отзыв (Stage 7). */
+export type VendorOrderForReview = {
+    id: string;
+    orderId: string;
+    vendorId: string;
+    buyerId: string;
+    orderStatus: string;
+    productIds: string[];
+};

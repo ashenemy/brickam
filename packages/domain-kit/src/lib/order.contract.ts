@@ -1,14 +1,28 @@
-import type { CreatePaymentInput, ProductSnapshot } from '../@types';
+import type { CreatePaymentInput, ProductSnapshot, VendorOrderForReview } from '../@types';
 import type { PaymentStatus } from './order-status';
 
 /**
- * Контракт каталога для оформления заказа. Реализует feature `catalog`;
- * `orders` зависит только от контракта (не импортирует catalog напрямую).
+ * Контракт каталога. Реализует feature `catalog`; `orders`/`reviews` зависят
+ * только от контракта (не импортируют catalog напрямую).
  */
 export abstract class CatalogServiceContract {
     abstract getProductSnapshot(productId: string): Promise<ProductSnapshot | null>;
     /** Списывает остаток (проверяет наличие; недостаток → ошибка). */
     abstract decrementStock(productId: string, qty: number): Promise<void>;
+    /** Проставляет агрегированный рейтинг товара (пересчёт в reviews, Stage 7). */
+    abstract setProductRating(
+        productId: string,
+        ratingAvg: number,
+        ratingCount: number,
+    ): Promise<void>;
+}
+
+/**
+ * Контракт заказов для проверки права на отзыв (Foundations §15, Stage 7).
+ * Реализует feature `orders`; `reviews` зависит только от контракта.
+ */
+export abstract class OrdersServiceContract {
+    abstract getVendorOrderForReview(vendorOrderId: string): Promise<VendorOrderForReview | null>;
 }
 
 /** Результат операций платежа. */
