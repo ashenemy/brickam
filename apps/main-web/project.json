@@ -21,7 +21,10 @@
                         "input": "apps/main-web/public"
                     }
                 ],
-                "styles": ["apps/main-web/src/styles.scss"],
+                "styles": [
+                    "packages/design-tokens/src/styles/index.css",
+                    "apps/main-web/src/styles.scss"
+                ],
                 "server": "apps/main-web/src/main.server.ts",
                 "ssr": {
                     "entry": "apps/main-web/src/server.ts"
