@@ -1,0 +1,132 @@
+/* СГЕНЕРИРОВАНО tools/design-tokens/build.mjs из tokens.json. Не править вручную. */
+export const tokens = {
+    "$comment": "BRICK дизайн-токены — единый источник истины. Цвета — RGB-каналами (для alpha в Tailwind). Извлечено из React-кита (_input/tokens/*.css).",
+    "color": {
+        "brick-orange": "238 117 23",
+        "brick-orange-hover": "245 141 60",
+        "brick-orange-soft": "255 180 100",
+        "brick-peach": "246 219 206",
+        "neutral-950": "25 28 31",
+        "neutral-900": "28 28 30",
+        "neutral-850": "35 38 37",
+        "neutral-800": "41 45 46",
+        "neutral-750": "51 56 57",
+        "neutral-700": "56 61 56",
+        "neutral-600": "64 64 64",
+        "white": "255 255 255",
+        "text-primary": "255 255 255",
+        "text-secondary": "181 181 181",
+        "text-tertiary": "132 140 146",
+        "text-on-accent": "255 255 255",
+        "text-inverse": "25 28 31",
+        "danger": "255 119 119",
+        "success": "95 196 130",
+        "warning": "255 180 100"
+    },
+    "semanticColor": {
+        "bg-app": "neutral-850",
+        "bg-deep": "neutral-950",
+        "surface-card": "neutral-800",
+        "surface-card-alt": "neutral-750",
+        "surface-chip": "neutral-700",
+        "accent": "brick-orange",
+        "accent-hover": "brick-orange-hover",
+        "link": "brick-orange",
+        "price": "brick-orange"
+    },
+    "line": {
+        "border-subtle": "rgba(255, 255, 255, 0.1)",
+        "border-default": "rgba(255, 255, 255, 0.2)",
+        "border-strong": "rgba(255, 255, 255, 0.4)",
+        "divider": "rgba(255, 255, 255, 0.6)",
+        "glass-fill": "rgba(0, 0, 0, 0.4)"
+    },
+    "space": {
+        "1": "4px",
+        "2": "8px",
+        "3": "12px",
+        "4": "16px",
+        "5": "20px",
+        "6": "24px",
+        "8": "32px",
+        "10": "40px",
+        "12": "48px",
+        "16": "64px",
+        "18": "72px"
+    },
+    "radius": {
+        "sm": "8px",
+        "md": "16px",
+        "lg": "24px",
+        "xl": "32px",
+        "2xl": "48px",
+        "pill": "999px"
+    },
+    "fontFamily": {
+        "display": "'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "body": "'Public Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
+        "input": "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+    },
+    "fontWeight": {
+        "light": "300",
+        "regular": "400",
+        "medium": "500",
+        "semibold": "600",
+        "bold": "700"
+    },
+    "fontSize": {
+        "11": "11px",
+        "12": "12px",
+        "14": "14px",
+        "16": "16px",
+        "18": "18px",
+        "20": "20px",
+        "24": "24px",
+        "32": "32px",
+        "40": "40px",
+        "48": "48px",
+        "64": "64px"
+    },
+    "typeRole": {
+        "hero": "var(--fw-light) var(--fs-48)/1.05 var(--font-display)",
+        "display": "var(--fw-light) var(--fs-32)/1.1 var(--font-display)",
+        "h1": "var(--fw-semibold) var(--fs-24)/1.2 var(--font-display)",
+        "h2": "var(--fw-medium) var(--fs-20)/1.2 var(--font-display)",
+        "section": "var(--fw-medium) var(--fs-20)/1 var(--font-display)",
+        "label": "var(--fw-medium) var(--fs-18)/1 var(--font-display)",
+        "button": "var(--fw-regular) var(--fs-14)/1 var(--font-display)",
+        "product": "var(--fw-semibold) var(--fs-14)/1.43 var(--font-body)",
+        "price": "var(--fw-semibold) var(--fs-20)/1 var(--font-body)",
+        "body": "var(--fw-regular) var(--fs-16)/1.5 var(--font-body)",
+        "caption": "var(--fw-regular) var(--fs-12)/1.67 var(--font-body)",
+        "meta": "var(--fw-light) var(--fs-11)/1.45 var(--font-body)",
+        "search": "var(--fw-regular) var(--fs-18)/1 var(--font-input)"
+    },
+    "blur": {
+        "glass": "36px",
+        "glass-sm": "4px"
+    },
+    "shadow": {
+        "glass": "inset 0 0 0 0.5px rgba(255,255,255,0.2), inset 4px 4px 12px rgba(0,0,0,0.1), inset -8px -8px 20px rgba(255,255,255,0.03)",
+        "glass-hover": "inset 0 0 0 0.5px rgba(255,255,255,0.2), 0 4px 28px rgba(0,0,0,0.55), inset 4px 4px 12px rgba(0,0,0,0.1), inset -8px -8px 20px rgba(255,255,255,0.03)",
+        "panel": "inset -4px -4px 12px rgba(0,0,0,0.05), inset 8px 8px 20px rgba(255,255,255,0.01)",
+        "inset": "inset 0 4px 12px rgba(0,0,0,0.2)",
+        "accent": "inset 4px 4px 8px rgba(255,255,255,0.15), inset -4px -4px 8px rgba(0,0,0,0.15)",
+        "float": "0 12px 40px rgba(0,0,0,0.45)"
+    },
+    "motion": {
+        "ease-out": "cubic-bezier(0.22, 0.61, 0.36, 1)",
+        "ease-soft": "cubic-bezier(0.4, 0, 0.2, 1)",
+        "dur-fast": "140ms",
+        "dur-base": "220ms",
+        "dur-slow": "360ms"
+    },
+    "layout": {
+        "container-max": "1776px",
+        "content-max": "1440px",
+        "gutter": "72px",
+        "gutter-mobile": "16px"
+    }
+} as const;
+
+export type Tokens = typeof tokens;

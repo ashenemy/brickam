@@ -1,0 +1,5 @@
+/* Единый вход дизайн-системы BRICK. Линкуется приложениями (styles).
+   Один файл подтягивает шрифты, токены и мост Material. */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap");
+@import "./tokens.css";
+@import "./material-bridge.css";

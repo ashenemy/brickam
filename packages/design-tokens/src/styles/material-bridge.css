@@ -1,0 +1,26 @@
+/* Мост Angular Material 3 → токены BRICK. Переопределяет системные переменные
+   --mat-sys-* значениями из tokens.css, чтобы Material-компоненты несли бренд.
+   Правка tokens.json отражается здесь автоматически (значения — var(--color-*)). */
+:root {
+    --mat-sys-primary: rgb(var(--color-accent));
+    --mat-sys-on-primary: rgb(var(--color-text-on-accent));
+    --mat-sys-primary-container: rgb(var(--color-brick-orange-soft));
+    --mat-sys-on-primary-container: rgb(var(--color-text-inverse));
+
+    --mat-sys-surface: rgb(var(--color-surface-card));
+    --mat-sys-surface-container: rgb(var(--color-surface-card-alt));
+    --mat-sys-surface-container-high: rgb(var(--color-surface-chip));
+    --mat-sys-on-surface: rgb(var(--color-text-primary));
+    --mat-sys-on-surface-variant: rgb(var(--color-text-secondary));
+
+    --mat-sys-background: rgb(var(--color-bg-app));
+    --mat-sys-on-background: rgb(var(--color-text-primary));
+
+    --mat-sys-error: rgb(var(--color-danger));
+    --mat-sys-outline: rgb(var(--color-text-tertiary));
+    --mat-sys-outline-variant: var(--border-default);
+
+    --mat-sys-corner-small: var(--radius-sm);
+    --mat-sys-corner-medium: var(--radius-md);
+    --mat-sys-corner-large: var(--radius-lg);
+}
