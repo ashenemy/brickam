@@ -125,6 +125,7 @@ class FakeCatalog extends CatalogServiceContract {
         return SNAPSHOTS[id] ?? null;
     }
     decrementStock = decrementStock;
+    async setProductRating() {}
 }
 
 @Injectable()
