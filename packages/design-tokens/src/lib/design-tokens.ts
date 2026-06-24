@@ -1,3 +1,3 @@
 export function designTokens(): string {
-  return 'design-tokens';
+    return 'design-tokens';
 }
