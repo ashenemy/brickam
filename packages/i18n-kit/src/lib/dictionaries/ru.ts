@@ -16,6 +16,7 @@ export const ru: Dictionary = {
     'errors.auth.otpRateLimited': 'Слишком много попыток, попробуйте позже',
     'errors.auth.blocked': 'Аккаунт заблокирован',
     'errors.auth.phoneNotVerified': 'Номер телефона не подтверждён',
+    'errors.auth.invalidPhone': 'Неверный формат телефона (+374XXXXXXXX)',
     'common.appName': 'BuildHub',
     'lang.hy': 'Армянский',
     'lang.ru': 'Русский',

@@ -16,6 +16,7 @@ export const en: Dictionary = {
     'errors.auth.otpRateLimited': 'Too many attempts, try later',
     'errors.auth.blocked': 'Account is blocked',
     'errors.auth.phoneNotVerified': 'Phone number is not verified',
+    'errors.auth.invalidPhone': 'Invalid phone number format (+374XXXXXXXX)',
     'common.appName': 'BuildHub',
     'lang.hy': 'Armenian',
     'lang.ru': 'Russian',
