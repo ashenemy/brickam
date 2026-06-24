@@ -1,33 +1,12 @@
-<header
-    class="sticky top-0 z-10 flex items-center justify-between gap-4 px-6 h-18 bg-[var(--glass-fill)] backdrop-blur-glass shadow-glass rounded-b-2xl"
->
-    <bh-logo [height]="32" />
-    <div class="flex items-center gap-3">
+<header class="sticky top-0 z-20">
+    <bh-navbar [navItems]="vendorNav" (nav)="onNav($event)" />
+    <div class="flex justify-end items-center gap-3 px-6 py-2 bg-bg-app">
         <bh-lang-switcher />
-        <bh-icon-button ariaLabel="Cart" variant="glass"><span aria-hidden="true">▢</span></bh-icon-button>
-        <bh-avatar name="BRICK Vendor" [size]="40" [ring]="true" />
     </div>
 </header>
 
-<main class="mx-auto max-w-content px-6 py-10 flex flex-col gap-6">
-    <h1 class="text-text-primary" style="font: var(--type-display)">Vendor workspace</h1>
-
-    <div class="flex flex-wrap items-center gap-3">
-        <bh-button variant="primary">Primary</bh-button>
-        <bh-button variant="secondary">Secondary</bh-button>
-        <bh-button variant="ghost">Ghost</bh-button>
-        <bh-button variant="danger">Danger</bh-button>
-    </div>
-
-    <div class="flex flex-wrap items-center gap-3">
-        <bh-badge tone="accent">-20%</bh-badge>
-        <bh-badge tone="success">In stock</bh-badge>
-        <bh-badge tone="danger">Old price</bh-badge>
-        <bh-tag [selected]="filterSelected()" [count]="12" (toggled)="filterSelected.set(!filterSelected())">
-            Cement
-        </bh-tag>
-        <bh-rating [value]="4.5" [count]="128" [showValue]="true" />
-    </div>
-
+<main class="mx-auto w-full max-w-content px-6 py-10">
     <router-outlet />
 </main>
+
+<bh-footer />
