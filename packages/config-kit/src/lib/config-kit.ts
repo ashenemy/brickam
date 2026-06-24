@@ -1,3 +1,3 @@
 export function configKit(): string {
-  return 'config-kit';
+    return 'config-kit';
 }
