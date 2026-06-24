@@ -24,6 +24,8 @@ export const hy: Dictionary = {
     'errors.reviews.notCompleted': 'Կարծիքը հնարավոր է միայն ավարտված պատվերի համար',
     'errors.reviews.productNotInOrder': 'Այս ապրանքը պատվերում չկա',
     'errors.reviews.duplicate': 'Դուք արդեն կարծիք եք թողել այս պատվերի մասին',
+    'errors.chat.notParticipant': 'Դուք այս զրույցի մասնակից չեք',
+    'errors.chat.failed': 'Զրույցի գործողությունը ձախողվեց',
     'common.appName': 'BuildHub',
     'lang.hy': 'Հայերեն',
     'lang.ru': 'Ռուսերեն',

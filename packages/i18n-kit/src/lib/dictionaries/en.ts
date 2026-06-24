@@ -24,6 +24,8 @@ export const en: Dictionary = {
     'errors.reviews.notCompleted': 'Review is allowed only for a completed order',
     'errors.reviews.productNotInOrder': 'This product is not in the order',
     'errors.reviews.duplicate': 'You have already reviewed this order',
+    'errors.chat.notParticipant': 'You are not a participant of this chat',
+    'errors.chat.failed': 'Chat operation failed',
     'common.appName': 'BuildHub',
     'lang.hy': 'Armenian',
     'lang.ru': 'Russian',

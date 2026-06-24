@@ -24,6 +24,8 @@ export const ru: Dictionary = {
     'errors.reviews.notCompleted': 'Отзыв возможен только по завершённому заказу',
     'errors.reviews.productNotInOrder': 'Этого товара нет в заказе',
     'errors.reviews.duplicate': 'Вы уже оставили отзыв по этому заказу',
+    'errors.chat.notParticipant': 'Вы не участник этого чата',
+    'errors.chat.failed': 'Не удалось выполнить операцию чата',
     'common.appName': 'BuildHub',
     'lang.hy': 'Армянский',
     'lang.ru': 'Русский',
