@@ -3,6 +3,10 @@ import { DEFAULT_LANG, type Lang, SUPPORTED_LANGS, type TranslateParams } from '
 import { dictionaries } from '../lib/dictionaries';
 import { translate } from '../lib/translate';
 
+// Реэкспорт типов локализации для потребителей браузерного входа.
+export type { Lang, TranslateParams } from '../@types';
+export { DEFAULT_LANG, SUPPORTED_LANGS } from '../@types';
+
 const STORAGE_KEY = 'buildhub.lang';
 
 /**
