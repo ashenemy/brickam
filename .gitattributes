@@ -1,0 +1,9 @@
+# Нормализация переводов строк: код — всегда LF (Biome требует lineEnding=lf).
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary

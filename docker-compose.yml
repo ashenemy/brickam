@@ -1,0 +1,66 @@
+# BuildHub — локальный стек: Mongo + Redis + API + 3 web.
+# Секреты/настройки — через env (см. .env.example). Конфиг сервера — config/*.toml.
+services:
+    mongo:
+        image: mongo:7
+        restart: unless-stopped
+        ports:
+            - '27017:27017'
+        volumes:
+            - mongo-data:/data/db
+
+    redis:
+        image: redis:7-alpine
+        restart: unless-stopped
+        ports:
+            - '6379:6379'
+
+    server:
+        build:
+            context: .
+            dockerfile: infra/Dockerfile.server
+        restart: unless-stopped
+        depends_on:
+            - mongo
+            - redis
+        environment:
+            NODE_ENV: production
+            MONGO_URI: mongodb://mongo:27017/buildhub
+            REDIS_URL: redis://redis:6379
+            JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-access}
+            JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-change-me-refresh}
+        ports:
+            - '3000:3000'
+
+    main-web:
+        build:
+            context: .
+            dockerfile: infra/Dockerfile.main-web
+        restart: unless-stopped
+        depends_on:
+            - server
+        ports:
+            - '4000:4000'
+
+    vendor-web:
+        build:
+            context: .
+            dockerfile: infra/Dockerfile.vendor-web
+        restart: unless-stopped
+        depends_on:
+            - server
+        ports:
+            - '4201:80'
+
+    admin-web:
+        build:
+            context: .
+            dockerfile: infra/Dockerfile.admin-web
+        restart: unless-stopped
+        depends_on:
+            - server
+        ports:
+            - '4202:80'
+
+volumes:
+    mongo-data:

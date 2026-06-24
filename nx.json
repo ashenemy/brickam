@@ -6,7 +6,17 @@
     },
     "namedInputs": {
         "default": ["{projectRoot}/**/*", "sharedGlobals"],
-        "production": ["default", "!{projectRoot}/**/?(*.)spec.ts"]
+        "production": [
+            "default",
+            "!{projectRoot}/**/?(*.)spec.ts",
+            "!{projectRoot}/vitest.config.mts",
+            "!{projectRoot}/tsconfig.spec.json"
+        ],
+        "sharedGlobals": [
+            "{workspaceRoot}/tsconfig.base.json",
+            "{workspaceRoot}/biome.json",
+            "{workspaceRoot}/nx.json"
+        ]
     },
     "targetDefaults": {
         "build": { "cache": true, "dependsOn": ["^build"] },

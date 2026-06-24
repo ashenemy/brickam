@@ -8,9 +8,15 @@ export const moduleBoundaries = {
         {
             enforceBuildableLibDependency: true,
             depConstraints: [
-                { sourceTag: 'type:app', onlyDependOnLibsWithTags: ['type:feature', 'type:kit', 'type:domain'] },
+                {
+                    sourceTag: 'type:app',
+                    onlyDependOnLibsWithTags: ['type:feature', 'type:kit', 'type:domain'],
+                },
                 // feature НЕ может зависеть от другого feature напрямую:
-                { sourceTag: 'type:feature', onlyDependOnLibsWithTags: ['type:kit', 'type:domain'] },
+                {
+                    sourceTag: 'type:feature',
+                    onlyDependOnLibsWithTags: ['type:kit', 'type:domain'],
+                },
                 { sourceTag: 'type:kit', onlyDependOnLibsWithTags: ['type:kit', 'type:domain'] },
                 { sourceTag: 'type:domain', onlyDependOnLibsWithTags: ['type:domain'] },
             ],

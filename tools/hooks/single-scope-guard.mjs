@@ -31,7 +31,7 @@ for (const file of staged) {
 
 if (projects.size > 1) {
     console.error('\n✖ Коммит затрагивает несколько проектов Nx:');
-    for (const p of projects) console.error('   - ' + p);
+    for (const p of projects) console.error(`   - ${p}`);
     console.error('Правило: один коммит = один app/package. Раздели изменения.\n');
     process.exit(1);
 }

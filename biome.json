@@ -1,8 +1,17 @@
 {
-    "$schema": "https://biomejs.dev/schemas/2.0.0/schema.json",
+    "$schema": "https://biomejs.dev/schemas/2.5.1/schema.json",
     "vcs": { "enabled": true, "clientKind": "git", "useIgnoreFile": true },
     "files": {
-        "ignore": ["**/dist/**", "**/.nx/**", "**/coverage/**", "**/node_modules/**", "**/*.generated.ts"]
+        "includes": [
+            "**",
+            "!**/dist",
+            "!**/.nx",
+            "!**/coverage",
+            "!**/node_modules",
+            "!**/*.generated.ts",
+            "!_input",
+            "!packages/api-kit/src/generated"
+        ]
     },
     "formatter": {
         "enabled": true,
@@ -12,6 +21,9 @@
         "lineEnding": "lf"
     },
     "javascript": {
+        "parser": {
+            "unsafeParameterDecoratorsEnabled": true
+        },
         "formatter": {
             "quoteStyle": "single",
             "jsxQuoteStyle": "single",
@@ -25,6 +37,21 @@
     },
     "linter": {
         "enabled": true,
-        "rules": { "recommended": true }
+        "rules": {
+            "preset": "recommended",
+            "style": {
+                "useImportType": "off"
+            },
+            "complexity": {
+                "useLiteralKeys": "off",
+                "noStaticOnlyClass": "off"
+            },
+            "correctness": {
+                "noUnusedFunctionParameters": "off"
+            },
+            "suspicious": {
+                "noExplicitAny": "off"
+            }
+        }
     }
 }

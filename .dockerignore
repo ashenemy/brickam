@@ -1,0 +1,11 @@
+node_modules
+dist
+.nx
+coverage
+.git
+.idea
+.vscode
+_input
+**/*.spec.ts
+npm-debug.log
+.env
