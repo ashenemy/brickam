@@ -3,7 +3,25 @@
     "$schema": "../../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/feature/catalog/src",
     "projectType": "library",
-    "tags": ["type:feature", "scope:server"],
-    "// targets": "to see all targets run: nx show project catalog --web",
-    "targets": {}
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/catalog",
+                "main": "packages/feature/catalog/src/index.ts",
+                "tsConfig": "packages/feature/catalog/tsconfig.lib.json",
+                "assets": ["packages/feature/catalog/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/catalog",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:feature", "scope:server"]
 }

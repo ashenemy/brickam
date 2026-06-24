@@ -1,3 +1,3 @@
-# catalog
+# @brickam/catalog
 
-This library was generated with [Nx](https://nx.dev).
+Каталог BuildHub (Stage 4): категории и товары (только продажа), медиа-валидация.
