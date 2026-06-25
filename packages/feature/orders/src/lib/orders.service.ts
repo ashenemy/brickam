@@ -6,9 +6,13 @@ import {
     ValidationException,
 } from '@brickam/core-kit';
 import {
+    applyDiscount,
     CatalogServiceContract,
+    calcCommission,
     calculateOrder,
     type DeliveryStatus,
+    type InvoiceOrderInput,
+    type InvoiceOrderResult,
     type OrderLineInput,
     OrderStatus,
     OrdersServiceContract,
@@ -312,6 +316,72 @@ export class OrdersService implements OrdersServiceContract {
             orderStatus: order.status,
             productIds: vendorOrder.items.map((item) => item.productId),
         };
+    }
+
+    /**
+     * Создаёт заказ из оплаченного инвойса (OrdersServiceContract). Один вендор,
+     * произвольные позиции; скидка инвойса — на сумму; комиссия по §11.
+     */
+    async createFromInvoice(input: InvoiceOrderInput): Promise<InvoiceOrderResult> {
+        const subtotal = input.lineItems.reduce((sum, li) => sum + li.price * li.qty, 0);
+        const total = input.discount ? applyDiscount(subtotal, input.discount) : subtotal;
+        const commissionPercent = this.config.marketplace.commissionPercent;
+        const commissionAmount = calcCommission(total, commissionPercent);
+        const payoutAmount = total - commissionAmount;
+
+        const orderNumber = generateOrderNumber();
+        const address = input.deliveryAddress ?? {
+            label: 'Invoice',
+            region: '-',
+            city: '-',
+            line1: '-',
+            phone: '-',
+        };
+        const orderDoc = await this.ordersRepository.create({
+            orderNumber,
+            buyerId: input.buyerId,
+            status: OrderStatus.Created,
+            subtotal,
+            productDiscountTotal: subtotal - total,
+            loyaltyDiscount: 0,
+            total,
+            currencyShown: input.currency,
+            deliveryAddressSnapshot: {
+                label: address.label,
+                region: address.region,
+                city: address.city,
+                line1: address.line1,
+                phone: address.phone,
+                ...(address.line2 !== undefined ? { line2: address.line2 } : {}),
+            },
+        } as Partial<Order>);
+        const orderId = orderDoc.id ?? orderDoc._id.toString();
+
+        await this.vendorOrdersRepository.create({
+            orderId,
+            vendorId: input.vendorId,
+            items: input.lineItems.map((li) => ({
+                productId: 'invoice',
+                qty: li.qty,
+                unitPrice: li.price,
+                discountApplied: 0,
+                lineTotal: li.price * li.qty,
+            })),
+            subtotal: total,
+            commissionPercentSnapshot: commissionPercent,
+            commissionAmount,
+            payoutAmount,
+        } as Partial<VendorOrder>);
+
+        const payment = await this.payments.createForOrder({
+            orderId,
+            buyerId: input.buyerId,
+            amount: total,
+            splits: [{ vendorId: input.vendorId, amount: total, commissionAmount, payoutAmount }],
+        });
+        await this.ordersRepository.updateById(orderId, { paymentId: payment.paymentId });
+
+        return { orderId, orderNumber, paymentId: payment.paymentId, total };
     }
 
     /** Постраничный список заказов покупателя. */
