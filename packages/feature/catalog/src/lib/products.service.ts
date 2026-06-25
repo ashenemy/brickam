@@ -1,9 +1,17 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { NotFoundException, type Page, ValidationException } from '@brickam/core-kit';
-import { CatalogServiceContract, type ProductSnapshot } from '@brickam/domain-kit';
+import {
+    CatalogSearchContract,
+    CatalogServiceContract,
+    EmbeddingProvider,
+    type ProductSearchHit,
+    type ProductSnapshot,
+} from '@brickam/domain-kit';
 import { BaseCrudService } from '@brickam/server-kit';
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
+import type { PipelineStage } from 'mongoose';
 import type { ProductDetail, ProductListItem } from '../@types';
+import { CategoriesRepository } from './categories.repository';
 import { computeFinalPrice } from './discount.util';
 import type { MediaDto } from './dto/media.dto';
 import type { CreateProductDto, UpdateProductDto } from './dto/product.dto';
@@ -13,19 +21,30 @@ import type { Product, ProductDocument } from './product.schema';
 import { buildProductFilter, buildSort } from './product-filter.builder';
 import { ProductsRepository } from './products.repository';
 
+/** Экранирует спецсимволы regex, чтобы ключевое слово трактовалось как литерал. */
+const escapeRegExp = (value: string): string => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/** Кол-во кандидатов для Atlas $vectorSearch (баланс точность/скорость). */
+const VECTOR_NUM_CANDIDATES = 100;
+
 /**
  * Сервис товаров. Публичный поиск/детальная карточка отдают плоские контракты с
  * посчитанной finalPrice; create/update валидируют медиа против лимитов платформы.
+ * Реализует и контракт поиска для AI (keyword + vector) — Foundations §13.
  */
 @Injectable()
 export class ProductsService
     extends BaseCrudService<Product, CreateProductDto, UpdateProductDto>
-    implements CatalogServiceContract
+    implements CatalogServiceContract, CatalogSearchContract
 {
+    private readonly logger = new Logger(ProductsService.name);
+
     constructor(
         private readonly productsRepository: ProductsRepository,
+        private readonly categoriesRepository: CategoriesRepository,
         private readonly mediaValidator: MediaValidator,
         private readonly config: AppConfigService,
+        private readonly embeddingProvider: EmbeddingProvider,
     ) {
         super(productsRepository, config.pagination.maxPageSize);
     }
@@ -123,14 +142,15 @@ export class ProductsService
         return this.toDetail(doc, new Date());
     }
 
-    /** Создаёт товар; перед сохранением валидирует cover и галерею. */
+    /** Создаёт товар; перед сохранением валидирует cover и галерею, затем эмбеддит. */
     override async create(dto: CreateProductDto): Promise<Product> {
         await this.validateMedia(dto.cover, dto.gallery);
         const doc = await this.productsRepository.create(dto as unknown as Partial<Product>);
+        await this.regenerateEmbedding(doc.id ?? doc._id.toString(), this.buildEmbeddingText(doc));
         return this.toDetail(doc, new Date()) as unknown as Product;
     }
 
-    /** Обновляет товар; валидирует медиа, если они переданы. */
+    /** Обновляет товар; валидирует медиа, при изменении текста — переэмбеддит. */
     override async update(id: string, dto: UpdateProductDto): Promise<Product> {
         await this.validateMedia(dto.cover, dto.gallery);
         const doc = await this.productsRepository.updateById(
@@ -140,7 +160,55 @@ export class ProductsService
         if (!doc) {
             throw new NotFoundException();
         }
+        if (dto.title !== undefined || dto.description !== undefined) {
+            await this.regenerateEmbedding(
+                doc.id ?? doc._id.toString(),
+                this.buildEmbeddingText(doc),
+            );
+        }
         return this.toDetail(doc, new Date()) as unknown as Product;
+    }
+
+    /**
+     * Собирает значимый текст товара для эмбеддинга: мультиязычный title +
+     * description + атрибуты (ключ-значение помогают семантике). Пустые поля
+     * отбрасываются, чтобы не зашумлять вектор.
+     */
+    private buildEmbeddingText(doc: ProductDocument): string {
+        const parts: string[] = [
+            doc.title.ru,
+            doc.title.en,
+            doc.title.hy,
+            doc.description?.ru ?? '',
+            doc.description?.en ?? '',
+            doc.description?.hy ?? '',
+            ...(doc.attributes ?? []).map((attr) => `${attr.key} ${attr.value}`),
+        ];
+        return parts
+            .map((part) => part.trim())
+            .filter((part) => part.length > 0)
+            .join(' ');
+    }
+
+    /**
+     * Генерирует эмбеддинг и сохраняет его в товар. Полностью изолирован: сбой
+     * провайдера/индекса логируется и проглатывается — векторизация не должна
+     * ронять создание/обновление товара (Foundations §13).
+     */
+    private async regenerateEmbedding(productId: string, text: string): Promise<void> {
+        if (text.length === 0) {
+            return;
+        }
+        try {
+            const embedding = await this.embeddingProvider.embed(text);
+            await this.productsRepository.updateById(productId, { embedding } as never);
+        } catch (error) {
+            this.logger.warn(
+                `Не удалось сгенерировать эмбеддинг товара ${productId}: ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+            );
+        }
     }
 
     /** Снимок товара для оформления заказа (CatalogServiceContract). */
@@ -181,6 +249,105 @@ export class ProductsService
         ratingCount: number,
     ): Promise<void> {
         await this.productsRepository.updateById(productId, { ratingAvg, ratingCount });
+    }
+
+    /**
+     * Текстовый поиск по ключевым словам (CatalogSearchContract). Только active.
+     * Каждое keyword → $or-регекс (case-insensitive, экранированный) по
+     * title.ru/title.en/title.hy/description.*; разные keyword объединяются через
+     * $or (любое совпадение). Опц. categorySlugs → categoryId через репозиторий
+     * категорий (пустой список — без фильтра).
+     */
+    async keywordSearch(
+        keywords: string[],
+        categorySlugs: string[],
+        limit: number,
+    ): Promise<ProductSearchHit[]> {
+        const terms = keywords.map((kw) => kw.trim()).filter((kw) => kw.length > 0);
+        if (terms.length === 0) {
+            return [];
+        }
+        const filter: Record<string, unknown> = { status: 'active' };
+        const orClauses = terms.flatMap((term) => {
+            const regex = { $regex: escapeRegExp(term), $options: 'i' };
+            return [
+                { 'title.ru': regex },
+                { 'title.en': regex },
+                { 'title.hy': regex },
+                { 'description.ru': regex },
+                { 'description.en': regex },
+                { 'description.hy': regex },
+            ];
+        });
+        filter['$or'] = orClauses;
+
+        if (categorySlugs.length > 0) {
+            const categories = await this.categoriesRepository.findBySlugs(categorySlugs);
+            const categoryIds = categories.map((cat) => cat.id ?? cat._id.toString());
+            // Slug-и не нашлись — фильтр по категории невозможен, отдаём пусто.
+            if (categoryIds.length === 0) {
+                return [];
+            }
+            filter['categoryId'] = { $in: categoryIds };
+        }
+
+        const docs = await this.productsRepository.findLimited(filter, limit);
+        const now = new Date();
+        return docs.map((doc) => this.toSearchHit(doc, now));
+    }
+
+    /**
+     * Векторный поиск по products.embedding (Atlas Vector Search, индекс
+     * 'product_embedding'). На локальном Mongo $vectorSearch недоступен —
+     * любые ошибки aggregation проглатываются и возвращается [] (graceful
+     * fallback, Foundations §13).
+     */
+    async vectorSearch(embedding: number[], limit: number): Promise<ProductSearchHit[]> {
+        if (embedding.length === 0) {
+            return [];
+        }
+        const pipeline: PipelineStage[] = [
+            {
+                $vectorSearch: {
+                    index: 'product_embedding',
+                    path: 'embedding',
+                    queryVector: embedding,
+                    numCandidates: VECTOR_NUM_CANDIDATES,
+                    limit,
+                },
+            } as unknown as PipelineStage,
+            { $match: { status: 'active' } },
+        ];
+        try {
+            const docs = await this.productsRepository.aggregate(pipeline);
+            const now = new Date();
+            return docs.map((doc) => this.toSearchHit(doc, now));
+        } catch (error) {
+            this.logger.warn(
+                `Векторный поиск недоступен (fallback на []): ${
+                    error instanceof Error ? error.message : String(error)
+                }`,
+            );
+            return [];
+        }
+    }
+
+    /** Маппит документ товара в результат подбора для AI (ProductSearchHit). */
+    private toSearchHit(doc: ProductDocument, now: Date): ProductSearchHit {
+        const coverUrl = doc.gallery?.[0]?.url ?? doc.cover?.url;
+        const hit: ProductSearchHit = {
+            id: doc.id ?? doc._id.toString(),
+            slug: doc.slug,
+            title: { hy: doc.title.hy, ru: doc.title.ru, en: doc.title.en },
+            finalPrice: computeFinalPrice(doc.price, doc.discount, now),
+            unit: doc.unit,
+            vendorId: doc.vendorId,
+            categoryId: doc.categoryId,
+        };
+        if (coverUrl !== undefined) {
+            hit.cover = coverUrl;
+        }
+        return hit;
     }
 
     /** Валидирует обложку и каждый элемент галереи через MediaValidator. */

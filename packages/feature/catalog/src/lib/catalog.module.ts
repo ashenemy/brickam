@@ -1,4 +1,4 @@
-import { CatalogServiceContract } from '@brickam/domain-kit';
+import { CatalogSearchContract, CatalogServiceContract } from '@brickam/domain-kit';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CategoriesController } from './categories.controller';
@@ -36,7 +36,9 @@ import { ProductsService } from './products.service';
         MediaValidator,
         // Контракт для orders: catalog отдаёт снимок товара и списывает остаток.
         { provide: CatalogServiceContract, useExisting: ProductsService },
+        // Контракт поиска для ai-search: keyword + vector подбор товаров (§13).
+        { provide: CatalogSearchContract, useExisting: ProductsService },
     ],
-    exports: [ProductsService, CategoriesService, CatalogServiceContract],
+    exports: [ProductsService, CategoriesService, CatalogServiceContract, CatalogSearchContract],
 })
 export class CatalogModule {}

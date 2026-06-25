@@ -15,4 +15,12 @@ export class CategoriesRepository extends BaseRepository<Category> {
     findBySlug(slug: string): Promise<CategoryDocument | null> {
         return this.findOne({ slug });
     }
+
+    /** Находит категории по списку slug (для фильтра поиска по категориям). */
+    findBySlugs(slugs: string[]): Promise<CategoryDocument[]> {
+        if (slugs.length === 0) {
+            return Promise.resolve([]);
+        }
+        return this.find({ slug: { $in: slugs } });
+    }
 }
