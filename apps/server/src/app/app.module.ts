@@ -4,6 +4,7 @@ import { ChatModule } from '@brickam/chat';
 import { ConfigKitModule } from '@brickam/config-kit';
 import { DbKitModule } from '@brickam/db-kit';
 import { I18nKitModule } from '@brickam/i18n-kit';
+import { InvoicesModule } from '@brickam/invoices';
 import { NotificationsModule } from '@brickam/notifications';
 import { OrdersModule } from '@brickam/orders';
 import { PaymentsModule } from '@brickam/payments';
@@ -34,6 +35,7 @@ import { HealthModule } from './health/health.module';
         WishlistModule,
         ReviewsModule,
         ChatModule,
+        InvoicesModule,
         HealthModule,
     ],
 })
