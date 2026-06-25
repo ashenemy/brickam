@@ -26,6 +26,7 @@ describe('VendorsService', () => {
         findById: ReturnType<typeof vi.fn>;
         findBySlug: ReturnType<typeof vi.fn>;
         findByOwner: ReturnType<typeof vi.fn>;
+        findAll: ReturnType<typeof vi.fn>;
         create: ReturnType<typeof vi.fn>;
         updateById: ReturnType<typeof vi.fn>;
     };
@@ -36,6 +37,7 @@ describe('VendorsService', () => {
             findById: vi.fn(),
             findBySlug: vi.fn(),
             findByOwner: vi.fn(),
+            findAll: vi.fn(),
             create: vi.fn(),
             updateById: vi.fn(),
         };
@@ -115,6 +117,45 @@ describe('VendorsService', () => {
             await expect(
                 service.create('u1', { slug: 'acme', name: 'Acme', region: 'Yerevan' }),
             ).rejects.toBeInstanceOf(ForbiddenException);
+        });
+    });
+
+    describe('list', () => {
+        it('без статуса → все вендоры', async () => {
+            repo.findAll.mockResolvedValue([makeDoc(), makeDoc({ id: 'v2' })]);
+            const result = await service.list();
+            expect(repo.findAll).toHaveBeenCalledWith(undefined);
+            expect(result).toHaveLength(2);
+        });
+
+        it('со статусом → фильтр по статусу', async () => {
+            repo.findAll.mockResolvedValue([makeDoc({ status: 'suspended' })]);
+            const result = await service.list('suspended');
+            expect(repo.findAll).toHaveBeenCalledWith('suspended');
+            expect(result[0]?.status).toBe('suspended');
+        });
+    });
+
+    describe('setStatus', () => {
+        it('approve → active', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ status: 'active' }));
+            const result = await service.setStatus('v1', 'active');
+            expect(repo.updateById).toHaveBeenCalledWith('v1', { status: 'active' });
+            expect(result.status).toBe('active');
+        });
+
+        it('reject → suspended', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ status: 'suspended' }));
+            const result = await service.setStatus('v1', 'suspended');
+            expect(repo.updateById).toHaveBeenCalledWith('v1', { status: 'suspended' });
+            expect(result.status).toBe('suspended');
+        });
+
+        it('нет вендора → NotFound', async () => {
+            repo.updateById.mockResolvedValue(null);
+            await expect(service.setStatus('vX', 'active')).rejects.toBeInstanceOf(
+                NotFoundException,
+            );
         });
     });
 

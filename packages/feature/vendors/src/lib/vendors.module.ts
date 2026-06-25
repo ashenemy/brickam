@@ -4,6 +4,7 @@ import { Vendor, VendorSchema } from './vendor.schema';
 import { VendorsController } from './vendors.controller';
 import { VendorsRepository } from './vendors.repository';
 import { VendorsService } from './vendors.service';
+import { VendorsAdminController } from './vendors-admin.controller';
 
 /**
  * Модуль вендоров (Foundations §15, Stage 15). НЕ @Global. Зависит только от
@@ -12,7 +13,7 @@ import { VendorsService } from './vendors.service';
  */
 @Module({
     imports: [MongooseModule.forFeature([{ name: Vendor.name, schema: VendorSchema }])],
-    controllers: [VendorsController],
+    controllers: [VendorsController, VendorsAdminController],
     providers: [VendorsRepository, VendorsService],
     exports: [VendorsService],
 })

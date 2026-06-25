@@ -2,6 +2,7 @@ import { BaseRepository } from '@brickam/db-kit';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import type { Model } from 'mongoose';
+import type { VendorStatus } from '../@types';
 import { Vendor, type VendorDocument } from './vendor.schema';
 
 /** Репозиторий вендоров поверх Mongoose-модели Vendor (Foundations §7). */
@@ -19,5 +20,10 @@ export class VendorsRepository extends BaseRepository<Vendor> {
     /** Находит вендора по владельцу (ownerUserId). */
     findByOwner(ownerUserId: string): Promise<VendorDocument | null> {
         return this.findOne({ ownerUserId });
+    }
+
+    /** Все вендоры (для админ-списка), опц. фильтр по статусу. */
+    findAll(status?: VendorStatus): Promise<VendorDocument[]> {
+        return this.find(status ? { status } : {});
     }
 }

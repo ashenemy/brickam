@@ -1,6 +1,6 @@
 import { ForbiddenException, NotFoundException } from '@brickam/core-kit';
 import { Injectable } from '@nestjs/common';
-import type { VendorContract } from '../@types';
+import type { VendorContract, VendorStatus } from '../@types';
 import type { CreateVendorDto, UpdateVendorDto } from './dto/vendor.dto';
 import type { VendorDocument } from './vendor.schema';
 import { VendorsRepository } from './vendors.repository';
@@ -80,6 +80,24 @@ export class VendorsService {
         }
         const created = await this.vendorsRepository.create({ ...dto, ownerUserId });
         return this.toContract(created);
+    }
+
+    /** Список вендоров для админ-модерации (§17); опц. фильтр по статусу. */
+    async list(status?: VendorStatus): Promise<VendorContract[]> {
+        const docs = await this.vendorsRepository.findAll(status);
+        return docs.map((doc) => this.toContract(doc));
+    }
+
+    /**
+     * Модерация вендора админом (§17): approve → 'active', reject → 'suspended'.
+     * 404, если вендора нет.
+     */
+    async setStatus(vendorId: string, status: VendorStatus): Promise<VendorContract> {
+        const updated = await this.vendorsRepository.updateById(vendorId, { status });
+        if (!updated) {
+            throw new NotFoundException('errors.vendors.notFound');
+        }
+        return this.toContract(updated);
     }
 
     /**
