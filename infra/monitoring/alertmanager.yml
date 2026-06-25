@@ -1,0 +1,29 @@
+# Alertmanager — маршрутизация алертов от Prometheus к получателям.
+# Получатель `default` пуст: алерты будут фиксироваться в UI Alertmanager
+# (http://localhost:9093), но никуда не отправляться, пока не настроите
+# email/Slack/Telegram ниже (раскомментируйте и подставьте секреты).
+route:
+  receiver: default
+  group_by: ['alertname']
+  group_wait: 30s
+  group_interval: 5m
+  repeat_interval: 3h
+
+receivers:
+  - name: default
+    # slack_configs:
+    #   - api_url: '<SLACK_WEBHOOK_URL>'
+    #     channel: '#alerts'
+    #     send_resolved: true
+    # email_configs:
+    #   - to: 'ops@buildhub.example'
+    #     from: 'alerts@buildhub.example'
+    #     smarthost: 'smtp.example:587'
+    #     auth_username: '<user>'
+    #     auth_password: '<pass>'
+
+# Подавление warning, если по тому же сервису уже горит critical.
+inhibit_rules:
+  - source_matchers: ['severity = critical']
+    target_matchers: ['severity = warning']
+    equal: ['instance']

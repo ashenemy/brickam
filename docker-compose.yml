@@ -173,7 +173,31 @@ services:
         ports:
             - '4202:80'
 
+    # Сбор метрик с /api/metrics + вычисление правил алертов.
+    prometheus:
+        image: prom/prometheus
+        restart: unless-stopped
+        depends_on:
+            - server
+            - alertmanager
+        volumes:
+            - ./infra/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+            - ./infra/monitoring/alert.rules.yml:/etc/prometheus/alert.rules.yml:ro
+            - prometheus-data:/prometheus
+        ports:
+            - '9090:9090'
+
+    # Маршрутизация алертов (UI http://localhost:9093; получатели — в alertmanager.yml).
+    alertmanager:
+        image: prom/alertmanager
+        restart: unless-stopped
+        volumes:
+            - ./infra/monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+        ports:
+            - '9093:9093'
+
 volumes:
     mongo-data:
     minio-data:
     pg-data:
+    prometheus-data:

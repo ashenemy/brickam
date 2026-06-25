@@ -1,0 +1,34 @@
+# Правила алертов BuildHub. Используют метрики, доступные по умолчанию
+# (prom-client default metrics + признак up от Prometheus).
+groups:
+  - name: buildhub
+    rules:
+      # Сервис не отвечает на scrape — самый важный алерт.
+      - alert: ServerDown
+        expr: up{job="buildhub-server"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'BuildHub API недоступен'
+          description: 'Цель {{ $labels.instance }} не отвечает дольше 1 минуты.'
+
+      # Утечка/перегрузка по памяти (RSS > 1.5 ГБ).
+      - alert: HighProcessMemory
+        expr: process_resident_memory_bytes{job="buildhub-server"} > 1.5e9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Высокое потребление памяти сервером'
+          description: 'RSS превышает 1.5 ГБ более 5 минут ({{ $value | humanize1024 }}B).'
+
+      # Лаг event loop — Node не успевает обрабатывать задачи.
+      - alert: HighEventLoopLag
+        expr: nodejs_eventloop_lag_seconds{job="buildhub-server"} > 0.5
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Высокий лаг event loop'
+          description: 'Лаг event loop > 0.5s более 5 минут — возможна перегрузка CPU.'
