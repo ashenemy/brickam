@@ -19,7 +19,7 @@ import { OrdersModule } from '@brickam/orders';
 import { PagesModule } from '@brickam/pages';
 import { PaymentsModule } from '@brickam/payments';
 import { ReviewsModule } from '@brickam/reviews';
-import { ServerKitModule } from '@brickam/server-kit';
+import { RedisModule, ServerKitModule } from '@brickam/server-kit';
 import { SubscriptionsModule } from '@brickam/subscriptions';
 import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
@@ -29,7 +29,9 @@ import { VendorsModule } from '@brickam/vendors';
 import { WishlistModule } from '@brickam/wishlist';
 import { BullModule } from '@nestjs/bullmq';
 import { Module } from '@nestjs/common';
+import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
+import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -38,9 +40,15 @@ import { HealthModule } from './health/health.module';
         ConfigKitModule.forRoot(),
         I18nKitModule,
         DbKitModule.forRoot(),
+        // Распределённое key-value (@Global): Redis в проде, in-memory в dev.
+        // Используется auth (OTP/refresh-сторы) — мультиинстансная консистентность.
+        RedisModule.forRoot(),
         // Идемпотентность мутирующих запросов (глобальный интерсептор по
         // Idempotency-Key для @Idempotent-маршрутов).
         IdempotencyModule,
+        // Глобальный rate-limiting (защита от brute-force/DDoS). 100 req/мин на IP
+        // по умолчанию; на auth-маршрутах строже (@Throttle в контроллере).
+        ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
         // Планировщик для дневного обновления курсов валют (@Cron в currency).
         ScheduleModule.forRoot(),
         // Очереди BullMQ (фоновые массовые операции vendor-bulk). Подключение —
@@ -88,5 +96,6 @@ import { HealthModule } from './health/health.module';
         PagesModule,
         HealthModule,
     ],
+    providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule {}

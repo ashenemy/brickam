@@ -4,6 +4,8 @@ import { AppConfigService } from '@brickam/config-kit';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
+import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 
 const buildSwaggerConfig = () =>
@@ -33,6 +35,19 @@ async function bootstrap(): Promise<void> {
     const app = await NestFactory.create(AppModule, { bufferLogs: true });
     const config = app.get(AppConfigService);
     const { globalPrefix, port, corsOrigins } = config.server;
+
+    // Security-заголовки (CSP/HSTS/X-Frame-Options и т.п.). API отдаёт JSON,
+    // поэтому CSP-директивы для документов не критичны — Swagger UI оставляем рабочим.
+    app.use(helmet({ contentSecurityPolicy: false }));
+    // Парсинг cookie для httpOnly-токенов (dual-mode: cookie ИЛИ Bearer-заголовок).
+    app.use(cookieParser());
+    // Корректный клиентский IP за прокси — для throttler/логов.
+    (app.getHttpAdapter().getInstance() as { set: (k: string, v: unknown) => void }).set(
+        'trust proxy',
+        1,
+    );
+    // Грейсфул-шатдаун: закрытие Mongo/Redis/BullMQ по SIGTERM/SIGINT.
+    app.enableShutdownHooks();
 
     app.setGlobalPrefix(globalPrefix);
     app.enableCors({ origin: corsOrigins, credentials: true });
