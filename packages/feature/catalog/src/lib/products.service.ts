@@ -1,9 +1,12 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { NotFoundException, type Page, ValidationException } from '@brickam/core-kit';
 import {
+    type BulkUpdate,
+    CatalogBulkContract,
     CatalogSearchContract,
     CatalogServiceContract,
     EmbeddingProvider,
+    type ProductBulkView,
     type ProductSearchHit,
     type ProductSnapshot,
 } from '@brickam/domain-kit';
@@ -35,7 +38,7 @@ const VECTOR_NUM_CANDIDATES = 100;
 @Injectable()
 export class ProductsService
     extends BaseCrudService<Product, CreateProductDto, UpdateProductDto>
-    implements CatalogServiceContract, CatalogSearchContract
+    implements CatalogServiceContract, CatalogSearchContract, CatalogBulkContract
 {
     private readonly logger = new Logger(ProductsService.name);
 
@@ -348,6 +351,61 @@ export class ProductsService
             hit.cover = coverUrl;
         }
         return hit;
+    }
+
+    /**
+     * Проекции товаров вендора по списку id для массовых операций
+     * (CatalogBulkContract, Foundations §14). Фильтрует по `vendorId` — чужие и
+     * несуществующие товары просто не возвращаются. Пустой вход — без обращения к БД.
+     */
+    async listForBulk(vendorId: string, productIds: string[]): Promise<ProductBulkView[]> {
+        if (productIds.length === 0) {
+            return [];
+        }
+        const docs = await this.productsRepository.find({
+            _id: { $in: productIds },
+            vendorId,
+        } as never);
+        return docs.map((doc) => this.toBulkView(doc));
+    }
+
+    /** Маппит документ товара в проекцию для массовых операций. */
+    private toBulkView(doc: ProductDocument): ProductBulkView {
+        const view: ProductBulkView = {
+            id: doc.id ?? doc._id.toString(),
+            price: doc.price,
+            stock: doc.stock,
+            status: doc.status,
+            categoryId: doc.categoryId,
+            title: { hy: doc.title.hy, ru: doc.title.ru, en: doc.title.en },
+        };
+        if (doc.discount !== undefined) {
+            view.discount = doc.discount;
+        }
+        return view;
+    }
+
+    /**
+     * Применяет точечные обновления товаров (CatalogBulkContract, §14). Каждое
+     * обновление пишется ТОЛЬКО в товар этого вендора (фильтр по `vendorId` в
+     * репозитории). `fields.discount === null` → `$unset discount`; остальные
+     * переданные поля → `$set`. Возвращает кол-во фактически обновлённых товаров.
+     */
+    async applyBulk(vendorId: string, updates: BulkUpdate[]): Promise<{ modified: number }> {
+        let modified = 0;
+        for (const { productId, fields } of updates) {
+            const set: Record<string, unknown> = {};
+            const unset: Record<string, unknown> = {};
+            for (const [key, value] of Object.entries(fields)) {
+                if (key === 'discount' && value === null) {
+                    unset['discount'] = '';
+                } else if (value !== undefined) {
+                    set[key] = value;
+                }
+            }
+            modified += await this.productsRepository.updateOwned(productId, vendorId, set, unset);
+        }
+        return { modified };
     }
 
     /** Валидирует обложку и каждый элемент галереи через MediaValidator. */

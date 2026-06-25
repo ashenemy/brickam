@@ -39,4 +39,32 @@ export class ProductsRepository extends BaseRepository<Product> {
     aggregate(pipeline: PipelineStage[]): Promise<ProductDocument[]> {
         return this.productModel.aggregate<ProductDocument>(pipeline).exec();
     }
+
+    /**
+     * Точечно обновляет товар ТОЛЬКО если он принадлежит вендору (фильтр по
+     * `vendorId`) — для массовых операций (Foundations §14). `set` идёт в `$set`,
+     * `unset` (если есть) в `$unset`. Возвращает кол-во фактически изменённых
+     * документов (0 — чужой/несуществующий товар или без изменений).
+     */
+    async updateOwned(
+        productId: string,
+        vendorId: string,
+        set: Record<string, unknown>,
+        unset?: Record<string, unknown>,
+    ): Promise<number> {
+        const update: Record<string, unknown> = {};
+        if (Object.keys(set).length > 0) {
+            update['$set'] = set;
+        }
+        if (unset && Object.keys(unset).length > 0) {
+            update['$unset'] = unset;
+        }
+        if (Object.keys(update).length === 0) {
+            return 0;
+        }
+        const result = await this.productModel
+            .updateOne({ _id: productId, vendorId } as never, update)
+            .exec();
+        return result.modifiedCount;
+    }
 }

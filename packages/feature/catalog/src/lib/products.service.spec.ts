@@ -49,6 +49,7 @@ describe('ProductsService', () => {
         find: ReturnType<typeof vi.fn>;
         findLimited: ReturnType<typeof vi.fn>;
         aggregate: ReturnType<typeof vi.fn>;
+        updateOwned: ReturnType<typeof vi.fn>;
     };
     let categoriesRepo: { findBySlugs: ReturnType<typeof vi.fn> };
     let mediaValidator: { validate: ReturnType<typeof vi.fn> };
@@ -65,6 +66,7 @@ describe('ProductsService', () => {
             find: vi.fn(),
             findLimited: vi.fn(),
             aggregate: vi.fn(),
+            updateOwned: vi.fn().mockResolvedValue(1),
         };
         categoriesRepo = { findBySlugs: vi.fn().mockResolvedValue([]) };
         mediaValidator = { validate: vi.fn().mockResolvedValue(undefined) };
@@ -354,6 +356,70 @@ describe('ProductsService', () => {
             const hits = await service.vectorSearch([], 5);
             expect(hits).toEqual([]);
             expect(repo.aggregate).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('listForBulk', () => {
+        it('фильтрует по vendorId и $in id, маппит в ProductBulkView', async () => {
+            repo.find.mockResolvedValue([makeDoc()]);
+            const views = await service.listForBulk('v1', ['p1', 'p2']);
+            expect(repo.find).toHaveBeenCalledWith({
+                _id: { $in: ['p1', 'p2'] },
+                vendorId: 'v1',
+            });
+            expect(views).toHaveLength(1);
+            expect(views[0]).toEqual({
+                id: 'p1',
+                price: 1000,
+                stock: 5,
+                status: 'active',
+                categoryId: 'c1',
+                title: { hy: 'Ց', ru: 'Цемент', en: 'Cement' },
+                discount: { type: 'percent', value: 10 },
+            });
+        });
+
+        it('опускает discount, если его нет у товара', async () => {
+            repo.find.mockResolvedValue([makeDoc({ discount: undefined })]);
+            const views = await service.listForBulk('v1', ['p1']);
+            expect(views[0]).not.toHaveProperty('discount');
+        });
+
+        it('пустой список id → [] без запроса в БД', async () => {
+            const views = await service.listForBulk('v1', []);
+            expect(views).toEqual([]);
+            expect(repo.find).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('applyBulk', () => {
+        it('$set переданных полей через updateOwned со scoped vendorId', async () => {
+            repo.updateOwned.mockResolvedValue(1);
+            const result = await service.applyBulk('v1', [
+                { productId: 'p1', fields: { price: 1200, stock: 9 } },
+            ]);
+            expect(repo.updateOwned).toHaveBeenCalledWith(
+                'p1',
+                'v1',
+                { price: 1200, stock: 9 },
+                {},
+            );
+            expect(result).toEqual({ modified: 1 });
+        });
+
+        it('discount: null → $unset discount', async () => {
+            repo.updateOwned.mockResolvedValue(1);
+            await service.applyBulk('v1', [{ productId: 'p1', fields: { discount: null } }]);
+            expect(repo.updateOwned).toHaveBeenCalledWith('p1', 'v1', {}, { discount: '' });
+        });
+
+        it('суммирует только фактически обновлённые (чужие → 0)', async () => {
+            repo.updateOwned.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+            const result = await service.applyBulk('v1', [
+                { productId: 'p1', fields: { status: 'hidden' } },
+                { productId: 'p2', fields: { status: 'hidden' } },
+            ]);
+            expect(result).toEqual({ modified: 1 });
         });
     });
 });

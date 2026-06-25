@@ -1,4 +1,8 @@
-import { CatalogSearchContract, CatalogServiceContract } from '@brickam/domain-kit';
+import {
+    CatalogBulkContract,
+    CatalogSearchContract,
+    CatalogServiceContract,
+} from '@brickam/domain-kit';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CategoriesController } from './categories.controller';
@@ -38,7 +42,15 @@ import { ProductsService } from './products.service';
         { provide: CatalogServiceContract, useExisting: ProductsService },
         // Контракт поиска для ai-search: keyword + vector подбор товаров (§13).
         { provide: CatalogSearchContract, useExisting: ProductsService },
+        // Контракт массовых операций для vendor-bulk: проекции + точечные апдейты (§14).
+        { provide: CatalogBulkContract, useExisting: ProductsService },
     ],
-    exports: [ProductsService, CategoriesService, CatalogServiceContract, CatalogSearchContract],
+    exports: [
+        ProductsService,
+        CategoriesService,
+        CatalogServiceContract,
+        CatalogSearchContract,
+        CatalogBulkContract,
+    ],
 })
 export class CatalogModule {}
