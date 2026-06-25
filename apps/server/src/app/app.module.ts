@@ -11,6 +11,7 @@ import { CurrencyModule } from '@brickam/currency';
 import { DbKitModule } from '@brickam/db-kit';
 import { DisputesModule } from '@brickam/disputes';
 import { I18nKitModule } from '@brickam/i18n-kit';
+import { IdempotencyModule } from '@brickam/idempotency';
 import { InvoicesModule } from '@brickam/invoices';
 import { LoyaltyModule } from '@brickam/loyalty';
 import { NotificationsModule } from '@brickam/notifications';
@@ -37,6 +38,9 @@ import { HealthModule } from './health/health.module';
         ConfigKitModule.forRoot(),
         I18nKitModule,
         DbKitModule.forRoot(),
+        // Идемпотентность мутирующих запросов (глобальный интерсептор по
+        // Idempotency-Key для @Idempotent-маршрутов).
+        IdempotencyModule,
         // Планировщик для дневного обновления курсов валют (@Cron в currency).
         ScheduleModule.forRoot(),
         // Очереди BullMQ (фоновые массовые операции vendor-bulk). Подключение —
