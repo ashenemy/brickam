@@ -1,0 +1,92 @@
+# BuildHub CD — сборка/публикация образов в GHCR и деплой стейджинга (§17).
+# Триггер: пуш в main (после прохождения CI). Раздельные образы и матрица для
+# server + 3 web. Секреты — из CI/секрет-менеджера (GITHUB_TOKEN для GHCR;
+# STAGING_* для деплоя). Sentry DSN прокидывается как env в рантайм.
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: cd-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    name: build & push (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [server, main-web, vendor-web, admin-web]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Lowercase owner
+        id: owner
+        run: echo "owner=${GITHUB_REPOSITORY_OWNER,,}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push ${{ matrix.app }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.${{ matrix.app }}
+          push: true
+          tags: |
+            ghcr.io/${{ steps.owner.outputs.owner }}/buildhub-${{ matrix.app }}:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.owner }}/buildhub-${{ matrix.app }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy-staging:
+    name: deploy staging
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+
+      # Деплой выполняется только при настроенном стейджинг-хосте (секреты заданы).
+      # На staging-хосте docker compose тянет свежие образы и поднимает стек,
+      # затем health-check сервера. Без секретов шаг помечается пропущенным.
+      - name: Deploy via SSH (docker compose pull + up)
+        if: ${{ secrets.STAGING_HOST != '' }}
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          envs: GITHUB_SHA
+          script: |
+            cd /opt/buildhub
+            export TAG="${GITHUB_SHA}"
+            export SENTRY_DSN="${{ secrets.SENTRY_DSN }}"
+            docker compose -f docker-compose.staging.yml pull
+            docker compose -f docker-compose.staging.yml up -d
+            # health-check: ждём, пока API ответит на /api/health
+            for i in $(seq 1 30); do
+              if wget -qO- http://localhost:3000/api/health >/dev/null 2>&1; then
+                echo "staging healthy"; exit 0
+              fi
+              sleep 3
+            done
+            echo "staging health-check failed"; exit 1
+
+      - name: Деплой пропущен (стейджинг-хост не настроен)
+        if: ${{ secrets.STAGING_HOST == '' }}
+        run: echo "STAGING_HOST не задан — публикация образов выполнена, деплой пропущен."

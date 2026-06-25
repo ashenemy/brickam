@@ -1,0 +1,61 @@
+# BuildHub CI — проверки на PR и пуш в не-main ветки (Foundations §17).
+# Порядок: install → biome → eslint → typecheck/build → test (порог покрытия ≥80%).
+# Красные тесты ИЛИ непокрытие (пороги в vitest-конфигах: lines 80 / branches 70)
+# заваливают job → обязательная проверка не проходит → мерж заблокирован
+# (включите branch protection: required status check = "CI / validate").
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches-ignore: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+  # Тестовые секреты/инфра-URL — реальные значения не нужны (e2e без Mongo/Redis).
+  MONGO_URI: mongodb://localhost:27017/buildhub
+  REDIS_URL: redis://localhost:6379
+  JWT_ACCESS_SECRET: ci-access-secret
+  JWT_REFRESH_SECRET: ci-refresh-secret
+
+jobs:
+  validate:
+    name: validate
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (полная история — для nx affected)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Определить базу/голову для nx affected
+        uses: nrwl/nx-set-shas@v4
+
+      - name: Biome (format + lint, весь репозиторий)
+        run: npx @biomejs/biome check .
+
+      - name: ESLint (affected, type-aware + boundaries)
+        run: npx nx affected -t lint --parallel=3
+
+      - name: Typecheck + build (affected)
+        run: npx nx affected -t build --parallel=3
+
+      - name: Test (affected, пороги покрытия ≥80%)
+        run: npx nx affected -t test --parallel=3
+
+      - name: E2E (in-process, без Mongo/Redis)
+        run: npx nx e2e server-e2e

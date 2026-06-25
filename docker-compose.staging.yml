@@ -1,0 +1,66 @@
+# BuildHub — стейджинг: тянет опубликованные в GHCR образы по тегу $TAG.
+# Деплой выполняет CD-пайплайн (cd.yml) на стейджинг-хосте: `docker compose
+# -f docker-compose.staging.yml pull && up -d`, затем health-check /api/health.
+# Секреты (SENTRY_DSN, ключи провайдеров) приходят из окружения хоста/секрет-менеджера.
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo-data:/data/db
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  server:
+    image: ghcr.io/${GHCR_OWNER:-buildhub}/buildhub-server:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - mongo
+      - redis
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      MONGO_URI: mongodb://mongo:27017/buildhub
+      REDIS_URL: redis://redis:6379
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      SENTRY_DSN: ${SENTRY_DSN:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      VOYAGE_API_KEY: ${VOYAGE_API_KEY:-}
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  main-web:
+    image: ghcr.io/${GHCR_OWNER:-buildhub}/buildhub-main-web:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "4000:4000"
+
+  vendor-web:
+    image: ghcr.io/${GHCR_OWNER:-buildhub}/buildhub-vendor-web:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "4001:4000"
+
+  admin-web:
+    image: ghcr.io/${GHCR_OWNER:-buildhub}/buildhub-admin-web:${TAG:-latest}
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "4002:4000"
+
+volumes:
+  mongo-data:

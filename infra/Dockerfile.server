@@ -13,4 +13,7 @@ COPY --from=build /workspace/dist/apps/server ./
 COPY --from=build /workspace/node_modules ./node_modules
 COPY --from=build /workspace/config ./config
 EXPOSE 3000
+# Health-check: API отвечает на /api/health (wget есть в busybox alpine).
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+    CMD wget -qO- http://localhost:3000/api/health >/dev/null 2>&1 || exit 1
 CMD ["node", "main.js"]
