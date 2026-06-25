@@ -7,6 +7,8 @@ import { ChatStore } from './chat/chat.store';
 import { ChatBadgeComponent } from './chat/chat-badge.component';
 import { CurrencyStore } from './currency/currency.store';
 import { CurrencySwitcherComponent } from './currency/currency-switcher.component';
+import { LoyaltyStore } from './loyalty/loyalty.store';
+import { LoyaltyBadgeComponent } from './loyalty/loyalty-badge.component';
 import { WishlistStore } from './wishlist/wishlist.store';
 import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
 
@@ -19,6 +21,7 @@ import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
         WishlistBadgeComponent,
         ChatBadgeComponent,
         CurrencySwitcherComponent,
+        LoyaltyBadgeComponent,
     ],
     selector: 'app-root',
     templateUrl: './app.html',
@@ -28,6 +31,7 @@ export class App implements OnInit {
     protected readonly wishlistStore = inject(WishlistStore);
     private readonly chatStore = inject(ChatStore);
     private readonly currencyStore = inject(CurrencyStore);
+    private readonly loyaltyStore = inject(LoyaltyStore);
     private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
     ngOnInit(): void {
@@ -37,6 +41,7 @@ export class App implements OnInit {
             this.wishlistStore.load();
             this.chatStore.loadChats();
             this.currencyStore.load();
+            this.loyaltyStore.load();
         }
     }
 

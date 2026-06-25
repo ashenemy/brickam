@@ -6,6 +6,7 @@ import { ProductDetailComponent } from './catalog/product-detail.component';
 import { ChatPageComponent } from './chat/chat-page.component';
 import { ForbiddenComponent } from './forbidden.component';
 import { HomeComponent } from './home.component';
+import { LoyaltyPageComponent } from './loyalty/loyalty-page.component';
 import { WishlistPageComponent } from './wishlist/wishlist-page.component';
 
 export const appRoutes: Route[] = [
@@ -22,6 +23,7 @@ export const appRoutes: Route[] = [
         canActivate: [roleGuard(['buyer'])],
     },
     { path: 'wishlist', component: WishlistPageComponent, canActivate: [roleGuard(['buyer'])] },
+    { path: 'loyalty', component: LoyaltyPageComponent, canActivate: [roleGuard(['buyer'])] },
     { path: 'chat', component: ChatPageComponent, canActivate: [roleGuard(['buyer'])] },
     { path: 'forbidden', component: ForbiddenComponent },
     { path: '**', redirectTo: '' },
