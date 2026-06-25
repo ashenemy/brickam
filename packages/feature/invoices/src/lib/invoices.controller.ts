@@ -1,7 +1,7 @@
 import { ValidationException } from '@brickam/core-kit';
 import { Permission } from '@brickam/domain-kit';
 import type { VendorContext } from '@brickam/server-kit';
-import { Auth, CurrentUser, CurrentVendor } from '@brickam/server-kit';
+import { Auth, CurrentUser, CurrentVendor, Idempotent } from '@brickam/server-kit';
 import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { Response } from 'express';
@@ -43,9 +43,10 @@ export class InvoicesController {
         return this.invoicesService.send(id, vendor.id);
     }
 
-    /** Оплачивает инвойс (создаёт заказ). */
+    /** Оплачивает инвойс (создаёт заказ). Идемпотентно по Idempotency-Key. */
     @Post(':id/pay')
     @Auth()
+    @Idempotent()
     @ApiOkResponse({ description: 'Оплаченный инвойс и созданный заказ' })
     pay(@Param('id') id: string, @CurrentUser('id') buyerId: string): Promise<InvoicePayResult> {
         return this.invoicesService.pay(id, buyerId);
