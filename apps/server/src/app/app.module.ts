@@ -2,6 +2,7 @@ import { AuthModule } from '@brickam/auth';
 import { CatalogModule } from '@brickam/catalog';
 import { ChatModule } from '@brickam/chat';
 import { ConfigKitModule } from '@brickam/config-kit';
+import { CurrencyModule } from '@brickam/currency';
 import { DbKitModule } from '@brickam/db-kit';
 import { I18nKitModule } from '@brickam/i18n-kit';
 import { InvoicesModule } from '@brickam/invoices';
@@ -14,6 +15,7 @@ import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
 import { WishlistModule } from '@brickam/wishlist';
 import { Module } from '@nestjs/common';
+import { ScheduleModule } from '@nestjs/schedule';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -22,6 +24,8 @@ import { HealthModule } from './health/health.module';
         ConfigKitModule.forRoot(),
         I18nKitModule,
         DbKitModule.forRoot(),
+        // Планировщик для дневного обновления курсов валют (@Cron в currency).
+        ScheduleModule.forRoot(),
         // Глобальные interceptors/filter/pipe платформы.
         ServerKitModule.forRoot(),
         // Фичи: templates → notifications → users → auth (контракты/guard'ы глобальные).
@@ -36,6 +40,7 @@ import { HealthModule } from './health/health.module';
         ReviewsModule,
         ChatModule,
         InvoicesModule,
+        CurrencyModule,
         HealthModule,
     ],
 })
