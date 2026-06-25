@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { AdminAnalyticsController } from './admin-analytics.controller';
 import { AnalyticsController } from './analytics.controller';
 import { AnalyticsService } from './analytics.service';
 import { AnalyticsExportService } from './analytics-export.service';
@@ -9,7 +10,7 @@ import { AnalyticsExportService } from './analytics-export.service';
  * (граница feature → не импортирует другие feature).
  */
 @Module({
-    controllers: [AnalyticsController],
+    controllers: [AnalyticsController, AdminAnalyticsController],
     providers: [AnalyticsService, AnalyticsExportService],
     exports: [AnalyticsService, AnalyticsExportService],
 })
