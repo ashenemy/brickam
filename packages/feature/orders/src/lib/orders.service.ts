@@ -23,11 +23,12 @@ import {
     PaymentStatus,
     PaymentsServiceContract,
     type PlatformAnalyticsSummary,
+    PlatformSettingsContract,
     type StatusFunnelItem,
     type TopProductItem,
     type VendorOrderForReview,
 } from '@brickam/domain-kit';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import type {
     CheckoutResult,
     OrderContract,
@@ -69,7 +70,20 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
         private readonly payments: PaymentsServiceContract,
         private readonly loyalty: LoyaltyServiceContract,
         private readonly config: AppConfigService,
+        // Переопределение комиссии из настроек платформы (§17). Опционально:
+        // без catalog-настроек комиссия берётся из конфига (прежнее поведение).
+        @Optional()
+        @Inject(PlatformSettingsContract)
+        private readonly platformSettings?: PlatformSettingsContract,
     ) {}
+
+    /** Эффективная комиссия: override из настроек платформы ?? дефолт конфига (§11/§17). */
+    private async effectiveCommissionPercent(): Promise<number> {
+        const override = this.platformSettings
+            ? await this.platformSettings.getCommissionPercent()
+            : null;
+        return override ?? this.config.marketplace.commissionPercent;
+    }
 
     /** Маппит документ заказа в плоский контракт. */
     private toOrderContract(doc: OrderDocument): OrderContract {
@@ -174,7 +188,7 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
             });
         }
 
-        const result = calculateOrder(lines, this.config.marketplace.commissionPercent);
+        const result = calculateOrder(lines, await this.effectiveCommissionPercent());
 
         // Скидка лояльности — по текущему уровню покупателя, от суммы после
         // товарных скидок. Её несёт ПЛАТФОРМА: splits/комиссия/payout вендора НЕ
@@ -314,6 +328,12 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
         return this.toOrderContract(doc);
     }
 
+    /** Саб-заказы вендора для кабинета продавца (Stage 15, §14). */
+    async listVendorOrders(vendorId: string): Promise<VendorOrderContract[]> {
+        const docs = await this.vendorOrdersRepository.findByVendor(vendorId);
+        return docs.map((doc) => this.toVendorOrderContract(doc));
+    }
+
     /** Сохранённые адреса доставки пользователя (для подстановки в checkout). */
     listAddresses(userId: string): Promise<unknown[]> {
         return this.deliveryAddressesRepository.findByUser(userId);
@@ -349,7 +369,7 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
     async createFromInvoice(input: InvoiceOrderInput): Promise<InvoiceOrderResult> {
         const subtotal = input.lineItems.reduce((sum, li) => sum + li.price * li.qty, 0);
         const total = input.discount ? applyDiscount(subtotal, input.discount) : subtotal;
-        const commissionPercent = this.config.marketplace.commissionPercent;
+        const commissionPercent = await this.effectiveCommissionPercent();
         const commissionAmount = calcCommission(total, commissionPercent);
         const payoutAmount = total - commissionAmount;
 

@@ -1,5 +1,12 @@
-import type { Page } from '@brickam/core-kit';
-import { ApiPaginatedOk, Auth, CurrentUser } from '@brickam/server-kit';
+import { ForbiddenException, type Page } from '@brickam/core-kit';
+import { Permission } from '@brickam/domain-kit';
+import {
+    ApiPaginatedOk,
+    Auth,
+    CurrentUser,
+    CurrentVendor,
+    type VendorContext,
+} from '@brickam/server-kit';
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { CheckoutResult, OrderContract, VendorOrderContract } from '../@types';
@@ -41,6 +48,19 @@ export class OrdersController {
         @Query() query: OrdersQueryDto,
     ): Promise<Page<OrderContract>> {
         return this.ordersService.listOrders(buyerId, query);
+    }
+
+    /** Саб-заказы текущего вендора (кабинет продавца). */
+    @Get('vendor-orders')
+    @Auth(Permission.OrdersView)
+    @ApiOkResponse({ type: VendorOrderDto, isArray: true, description: 'Саб-заказы вендора' })
+    vendorOrders(
+        @CurrentVendor() vendor: VendorContext | undefined,
+    ): Promise<VendorOrderContract[]> {
+        if (!vendor) {
+            throw new ForbiddenException('errors.orders.noVendor');
+        }
+        return this.ordersService.listVendorOrders(vendor.id);
     }
 
     /** Заказ покупателя по id. */

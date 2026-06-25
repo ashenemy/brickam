@@ -77,6 +77,7 @@ describe('OrdersService', () => {
     let vendorOrdersRepo: {
         create: ReturnType<typeof vi.fn>;
         findById: ReturnType<typeof vi.fn>;
+        findByVendor: ReturnType<typeof vi.fn>;
         aggregate: ReturnType<typeof vi.fn>;
     };
     let deliveryRepo: { findByUser: ReturnType<typeof vi.fn> };
@@ -106,7 +107,12 @@ describe('OrdersService', () => {
             findById: vi.fn(),
             findByBuyer: vi.fn(),
         };
-        vendorOrdersRepo = { create: vi.fn(), findById: vi.fn(), aggregate: vi.fn() };
+        vendorOrdersRepo = {
+            create: vi.fn(),
+            findById: vi.fn(),
+            findByVendor: vi.fn(),
+            aggregate: vi.fn(),
+        };
         deliveryRepo = { findByUser: vi.fn() };
         catalog = {
             getProductSnapshot: vi.fn((id: string) => Promise.resolve(snapshots[id] ?? null)),
@@ -656,6 +662,82 @@ describe('OrdersService', () => {
                 const summary = await service.platformSummary(new Date(), new Date());
                 expect(summary).toEqual({ gmv: 0, platformRevenue: 0, orders: 0 });
             });
+        });
+    });
+
+    describe('эффективная комиссия из настроек платформы (§17)', () => {
+        it('override из PlatformSettings применяется к расчёту заказа', async () => {
+            cartsRepo.findByBuyer.mockResolvedValue(makeCart());
+            ordersRepo.create.mockImplementation((d: Record<string, unknown>) =>
+                Promise.resolve({ id: 'o1', _id: { toString: () => 'o1' }, ...d }),
+            );
+            ordersRepo.updateById.mockResolvedValue({
+                id: 'o1',
+                _id: { toString: () => 'o1' },
+                buyerId: 'b1',
+                status: OrderStatus.Created,
+                subtotal: 2500,
+                productDiscountTotal: 100,
+                loyaltyDiscount: 0,
+                total: 2400,
+                currencyShown: 'AMD',
+                deliveryAddressSnapshot: checkoutDto.deliveryAddress,
+            });
+            vendorOrdersRepo.create.mockImplementation((d: Record<string, unknown>) =>
+                Promise.resolve({
+                    id: 'vo',
+                    _id: { toString: () => 'vo' },
+                    deliveryStatus: DeliveryStatus.Accepted,
+                    deliveryEvents: [],
+                    ...d,
+                }),
+            );
+            const platformSettings = { getCommissionPercent: vi.fn().mockResolvedValue(20) };
+            const svc = new OrdersService(
+                cartsRepo as unknown as CartsRepository,
+                ordersRepo as unknown as OrdersRepository,
+                vendorOrdersRepo as unknown as VendorOrdersRepository,
+                deliveryRepo as unknown as DeliveryAddressesRepository,
+                catalog as unknown as CatalogServiceContract,
+                payments as unknown as PaymentsServiceContract,
+                loyalty as unknown as LoyaltyServiceContract,
+                { marketplace: { commissionPercent: 10, baseCurrency: 'AMD' } } as never,
+                platformSettings as never,
+            );
+
+            await svc.checkout('b1', checkoutDto);
+
+            // v1 (subtotal 2000): комиссия 20% = 400 (а не 10%/200 из конфига)
+            const v1 = vendorOrdersRepo.create.mock.calls
+                .map((c) => c[0] as Record<string, number | string>)
+                .find((c) => c['vendorId'] === 'v1');
+            expect(v1).toMatchObject({ commissionPercentSnapshot: 20, commissionAmount: 400 });
+        });
+    });
+
+    describe('listVendorOrders (§14)', () => {
+        it('возвращает саб-заказы вендора', async () => {
+            vendorOrdersRepo.findByVendor.mockResolvedValue([
+                {
+                    id: 'vo1',
+                    _id: { toString: () => 'vo1' },
+                    orderId: 'order1',
+                    vendorId: 'v1',
+                    items: [],
+                    subtotal: 2000,
+                    commissionPercentSnapshot: 10,
+                    commissionAmount: 200,
+                    payoutAmount: 1800,
+                    deliveryStatus: DeliveryStatus.Accepted,
+                    deliveryEvents: [],
+                },
+            ]);
+
+            const result = await service.listVendorOrders('v1');
+
+            expect(vendorOrdersRepo.findByVendor).toHaveBeenCalledWith('v1');
+            expect(result).toHaveLength(1);
+            expect(result[0]?.vendorId).toBe('v1');
         });
     });
 });

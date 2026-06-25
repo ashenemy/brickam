@@ -16,6 +16,11 @@ export class VendorOrdersRepository extends BaseRepository<VendorOrder> {
         return this.find({ orderId });
     }
 
+    /** Саб-заказы вендора (новейшие первыми) — для кабинета продавца. */
+    findByVendor(vendorId: string): Promise<VendorOrderDocument[]> {
+        return this.find({ vendorId }, { sort: { createdAt: -1 } });
+    }
+
     /**
      * Произвольный aggregate-пайплайн (для аналитики; типизация ослаблена —
      * каждый этап формируется в OrdersService/OrdersAnalyticsContract).
