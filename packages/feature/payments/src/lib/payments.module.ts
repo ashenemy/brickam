@@ -3,6 +3,7 @@ import { PaymentsServiceContract } from '@brickam/domain-kit';
 import { Global, Module, type Provider } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Payment, PaymentSchema } from './payment.schema';
+import { PaymentsController } from './payments.controller';
 import { PaymentsRepository } from './payments.repository';
 import { PaymentsService } from './payments.service';
 import { MockPaymentProvider } from './providers/mock-payment.provider';
@@ -28,6 +29,7 @@ const paymentProvider: Provider = {
 @Global()
 @Module({
     imports: [MongooseModule.forFeature([{ name: Payment.name, schema: PaymentSchema }])],
+    controllers: [PaymentsController],
     providers: [
         PaymentsRepository,
         paymentProvider,

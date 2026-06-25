@@ -1,5 +1,5 @@
 import { AppConfigService } from '@brickam/config-kit';
-import { NotFoundException } from '@brickam/core-kit';
+import { NotFoundException, ValidationException } from '@brickam/core-kit';
 import {
     type CreatePaymentInput,
     type PaymentResult,
@@ -69,6 +69,69 @@ export class PaymentsService implements PaymentsServiceContract {
             payment.providerRef = result.providerRef;
         }
         await payment.save();
+
+        return { paymentId, status: payment.status };
+    }
+
+    /**
+     * Обрабатывает асинхронный вебхук провайдера (Foundations §11). Провайдер
+     * сам подтверждает оплату — мы парсим/верифицируем payload, находим платёж
+     * по `providerRef` (или `orderId`) и при успехе переводим в Succeeded.
+     * Идемпотентно: повторный вебхук на уже Succeeded-платёж не меняет статус и
+     * не падает. Невалидный/неверифицированный payload → ValidationException.
+     */
+    async handleWebhook(payload: unknown, signature?: string): Promise<PaymentResult> {
+        const event = this.provider.parseWebhook(payload, signature);
+        if (!event) {
+            throw new ValidationException('errors.payments.invalidWebhook');
+        }
+
+        const payment =
+            (await this.paymentsRepository.findByProviderRef(event.providerRef)) ??
+            (event.orderId ? await this.paymentsRepository.findByOrder(event.orderId) : null);
+        if (!payment) {
+            throw new NotFoundException();
+        }
+
+        const paymentId = payment.id ?? payment._id.toString();
+
+        // Идемпотентность: уже подтверждённый платёж возвращаем как есть.
+        if (payment.status === PaymentStatus.Succeeded) {
+            return { paymentId, status: payment.status };
+        }
+
+        if (event.success) {
+            payment.status = PaymentStatus.Succeeded;
+            payment.providerRef = event.providerRef;
+            await payment.save();
+        }
+
+        return { paymentId, status: payment.status };
+    }
+
+    /**
+     * Возврат средств по платежу. Возможен только для Succeeded; провайдер
+     * выполняет refund, после чего платёж переводится в Refunded и сохраняется
+     * `refundRef`. NotFound, если платежа нет; ValidationException, если платёж
+     * не в статусе Succeeded.
+     */
+    async refund(paymentId: string): Promise<PaymentResult> {
+        const payment = await this.paymentsRepository.findById(paymentId);
+        if (!payment) {
+            throw new NotFoundException();
+        }
+        if (payment.status !== PaymentStatus.Succeeded || !payment.providerRef) {
+            throw new ValidationException('errors.payments.notRefundable');
+        }
+
+        const result = await this.provider.refund(payment.providerRef, payment.amount);
+        if (result.success) {
+            payment.status = PaymentStatus.Refunded;
+            if (result.refundRef) {
+                payment.refundRef = result.refundRef;
+            }
+            await payment.save();
+        }
 
         return { paymentId, status: payment.status };
     }

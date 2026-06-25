@@ -21,4 +21,9 @@ describe('PaymentsRepository', () => {
         expect(model.findOne).toHaveBeenCalledWith({ orderId: 'o1' });
         expect(doc).toMatchObject({ orderId: 'o1' });
     });
+
+    it('findByProviderRef ищет по полю providerRef', async () => {
+        await repo.findByProviderRef('mock_ref');
+        expect(model.findOne).toHaveBeenCalledWith({ providerRef: 'mock_ref' });
+    });
 });

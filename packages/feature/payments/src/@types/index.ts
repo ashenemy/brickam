@@ -12,6 +12,23 @@ export type ChargeResult = {
     success: boolean;
 };
 
+/**
+ * Разобранный и верифицированный вебхук провайдера. `providerRef` —
+ * идентификатор транзакции у провайдера; `orderId` — наш заказ (если провайдер
+ * прислал); `success` — подтверждена ли оплата.
+ */
+export type WebhookEvent = {
+    providerRef: string;
+    orderId?: string;
+    success: boolean;
+};
+
+/** Результат возврата у провайдера. */
+export type RefundResult = {
+    success: boolean;
+    refundRef?: string;
+};
+
 /** Краткое представление платежа по заказу (наружу). */
 export type PaymentByOrder = {
     id: string;

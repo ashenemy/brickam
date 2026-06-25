@@ -1,5 +1,6 @@
 export * from './@types';
 export * from './lib/payment.schema';
+export * from './lib/payments.controller';
 export * from './lib/payments.module';
 export * from './lib/payments.repository';
 export * from './lib/payments.service';

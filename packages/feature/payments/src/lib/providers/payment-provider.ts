@@ -1,4 +1,4 @@
-import type { ChargeResult } from '../../@types';
+import type { ChargeResult, RefundResult, WebhookEvent } from '../../@types';
 
 /**
  * Абстрактный провайдер платежей. Реализации скрывают конкретного провайдера
@@ -11,4 +11,14 @@ export abstract class PaymentProvider {
 
     /** Списывает сумму; `ref` — идентификатор платежа на нашей стороне. */
     abstract charge(amount: number, ref: string): Promise<ChargeResult>;
+
+    /**
+     * Разбирает и верифицирует асинхронный вебхук провайдера. Возвращает
+     * нормализованное событие либо `null`, если payload не распознан или подпись
+     * невалидна. Синхронный — верификация подписи не требует сети.
+     */
+    abstract parseWebhook(payload: unknown, signature?: string): WebhookEvent | null;
+
+    /** Возвращает средства по транзакции провайдера (`providerRef`). */
+    abstract refund(providerRef: string, amount: number): Promise<RefundResult>;
 }

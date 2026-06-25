@@ -45,8 +45,12 @@ export class Payment extends BaseSchema {
     provider!: string;
 
     /** Идентификатор транзакции у провайдера (появляется после списания). */
-    @Prop({ type: String, required: false })
+    @Prop({ type: String, required: false, index: true })
     providerRef?: string;
+
+    /** Идентификатор возврата у провайдера (появляется после refund). */
+    @Prop({ type: String, required: false })
+    refundRef?: string;
 
     @Prop({
         type: String,

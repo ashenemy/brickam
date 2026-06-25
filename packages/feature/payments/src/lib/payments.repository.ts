@@ -15,4 +15,9 @@ export class PaymentsRepository extends BaseRepository<Payment> {
     findByOrder(orderId: string): Promise<PaymentDocument | null> {
         return this.findOne({ orderId });
     }
+
+    /** Находит платёж по идентификатору транзакции провайдера. */
+    findByProviderRef(providerRef: string): Promise<PaymentDocument | null> {
+        return this.findOne({ providerRef });
+    }
 }

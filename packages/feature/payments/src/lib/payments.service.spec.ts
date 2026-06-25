@@ -1,5 +1,5 @@
 import type { AppConfigService } from '@brickam/config-kit';
-import { NotFoundException } from '@brickam/core-kit';
+import { NotFoundException, ValidationException } from '@brickam/core-kit';
 import { PaymentStatus, type VendorSplit } from '@brickam/domain-kit';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PaymentsRepository } from './payments.repository';
@@ -29,14 +29,25 @@ describe('PaymentsService', () => {
         create: ReturnType<typeof vi.fn>;
         findById: ReturnType<typeof vi.fn>;
         findByOrder: ReturnType<typeof vi.fn>;
+        findByProviderRef: ReturnType<typeof vi.fn>;
     };
-    let provider: { name: string; charge: ReturnType<typeof vi.fn> };
+    let provider: {
+        name: string;
+        charge: ReturnType<typeof vi.fn>;
+        parseWebhook: ReturnType<typeof vi.fn>;
+        refund: ReturnType<typeof vi.fn>;
+    };
     let config: { providers: { payment: string } };
     let service: PaymentsService;
 
     beforeEach(() => {
-        repo = { create: vi.fn(), findById: vi.fn(), findByOrder: vi.fn() };
-        provider = { name: 'mock', charge: vi.fn() };
+        repo = {
+            create: vi.fn(),
+            findById: vi.fn(),
+            findByOrder: vi.fn(),
+            findByProviderRef: vi.fn(),
+        };
+        provider = { name: 'mock', charge: vi.fn(), parseWebhook: vi.fn(), refund: vi.fn() };
         config = { providers: { payment: 'mock' } };
         service = new PaymentsService(
             repo as unknown as PaymentsRepository,
@@ -117,6 +128,102 @@ describe('PaymentsService', () => {
 
             await expect(service.confirm('missing')).rejects.toBeInstanceOf(NotFoundException);
             expect(provider.charge).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('handleWebhook', () => {
+        it('валидный success → находит по providerRef, ставит Succeeded и сохраняет', async () => {
+            const doc = makeDoc({ providerRef: undefined });
+            provider.parseWebhook.mockReturnValue({ providerRef: 'mock_ref', success: true });
+            repo.findByProviderRef.mockResolvedValue(doc);
+
+            const result = await service.handleWebhook(
+                { ref: 'mock_ref', status: 'succeeded' },
+                'mock',
+            );
+
+            expect(provider.parseWebhook).toHaveBeenCalledWith(
+                { ref: 'mock_ref', status: 'succeeded' },
+                'mock',
+            );
+            expect(doc.status).toBe(PaymentStatus.Succeeded);
+            expect(doc.providerRef).toBe('mock_ref');
+            expect(doc.save).toHaveBeenCalled();
+            expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Succeeded });
+        });
+
+        it('фолбэк-поиск по orderId, если по providerRef не найден', async () => {
+            const doc = makeDoc({ providerRef: undefined });
+            provider.parseWebhook.mockReturnValue({
+                providerRef: 'mock_ref',
+                orderId: 'o1',
+                success: true,
+            });
+            repo.findByProviderRef.mockResolvedValue(null);
+            repo.findByOrder.mockResolvedValue(doc);
+
+            const result = await service.handleWebhook({}, 'mock');
+
+            expect(repo.findByOrder).toHaveBeenCalledWith('o1');
+            expect(result.status).toBe(PaymentStatus.Succeeded);
+        });
+
+        it('идемпотентно: повторный вебхук на Succeeded не меняет статус и не падает', async () => {
+            const doc = makeDoc({ status: PaymentStatus.Succeeded, providerRef: 'mock_ref' });
+            provider.parseWebhook.mockReturnValue({ providerRef: 'mock_ref', success: true });
+            repo.findByProviderRef.mockResolvedValue(doc);
+
+            const result = await service.handleWebhook({}, 'mock');
+
+            expect(doc.save).not.toHaveBeenCalled();
+            expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Succeeded });
+        });
+
+        it('невалидный вебхук → ValidationException', async () => {
+            provider.parseWebhook.mockReturnValue(null);
+
+            await expect(service.handleWebhook({}, 'bad')).rejects.toBeInstanceOf(
+                ValidationException,
+            );
+            expect(repo.findByProviderRef).not.toHaveBeenCalled();
+        });
+
+        it('платёж не найден → NotFound', async () => {
+            provider.parseWebhook.mockReturnValue({ providerRef: 'mock_x', success: true });
+            repo.findByProviderRef.mockResolvedValue(null);
+
+            await expect(service.handleWebhook({}, 'mock')).rejects.toBeInstanceOf(
+                NotFoundException,
+            );
+        });
+    });
+
+    describe('refund', () => {
+        it('Succeeded → provider.refund, ставит Refunded и сохраняет refundRef', async () => {
+            const doc = makeDoc({ status: PaymentStatus.Succeeded, providerRef: 'mock_ref' });
+            repo.findById.mockResolvedValue(doc);
+            provider.refund.mockResolvedValue({ success: true, refundRef: 'mock_refund_mock_ref' });
+
+            const result = await service.refund('p1');
+
+            expect(provider.refund).toHaveBeenCalledWith('mock_ref', 1000);
+            expect(doc.status).toBe(PaymentStatus.Refunded);
+            expect(doc.refundRef).toBe('mock_refund_mock_ref');
+            expect(doc.save).toHaveBeenCalled();
+            expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Refunded });
+        });
+
+        it('не-Succeeded → ValidationException', async () => {
+            repo.findById.mockResolvedValue(makeDoc({ status: PaymentStatus.Pending }));
+
+            await expect(service.refund('p1')).rejects.toBeInstanceOf(ValidationException);
+            expect(provider.refund).not.toHaveBeenCalled();
+        });
+
+        it('платёж не найден → NotFound', async () => {
+            repo.findById.mockResolvedValue(null);
+
+            await expect(service.refund('missing')).rejects.toBeInstanceOf(NotFoundException);
         });
     });
 
