@@ -1,5 +1,6 @@
 export * from './@types';
 export * from './lib/catalog.module';
+export * from './lib/catalog-ai.service';
 export * from './lib/categories.controller';
 export * from './lib/categories.repository';
 export * from './lib/categories.service';
@@ -11,6 +12,7 @@ export * from './lib/dto/product.dto';
 export * from './lib/dto/product-filter-query.dto';
 export * from './lib/dto/response.dto';
 export * from './lib/media-validator';
+export * from './lib/platform-settings.repository';
 export * from './lib/platform-settings.schema';
 export * from './lib/platform-settings.service';
 export * from './lib/product.schema';

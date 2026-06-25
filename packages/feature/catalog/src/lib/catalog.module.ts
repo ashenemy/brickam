@@ -2,14 +2,18 @@ import {
     CatalogBulkContract,
     CatalogSearchContract,
     CatalogServiceContract,
+    PlatformSettingsContract,
+    ProductMediaContract,
 } from '@brickam/domain-kit';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CatalogAiService } from './catalog-ai.service';
 import { CategoriesController } from './categories.controller';
 import { CategoriesRepository } from './categories.repository';
 import { CategoriesService } from './categories.service';
 import { Category, CategorySchema } from './category.schema';
 import { MediaValidator } from './media-validator';
+import { PlatformSettingsRepository } from './platform-settings.repository';
 import { PlatformSettings, PlatformSettingsSchema } from './platform-settings.schema';
 import { PlatformSettingsService } from './platform-settings.service';
 import { Product, ProductSchema } from './product.schema';
@@ -34,9 +38,11 @@ import { ProductsService } from './products.service';
     providers: [
         CategoriesRepository,
         ProductsRepository,
+        PlatformSettingsRepository,
         CategoriesService,
         ProductsService,
         PlatformSettingsService,
+        CatalogAiService,
         MediaValidator,
         // Контракт для orders: catalog отдаёт снимок товара и списывает остаток.
         { provide: CatalogServiceContract, useExisting: ProductsService },
@@ -44,6 +50,9 @@ import { ProductsService } from './products.service';
         { provide: CatalogSearchContract, useExisting: ProductsService },
         // Контракт массовых операций для vendor-bulk: проекции + точечные апдейты (§14).
         { provide: CatalogBulkContract, useExisting: ProductsService },
+        // Контракты настроек/медиа для ai-assistant: промпты + контекст/обложка (§13/§16).
+        { provide: PlatformSettingsContract, useExisting: CatalogAiService },
+        { provide: ProductMediaContract, useExisting: CatalogAiService },
     ],
     exports: [
         ProductsService,
@@ -51,6 +60,8 @@ import { ProductsService } from './products.service';
         CatalogServiceContract,
         CatalogSearchContract,
         CatalogBulkContract,
+        PlatformSettingsContract,
+        ProductMediaContract,
     ],
 })
 export class CatalogModule {}
