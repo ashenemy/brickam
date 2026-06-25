@@ -1,4 +1,5 @@
-import { Module } from '@nestjs/common';
+import { ChatServiceContract } from '@brickam/domain-kit';
+import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { ChatController } from './chat.controller';
 import { ChatGateway } from './chat.gateway';
@@ -17,6 +18,7 @@ import { MessagesRepository } from './messages.repository';
  * (config.queue.redisUrl) через @socket.io/redis-adapter в bootstrap; по
  * умолчанию используется встроенный in-memory адаптер Socket.IO.
  */
+@Global()
 @Module({
     imports: [
         MongooseModule.forFeature([
@@ -25,7 +27,14 @@ import { MessagesRepository } from './messages.repository';
         ]),
     ],
     controllers: [ChatController],
-    providers: [ChatsRepository, MessagesRepository, ChatService, ChatGateway],
-    exports: [ChatService, ChatGateway],
+    providers: [
+        ChatsRepository,
+        MessagesRepository,
+        ChatService,
+        ChatGateway,
+        // Контракт для invoices: постинг инвойс-сообщения в чат.
+        { provide: ChatServiceContract, useExisting: ChatService },
+    ],
+    exports: [ChatService, ChatGateway, ChatServiceContract],
 })
 export class ChatModule {}

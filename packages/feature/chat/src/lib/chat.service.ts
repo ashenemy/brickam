@@ -1,7 +1,6 @@
 import type { Page } from '@brickam/core-kit';
 import { ForbiddenException, NotFoundException } from '@brickam/core-kit';
-import type { JwtPayload } from '@brickam/domain-kit';
-import { Role } from '@brickam/domain-kit';
+import { ChatServiceContract, type JwtPayload, Role } from '@brickam/domain-kit';
 import type { PaginationQueryDto } from '@brickam/server-kit';
 import { Injectable } from '@nestjs/common';
 import type { ChatView, MessageView, SendMessagePayload } from '../@types';
@@ -17,11 +16,33 @@ import { MessagesRepository } from './messages.repository';
  * Границы feature: зависит только от kit/domain.
  */
 @Injectable()
-export class ChatService {
+export class ChatService implements ChatServiceContract {
     constructor(
         private readonly chatsRepository: ChatsRepository,
         private readonly messagesRepository: MessagesRepository,
     ) {}
+
+    /**
+     * Постит инвойс-сообщение в чат (тип invoice) от имени отправителя
+     * (ChatServiceContract). Увеличивает unread получателя.
+     */
+    async postInvoiceMessage(chatId: string, senderId: string, invoiceId: string): Promise<void> {
+        const chat = await this.loadChat(chatId);
+        const created = await this.messagesRepository.create({
+            chatId,
+            senderId,
+            type: 'invoice',
+            invoiceId,
+            readBy: [senderId],
+        });
+        if (senderId === chat.buyerId) {
+            chat.unread.vendor += 1;
+        } else {
+            chat.unread.buyer += 1;
+        }
+        chat.lastMessageAt = created.createdAt ?? new Date();
+        await chat.save();
+    }
 
     /** true, если запрос исходит со стороны покупателя данного чата. */
     isBuyerSide(chat: ChatDocument, payload: JwtPayload): boolean {
