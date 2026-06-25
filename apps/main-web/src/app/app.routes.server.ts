@@ -8,6 +8,9 @@ export const serverRoutes: ServerRoute[] = [
     { path: 'calculators', renderMode: RenderMode.Prerender },
     // AI-поиск — оболочка пуста до запроса пользователя; пререндер на билде.
     { path: 'ai', renderMode: RenderMode.Prerender },
+    // Вход/регистрация — формы статичны до сабмита; пререндер на билде.
+    { path: 'login', renderMode: RenderMode.Prerender },
+    { path: 'register', renderMode: RenderMode.Prerender },
     // Каталог и товары — SSR on-demand (список товаров неизвестен на билде).
     { path: 'catalog', renderMode: RenderMode.Server },
     { path: 'product/:slug', renderMode: RenderMode.Server },

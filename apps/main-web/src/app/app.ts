@@ -1,8 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, type OnInit, PLATFORM_ID } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { Router, RouterModule } from '@angular/router';
 import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
 import { FooterComponent, NavbarComponent } from '@brickam/ui-kit';
+import { SessionStore } from './auth/session.store';
 import { ChatStore } from './chat/chat.store';
 import { ChatBadgeComponent } from './chat/chat-badge.component';
 import { CurrencyStore } from './currency/currency.store';
@@ -29,9 +30,11 @@ import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
 })
 export class App implements OnInit {
     protected readonly wishlistStore = inject(WishlistStore);
+    protected readonly session = inject(SessionStore);
     private readonly chatStore = inject(ChatStore);
     private readonly currencyStore = inject(CurrencyStore);
     private readonly loyaltyStore = inject(LoyaltyStore);
+    private readonly router = inject(Router);
     private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
     ngOnInit(): void {
@@ -47,5 +50,10 @@ export class App implements OnInit {
 
     protected onNav(_item: string): void {
         // навигация по разделам — подключится с реальными маршрутами каталога (Stage 4+)
+    }
+
+    protected logout(): void {
+        this.session.logout();
+        this.router.navigate(['/login']);
     }
 }

@@ -1,6 +1,9 @@
 import { Route } from '@angular/router';
 import { roleGuard } from '@brickam/config-kit/browser';
 import { AiSearchPageComponent } from './ai-search/ai-search-page.component';
+import { authGuard } from './auth/auth.guard';
+import { LoginPageComponent } from './auth/login-page.component';
+import { RegisterPageComponent } from './auth/register-page.component';
 import { CalculatorsPageComponent } from './calculators/calculators-page.component';
 import { CatalogListComponent } from './catalog/catalog-list.component';
 import { ProductDetailComponent } from './catalog/product-detail.component';
@@ -24,9 +27,19 @@ export const appRoutes: Route[] = [
         component: ProductDetailComponent,
         canActivate: [roleGuard(['buyer'])],
     },
-    { path: 'wishlist', component: WishlistPageComponent, canActivate: [roleGuard(['buyer'])] },
-    { path: 'loyalty', component: LoyaltyPageComponent, canActivate: [roleGuard(['buyer'])] },
-    { path: 'chat', component: ChatPageComponent, canActivate: [roleGuard(['buyer'])] },
+    {
+        path: 'wishlist',
+        component: WishlistPageComponent,
+        canActivate: [authGuard, roleGuard(['buyer'])],
+    },
+    {
+        path: 'loyalty',
+        component: LoyaltyPageComponent,
+        canActivate: [authGuard, roleGuard(['buyer'])],
+    },
+    { path: 'chat', component: ChatPageComponent, canActivate: [authGuard, roleGuard(['buyer'])] },
+    { path: 'login', component: LoginPageComponent },
+    { path: 'register', component: RegisterPageComponent },
     { path: 'forbidden', component: ForbiddenComponent },
     { path: '**', redirectTo: '' },
 ];
