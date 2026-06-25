@@ -1,29 +1,68 @@
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { SessionStore } from './session.store';
 import { TokenStore } from './token.store';
+
+const CONFIG: RuntimeConfig = {
+    apiBaseUrl: 'http://api.test/api',
+    defaultLang: 'ru',
+    supportedLangs: ['hy', 'ru', 'en'],
+};
+
+const AUTHED_KEY = 'buildhub.authed';
 
 describe('SessionStore', () => {
     let session: SessionStore;
     let tokenStore: TokenStore;
+    let httpMock: HttpTestingController;
 
     beforeEach(() => {
-        TestBed.configureTestingModule({});
+        localStorage.clear();
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(withFetch()),
+                provideHttpClientTesting(),
+                { provide: RUNTIME_CONFIG, useValue: CONFIG },
+            ],
+        });
         session = TestBed.inject(SessionStore);
         tokenStore = TestBed.inject(TokenStore);
-        tokenStore.clear();
+        httpMock = TestBed.inject(HttpTestingController);
     });
 
-    it('applyTokens сохраняет accessToken и поднимает isAuthenticated', () => {
+    afterEach(() => {
+        httpMock.verify();
+        localStorage.clear();
+    });
+
+    it('токен НЕ персистится в localStorage (только в памяти)', () => {
+        session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+        expect(tokenStore.get()).toBe('a');
+        expect(localStorage.getItem('buildhub.token')).toBeNull();
+    });
+
+    it('applyTokens сохраняет accessToken, поднимает authed-флаг и isAuthenticated', () => {
         expect(session.isAuthenticated()).toBe(false);
         session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
         expect(tokenStore.get()).toBe('a');
         expect(session.isAuthenticated()).toBe(true);
+        expect(localStorage.getItem(AUTHED_KEY)).toBe('1');
     });
 
-    it('logout очищает токен', () => {
+    it('logout шлёт POST /auth/logout и чистит токен + флаг', () => {
         session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+
         session.logout();
+
+        const req = httpMock.expectOne('http://api.test/api/auth/logout');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.withCredentials).toBe(true);
+        req.flush({ success: true, data: null });
+
         expect(tokenStore.get()).toBeNull();
         expect(session.isAuthenticated()).toBe(false);
+        expect(localStorage.getItem(AUTHED_KEY)).toBeNull();
     });
 });

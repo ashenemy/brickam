@@ -3,17 +3,16 @@ import { inject } from '@angular/core';
 import { TokenStore } from './token.store';
 
 /**
- * Добавляет заголовок `Authorization: Bearer <token>`, если токен есть.
- * Без токена запрос проходит как есть (публичные эндпоинты / SSR без токена).
+ * Всегда отправляет cookie (`withCredentials: true`) — в проде это передаёт
+ * httpOnly-cookie `access_token`. Заголовок `Authorization: Bearer <token>`
+ * добавляется только если токен есть в памяти (dev/Bearer-фолбэк).
  */
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
     const token = inject(TokenStore).get();
-    if (!token) {
-        return next(req);
-    }
     return next(
         req.clone({
-            setHeaders: { Authorization: `Bearer ${token}` },
+            withCredentials: true,
+            ...(token ? { setHeaders: { Authorization: `Bearer ${token}` } } : {}),
         }),
     );
 };

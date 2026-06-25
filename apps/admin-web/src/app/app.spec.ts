@@ -1,12 +1,26 @@
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
+import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { App } from './app';
+
+const CONFIG: RuntimeConfig = {
+    apiBaseUrl: 'http://api.test/api',
+    defaultLang: 'ru',
+    supportedLangs: ['hy', 'ru', 'en'],
+};
 
 describe('App', () => {
     beforeEach(async () => {
         await TestBed.configureTestingModule({
             imports: [App],
-            providers: [provideRouter([])],
+            providers: [
+                provideRouter([]),
+                provideHttpClient(withFetch()),
+                provideHttpClientTesting(),
+                { provide: RUNTIME_CONFIG, useValue: CONFIG },
+            ],
         }).compileComponents();
     });
 
