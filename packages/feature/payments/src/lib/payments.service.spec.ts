@@ -36,6 +36,8 @@ describe('PaymentsService', () => {
         charge: ReturnType<typeof vi.fn>;
         parseWebhook: ReturnType<typeof vi.fn>;
         refund: ReturnType<typeof vi.fn>;
+        initiate: ReturnType<typeof vi.fn>;
+        getStatus: ReturnType<typeof vi.fn>;
     };
     let config: { providers: { payment: string } };
     let service: PaymentsService;
@@ -47,7 +49,14 @@ describe('PaymentsService', () => {
             findByOrder: vi.fn(),
             findByProviderRef: vi.fn(),
         };
-        provider = { name: 'mock', charge: vi.fn(), parseWebhook: vi.fn(), refund: vi.fn() };
+        provider = {
+            name: 'mock',
+            charge: vi.fn(),
+            parseWebhook: vi.fn(),
+            refund: vi.fn(),
+            initiate: vi.fn().mockResolvedValue(null),
+            getStatus: vi.fn(),
+        };
         config = { providers: { payment: 'mock' } };
         service = new PaymentsService(
             repo as unknown as PaymentsRepository,
@@ -93,6 +102,77 @@ describe('PaymentsService', () => {
 
             expect(repo.create).toHaveBeenCalled();
             expect(result.status).toBe(PaymentStatus.Pending);
+        });
+
+        it('redirect-провайдер: initiate → redirectUrl в результате + сохранён providerRef', async () => {
+            const doc = makeDoc({ providerRef: undefined });
+            repo.create.mockResolvedValue(doc);
+            provider.initiate.mockResolvedValue({
+                redirectUrl: 'https://psp.test/pay/x',
+                providerRef: 'arca-1',
+            });
+
+            const result = await service.createForOrder({
+                orderId: 'o1',
+                buyerId: 'b1',
+                amount: 1000,
+                splits,
+            });
+
+            expect(provider.initiate).toHaveBeenCalledWith(
+                expect.objectContaining({ amount: 1000, orderId: 'o1', ref: 'p1' }),
+            );
+            expect(doc.providerRef).toBe('arca-1');
+            expect(doc.save).toHaveBeenCalled();
+            expect(result.redirectUrl).toBe('https://psp.test/pay/x');
+        });
+
+        it('mock (initiate=null): без redirectUrl, прежнее поведение', async () => {
+            repo.create.mockResolvedValue(makeDoc());
+            provider.initiate.mockResolvedValue(null);
+
+            const result = await service.createForOrder({
+                orderId: 'o1',
+                buyerId: 'b1',
+                amount: 1000,
+                splits,
+            });
+
+            expect(result.redirectUrl).toBeUndefined();
+        });
+    });
+
+    describe('handleArcaReturn', () => {
+        it('getStatus success → переводит в Succeeded и возвращает orderId', async () => {
+            const doc = makeDoc({ status: PaymentStatus.Pending });
+            repo.findByProviderRef.mockResolvedValue(doc);
+            provider.getStatus.mockResolvedValue({ success: true });
+
+            const result = await service.handleArcaReturn('arca-1');
+
+            expect(repo.findByProviderRef).toHaveBeenCalledWith('arca-1');
+            expect(doc.status).toBe(PaymentStatus.Succeeded);
+            expect(doc.save).toHaveBeenCalled();
+            expect(result).toEqual({ orderId: 'o1' });
+        });
+
+        it('идемпотентно: уже Succeeded — getStatus не вызывается', async () => {
+            const doc = makeDoc({ status: PaymentStatus.Succeeded, providerRef: 'arca-1' });
+            repo.findByProviderRef.mockResolvedValue(doc);
+
+            const result = await service.handleArcaReturn('arca-1');
+
+            expect(provider.getStatus).not.toHaveBeenCalled();
+            expect(doc.save).not.toHaveBeenCalled();
+            expect(result).toEqual({ orderId: 'o1' });
+        });
+
+        it('платёж не найден → NotFound', async () => {
+            repo.findByProviderRef.mockResolvedValue(null);
+
+            await expect(service.handleArcaReturn('missing')).rejects.toBeInstanceOf(
+                NotFoundException,
+            );
         });
     });
 
@@ -177,6 +257,19 @@ describe('PaymentsService', () => {
 
             expect(doc.save).not.toHaveBeenCalled();
             expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Succeeded });
+        });
+
+        it('precheck (Idram) → маркер { precheck: true } без поиска платежа', async () => {
+            provider.parseWebhook.mockReturnValue({
+                providerRef: 'p1',
+                success: false,
+                precheck: true,
+            });
+
+            const result = await service.handleWebhook({ EDP_PRECHECK: 'YES' });
+
+            expect(result).toEqual({ precheck: true });
+            expect(repo.findByProviderRef).not.toHaveBeenCalled();
         });
 
         it('невалидный вебхук → ValidationException', async () => {

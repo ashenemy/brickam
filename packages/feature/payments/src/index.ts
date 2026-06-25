@@ -4,5 +4,7 @@ export * from './lib/payments.controller';
 export * from './lib/payments.module';
 export * from './lib/payments.repository';
 export * from './lib/payments.service';
+export * from './lib/providers/arca-payment.provider';
+export * from './lib/providers/idram-payment.provider';
 export * from './lib/providers/mock-payment.provider';
 export * from './lib/providers/payment-provider';
