@@ -7,6 +7,7 @@ export * from './lib/decorators/api-paginated-ok.decorator';
 export * from './lib/decorators/auth.decorator';
 export * from './lib/decorators/current-user.decorator';
 export * from './lib/decorators/current-vendor.decorator';
+export * from './lib/decorators/idempotent.decorator';
 export * from './lib/decorators/serialize.decorator';
 export * from './lib/dto/api-response.dto';
 export * from './lib/dto/paginated.dto';
