@@ -1,20 +1,33 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { NotificationsServiceContract } from '@brickam/domain-kit';
-import { Global, Module, type Provider } from '@nestjs/common';
+import { Global, Logger, Module, type Provider } from '@nestjs/common';
 import { EmailChannel } from './channels/email.channel';
 import { MockEmailChannel } from './channels/mock-email.channel';
 import { MockSmsChannel } from './channels/mock-sms.channel';
 import { SmsChannel } from './channels/sms.channel';
+import { TwilioSmsChannel } from './channels/twilio-sms.channel';
 import { NotificationsService } from './notifications.service';
 
-// TODO: реальный провайдер выбирается по `config.providers.sms` / e-mail-конфигу.
-// Сейчас всегда возвращаем mock; когда появятся twilio/SMTP-каналы — добавить
-// ветвление по значению конфига. Фабрики оставлены как точка расширения.
+// SMS-канал выбирается по `config.providers.sms`. Для 'twilio' нужны ключи
+// (TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM в secrets); если их нет — фолбэк на mock,
+// чтобы dev/тесты не падали без реального провайдера. Email пока всегда mock.
 const smsChannelProvider: Provider = {
     provide: SmsChannel,
     inject: [AppConfigService],
-    useFactory: (_config: AppConfigService): SmsChannel => {
-        // switch (_config.providers.sms) { case 'twilio': return new TwilioSmsChannel(...) }
+    useFactory: (config: AppConfigService): SmsChannel => {
+        if (config.providers.sms === 'twilio') {
+            const { twilioAccountSid, twilioAuthToken, twilioFrom } = config.secrets;
+            if (twilioAccountSid && twilioAuthToken && twilioFrom) {
+                return new TwilioSmsChannel({
+                    accountSid: twilioAccountSid,
+                    authToken: twilioAuthToken,
+                    from: twilioFrom,
+                });
+            }
+            new Logger('SMS').warn(
+                'providers.sms=twilio, но TWILIO_* ключи не заданы — используется mock-канал',
+            );
+        }
         return new MockSmsChannel();
     },
 };
