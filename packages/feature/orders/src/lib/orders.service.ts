@@ -22,6 +22,7 @@ import {
     OrdersServiceContract,
     PaymentStatus,
     PaymentsServiceContract,
+    type PlatformAnalyticsSummary,
     type StatusFunnelItem,
     type TopProductItem,
     type VendorOrderForReview,
@@ -424,6 +425,31 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
      * Сводка аналитики вендора за период (OrdersAnalyticsContract). GMV/заказы
      * по саб-заказам вендора; средний чек = gmv/orders (0 при отсутствии заказов).
      */
+    async platformSummary(from: Date, to: Date): Promise<PlatformAnalyticsSummary> {
+        const rows = await this.vendorOrdersRepository.aggregate<{
+            gmv: number;
+            platformRevenue: number;
+            orders: number;
+        }>([
+            { $match: { createdAt: { $gte: from, $lte: to } } },
+            {
+                $group: {
+                    _id: null,
+                    gmv: { $sum: '$subtotal' },
+                    platformRevenue: { $sum: '$commissionAmount' },
+                    orders: { $sum: 1 },
+                },
+            },
+        ]);
+        const row = rows[0];
+        return {
+            gmv: row?.gmv ?? 0,
+            platformRevenue: row?.platformRevenue ?? 0,
+            orders: row?.orders ?? 0,
+        };
+    }
+
+    /** Сводка GMV/заказы/средний чек вендора за период (OrdersAnalyticsContract). */
     async vendorSummary(vendorId: string, from: Date, to: Date): Promise<AnalyticsSummary> {
         const rows = await this.vendorOrdersRepository.aggregate<{
             gmv: number;

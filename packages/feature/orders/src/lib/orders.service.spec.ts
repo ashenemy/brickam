@@ -632,5 +632,30 @@ describe('OrdersService', () => {
                 expect(pipeline).toContainEqual({ $limit: 5 });
             });
         });
+
+        describe('platformSummary', () => {
+            it('агрегирует GMV/выручку платформы(=комиссии)/заказы по всем вендорам', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([
+                    { gmv: 10000, platformRevenue: 750, orders: 5 },
+                ]);
+                const from = new Date('2026-01-01');
+                const to = new Date('2026-12-31');
+
+                const summary = await service.platformSummary(from, to);
+
+                expect(summary).toEqual({ gmv: 10000, platformRevenue: 750, orders: 5 });
+                const pipeline = vendorOrdersRepo.aggregate.mock.calls[0]?.[0] as Record<
+                    string,
+                    unknown
+                >[];
+                expect(pipeline[0]).toEqual({ $match: { createdAt: { $gte: from, $lte: to } } });
+            });
+
+            it('пустой результат → нули', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([]);
+                const summary = await service.platformSummary(new Date(), new Date());
+                expect(summary).toEqual({ gmv: 0, platformRevenue: 0, orders: 0 });
+            });
+        });
     });
 });
