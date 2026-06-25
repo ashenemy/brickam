@@ -1,5 +1,6 @@
 // Контракты и типы, общие для фич (фичи общаются только через domain-kit).
 export * from './@types';
+export * from './lib/ai.contract';
 export * from './lib/auth.contract';
 export * from './lib/loyalty.contract';
 export * from './lib/money';

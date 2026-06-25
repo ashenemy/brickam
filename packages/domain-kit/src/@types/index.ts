@@ -162,6 +162,46 @@ export type LoyaltyDiscountPreview = {
     tierId?: string;
 };
 
+/** Тема из строгого JSON-ответа LLM (Foundations §13). */
+export type AiThemeSpec = {
+    name: string;
+    materialCategories: string[];
+    keywords: string[];
+};
+
+/** Строгая JSON-схема ответа LLM на описание проекта. */
+export type AiQuerySpec = {
+    projectType: string;
+    themes: AiThemeSpec[];
+};
+
+/** Товар-результат гибридного подбора (вектор+ключевые слова). */
+export type ProductSearchHit = {
+    id: string;
+    slug: string;
+    title: LocalizedText;
+    finalPrice: number;
+    unit: string;
+    vendorId: string;
+    categoryId: string;
+    cover?: string;
+};
+
+/** Тема результата AI-поиска с пояснением и подобранными товарами. */
+export type AiSearchThemeResult = {
+    name: string;
+    explanation: string;
+    materialCategories: string[];
+    keywords: string[];
+    products: ProductSearchHit[];
+};
+
+/** Результат AI-поиска, сгруппированный по темам. */
+export type AiSearchResult = {
+    projectType: string;
+    themes: AiSearchThemeResult[];
+};
+
 /** Позиция инвойса. */
 export type InvoiceLineItem = {
     title: string;
