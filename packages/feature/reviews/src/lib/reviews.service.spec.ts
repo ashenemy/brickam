@@ -179,6 +179,22 @@ describe('ReviewsService', () => {
             const summary = await service.recomputeVendor('v1');
             expect(summary).toEqual({ ratingAvg: 4, ratingCount: 2 });
         });
+
+        it('денормализует рейтинг в vendors через контракт (если доступен)', async () => {
+            repo.findPublishedByVendor.mockResolvedValue([
+                makeReviewDoc({ rating: 4 }),
+                makeReviewDoc({ rating: 4 }),
+            ]);
+            const vendors = { createForOwner: vi.fn(), setRating: vi.fn() };
+            const withVendors = new ReviewsService(
+                repo as unknown as ReviewsRepository,
+                orders as unknown as OrdersServiceContract,
+                catalog as unknown as CatalogServiceContract,
+                vendors as never,
+            );
+            await withVendors.recomputeVendor('v1');
+            expect(vendors.setRating).toHaveBeenCalledWith('v1', 4, 2);
+        });
     });
 
     describe('setStatus', () => {

@@ -4,8 +4,12 @@ import {
     NotFoundException,
     ValidationException,
 } from '@brickam/core-kit';
-import { CatalogServiceContract, OrdersServiceContract } from '@brickam/domain-kit';
-import { Injectable } from '@nestjs/common';
+import {
+    CatalogServiceContract,
+    OrdersServiceContract,
+    VendorsServiceContract,
+} from '@brickam/domain-kit';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import type { RatingSummary, ReviewContract, ReviewListView, ReviewStatus } from '../@types';
 import type { CreateReviewDto } from './dto/review.dto';
 import { computeRating } from './rating.util';
@@ -24,6 +28,11 @@ export class ReviewsService {
         private readonly reviewsRepository: ReviewsRepository,
         private readonly orders: OrdersServiceContract,
         private readonly catalog: CatalogServiceContract,
+        // Денормализация рейтинга в документ вендора. Опционально: без vendors
+        // (изолированные тесты) — агрегат лишь отдаётся на чтение.
+        @Optional()
+        @Inject(VendorsServiceContract)
+        private readonly vendors?: VendorsServiceContract,
     ) {}
 
     /** Маппит документ отзыва в плоский контракт. */
@@ -98,13 +107,17 @@ export class ReviewsService {
     }
 
     /**
-     * Пересчитывает рейтинг вендора по опубликованным отзывам. Коллекции
-     * vendors пока нет — агрегат отдаётся на чтение.
-     * TODO: денормализация в vendors, когда появится фича.
+     * Пересчитывает рейтинг вендора по опубликованным отзывам и денормализует
+     * его в документ вендора через VendorsServiceContract (если доступен —
+     * инжектится опционально; иначе агрегат только отдаётся на чтение).
      */
     async recomputeVendor(vendorId: string): Promise<RatingSummary> {
         const reviews = await this.reviewsRepository.findPublishedByVendor(vendorId);
-        return computeRating(reviews.map((review) => review.rating));
+        const summary = computeRating(reviews.map((review) => review.rating));
+        if (this.vendors) {
+            await this.vendors.setRating(vendorId, summary.ratingAvg, summary.ratingCount);
+        }
+        return summary;
     }
 
     /**
