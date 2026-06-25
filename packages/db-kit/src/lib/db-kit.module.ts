@@ -17,6 +17,10 @@ export class DbKitModule {
                     inject: [AppConfigService],
                     useFactory: (config: AppConfigService) => ({
                         uri: config.database.mongoUri,
+                        // В проде индексы НЕ строятся автоматически на старте (долго и
+                        // блокирующе) — их создаёт миграция `npm run migrate`. В dev/test
+                        // autoIndex включён для удобства.
+                        autoIndex: !config.isProduction,
                     }),
                 }),
             ],
