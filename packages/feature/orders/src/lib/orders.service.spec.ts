@@ -3,6 +3,7 @@ import { ForbiddenException, NotFoundException, ValidationException } from '@bri
 import {
     type CatalogServiceContract,
     DeliveryStatus,
+    type LoyaltyServiceContract,
     OrderStatus,
     PaymentStatus,
     type PaymentsServiceContract,
@@ -87,6 +88,10 @@ describe('OrdersService', () => {
         confirm: ReturnType<typeof vi.fn>;
         getByOrder: ReturnType<typeof vi.fn>;
     };
+    let loyalty: {
+        previewDiscount: ReturnType<typeof vi.fn>;
+        recordCompletedOrder: ReturnType<typeof vi.fn>;
+    };
     let service: OrdersService;
 
     beforeEach(() => {
@@ -118,6 +123,11 @@ describe('OrdersService', () => {
             pagination: { maxPageSize: 50 },
         } as unknown as AppConfigService;
 
+        loyalty = {
+            previewDiscount: vi.fn().mockResolvedValue({ loyaltyDiscount: 0 }),
+            recordCompletedOrder: vi.fn().mockResolvedValue(undefined),
+        };
+
         service = new OrdersService(
             cartsRepo as unknown as CartsRepository,
             ordersRepo as unknown as OrdersRepository,
@@ -125,6 +135,7 @@ describe('OrdersService', () => {
             deliveryRepo as unknown as DeliveryAddressesRepository,
             catalog as unknown as CatalogServiceContract,
             payments as unknown as PaymentsServiceContract,
+            loyalty as unknown as LoyaltyServiceContract,
             config,
         );
     });

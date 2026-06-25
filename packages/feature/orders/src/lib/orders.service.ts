@@ -13,6 +13,7 @@ import {
     type DeliveryStatus,
     type InvoiceOrderInput,
     type InvoiceOrderResult,
+    LoyaltyServiceContract,
     type OrderLineInput,
     OrderStatus,
     OrdersServiceContract,
@@ -60,6 +61,7 @@ export class OrdersService implements OrdersServiceContract {
         private readonly deliveryAddressesRepository: DeliveryAddressesRepository,
         private readonly catalog: CatalogServiceContract,
         private readonly payments: PaymentsServiceContract,
+        private readonly loyalty: LoyaltyServiceContract,
         private readonly config: AppConfigService,
     ) {}
 
@@ -168,6 +170,14 @@ export class OrdersService implements OrdersServiceContract {
 
         const result = calculateOrder(lines, this.config.marketplace.commissionPercent);
 
+        // Скидка лояльности — по текущему уровню покупателя, от суммы после
+        // товарных скидок. Её несёт ПЛАТФОРМА: splits/комиссия/payout вендора НЕ
+        // меняются (комиссия посчитана ДО лояльности). Уменьшается только total,
+        // который платит покупатель.
+        const preview = await this.loyalty.previewDiscount(buyerId, result.total);
+        const loyaltyDiscount = Math.max(0, Math.min(preview.loyaltyDiscount, result.total));
+        const finalTotal = result.total - loyaltyDiscount;
+
         const orderNumber = generateOrderNumber();
         const orderDoc = await this.ordersRepository.create({
             orderNumber,
@@ -175,9 +185,10 @@ export class OrdersService implements OrdersServiceContract {
             status: OrderStatus.Created,
             subtotal: result.subtotal,
             productDiscountTotal: result.productDiscountTotal,
-            loyaltyDiscount: result.loyaltyDiscount,
-            total: result.total,
+            loyaltyDiscount,
+            total: finalTotal,
             currencyShown: this.config.marketplace.baseCurrency,
+            ...(preview.tierId !== undefined ? { loyaltyTierSnapshot: preview.tierId } : {}),
             deliveryAddressSnapshot: {
                 label: dto.deliveryAddress.label,
                 region: dto.deliveryAddress.region,
@@ -210,10 +221,12 @@ export class OrdersService implements OrdersServiceContract {
             await this.catalog.decrementStock(item.productId, item.qty);
         }
 
+        // Покупатель платит сумму после лояльности; разбивка по вендорам (splits)
+        // прежняя — скидку лояльности абсорбирует платформа из своей комиссии.
         const payment = await this.payments.createForOrder({
             orderId,
             buyerId,
-            amount: result.total,
+            amount: finalTotal,
             splits: result.splits,
         });
 
@@ -261,6 +274,11 @@ export class OrdersService implements OrdersServiceContract {
             });
         }
         const updated = await this.ordersRepository.updateById(orderId, { status });
+        // При завершении заказа растим метрику лояльности покупателя и
+        // пересчитываем уровень (loyalty пишет в users.loyalty + ledger).
+        if (status === OrderStatus.Completed) {
+            await this.loyalty.recordCompletedOrder(doc.buyerId, doc.total);
+        }
         return this.toOrderContract(updated ?? doc);
     }
 
