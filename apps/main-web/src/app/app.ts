@@ -4,6 +4,8 @@ import { Router, RouterModule } from '@angular/router';
 import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
 import { FooterComponent, NavbarComponent } from '@brickam/ui-kit';
 import { SessionStore } from './auth/session.store';
+import { CartStore } from './cart/cart.store';
+import { CartBadgeComponent } from './cart/cart-badge.component';
 import { ChatStore } from './chat/chat.store';
 import { ChatBadgeComponent } from './chat/chat-badge.component';
 import { CurrencyStore } from './currency/currency.store';
@@ -20,6 +22,7 @@ import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
         FooterComponent,
         LangSwitcherComponent,
         WishlistBadgeComponent,
+        CartBadgeComponent,
         ChatBadgeComponent,
         CurrencySwitcherComponent,
         LoyaltyBadgeComponent,
@@ -31,6 +34,7 @@ import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
 export class App implements OnInit {
     protected readonly wishlistStore = inject(WishlistStore);
     protected readonly session = inject(SessionStore);
+    private readonly cartStore = inject(CartStore);
     private readonly chatStore = inject(ChatStore);
     private readonly currencyStore = inject(CurrencyStore);
     private readonly loyaltyStore = inject(LoyaltyStore);
@@ -42,6 +46,7 @@ export class App implements OnInit {
         // load()/loadChats() глушат 401/ошибку через catchError и не падают.
         if (this.isBrowser) {
             this.wishlistStore.load();
+            this.cartStore.load();
             this.chatStore.loadChats();
             this.currencyStore.load();
             this.loyaltyStore.load();

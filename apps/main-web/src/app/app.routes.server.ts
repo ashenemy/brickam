@@ -20,6 +20,13 @@ export const serverRoutes: ServerRoute[] = [
     { path: 'loyalty', renderMode: RenderMode.Server },
     // Чат — требует токена и сокета; SSR on-demand, не пререндер.
     { path: 'chat', renderMode: RenderMode.Server },
+    // Корзина — данные требуют токена; SSR on-demand (у гостя пуста), не пререндер.
+    { path: 'cart', renderMode: RenderMode.Server },
+    // Оформление — приватное; SSR on-demand, не пререндер.
+    { path: 'checkout', renderMode: RenderMode.Server },
+    // Заказы — приватные, данные требуют токена; SSR on-demand, не пререндер.
+    { path: 'orders', renderMode: RenderMode.Server },
+    { path: 'orders/:id', renderMode: RenderMode.Server },
     // Остальное (включая :slug-параметры) — SSR, не пререндер.
     { path: '**', renderMode: RenderMode.Server },
 ];

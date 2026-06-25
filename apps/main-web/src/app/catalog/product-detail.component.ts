@@ -16,6 +16,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import { BreadcrumbComponent, ButtonComponent } from '@brickam/ui-kit';
+import { CartStore } from '../cart/cart.store';
 import { CurrencyDisplayPipe } from '../currency/currency-display.pipe';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
@@ -164,6 +165,7 @@ export class ProductDetailComponent implements OnDestroy {
     private readonly meta = inject(Meta);
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
+    private readonly cart = inject(CartStore);
 
     protected readonly lang = this.i18n.lang;
 
@@ -295,7 +297,10 @@ export class ProductDetailComponent implements OnDestroy {
     }
 
     protected addToCart(): void {
-        // Корзина подключится в следующем стейдже; пока no-op.
+        const p = this.product();
+        if (p) {
+            this.cart.addItem(p.id, 1);
+        }
     }
 
     protected ph(key: string): string {

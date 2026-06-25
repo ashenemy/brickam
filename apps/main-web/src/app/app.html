@@ -22,8 +22,19 @@
             style="font: var(--type-label)"
             >Calculators</a
         >
+        @if (session.isAuthenticated()) {
+            <a
+                href="/orders"
+                routerLink="/orders"
+                data-testid="nav-orders"
+                class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                style="font: var(--type-label)"
+                >My orders</a
+            >
+        }
         <app-loyalty-badge />
         <app-wishlist-badge />
+        <app-cart-badge />
         <app-chat-badge />
         <app-currency-switcher />
         <bh-lang-switcher />
