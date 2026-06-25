@@ -1,4 +1,4 @@
-import { OrdersServiceContract } from '@brickam/domain-kit';
+import { OrdersAnalyticsContract, OrdersServiceContract } from '@brickam/domain-kit';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { CartController } from './cart.controller';
@@ -39,7 +39,9 @@ import { VendorOrdersRepository } from './vendor-orders.repository';
         OrdersService,
         // Контракт для reviews: проверка завершённого vendor_order покупателя.
         { provide: OrdersServiceContract, useExisting: OrdersService },
+        // Контракт аналитики для analytics (Foundations §14): scoped по вендору.
+        { provide: OrdersAnalyticsContract, useExisting: OrdersService },
     ],
-    exports: [CartService, OrdersService, OrdersServiceContract],
+    exports: [CartService, OrdersService, OrdersServiceContract, OrdersAnalyticsContract],
 })
 export class OrdersModule {}

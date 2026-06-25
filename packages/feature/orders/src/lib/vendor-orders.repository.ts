@@ -15,4 +15,16 @@ export class VendorOrdersRepository extends BaseRepository<VendorOrder> {
     findByOrder(orderId: string): Promise<VendorOrderDocument[]> {
         return this.find({ orderId });
     }
+
+    /**
+     * Произвольный aggregate-пайплайн (для аналитики; типизация ослаблена —
+     * каждый этап формируется в OrdersService/OrdersAnalyticsContract).
+     */
+    aggregate<TResult = Record<string, unknown>>(
+        pipeline: Record<string, unknown>[],
+    ): Promise<TResult[]> {
+        return (
+            this.model as unknown as { aggregate: (p: unknown) => Promise<TResult[]> }
+        ).aggregate(pipeline);
+    }
 }

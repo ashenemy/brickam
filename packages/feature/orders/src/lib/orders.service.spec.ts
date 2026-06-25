@@ -77,6 +77,7 @@ describe('OrdersService', () => {
     let vendorOrdersRepo: {
         create: ReturnType<typeof vi.fn>;
         findById: ReturnType<typeof vi.fn>;
+        aggregate: ReturnType<typeof vi.fn>;
     };
     let deliveryRepo: { findByUser: ReturnType<typeof vi.fn> };
     let catalog: {
@@ -105,7 +106,7 @@ describe('OrdersService', () => {
             findById: vi.fn(),
             findByBuyer: vi.fn(),
         };
-        vendorOrdersRepo = { create: vi.fn(), findById: vi.fn() };
+        vendorOrdersRepo = { create: vi.fn(), findById: vi.fn(), aggregate: vi.fn() };
         deliveryRepo = { findByUser: vi.fn() };
         catalog = {
             getProductSnapshot: vi.fn((id: string) => Promise.resolve(snapshots[id] ?? null)),
@@ -534,6 +535,102 @@ describe('OrdersService', () => {
                 'Invoice',
             );
             expect(result.total).toBe(1000);
+        });
+    });
+
+    describe('OrdersAnalyticsContract', () => {
+        const from = new Date('2026-06-01T00:00:00.000Z');
+        const to = new Date('2026-06-30T23:59:59.999Z');
+
+        describe('vendorSummary', () => {
+            it('маппит строку агрегата и считает avgCheck=gmv/orders; период в $match', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([{ gmv: 1000, orders: 4 }]);
+
+                const summary = await service.vendorSummary('v1', from, to);
+
+                expect(summary).toEqual({ gmv: 1000, orders: 4, avgCheck: 250 });
+                const pipeline = vendorOrdersRepo.aggregate.mock.calls[0]?.[0] as Record<
+                    string,
+                    unknown
+                >[];
+                expect(pipeline[0]).toEqual({
+                    $match: { vendorId: 'v1', createdAt: { $gte: from, $lte: to } },
+                });
+            });
+
+            it('пустой агрегат → нули и avgCheck=0 (без деления на ноль)', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([]);
+
+                const summary = await service.vendorSummary('v1', from, to);
+
+                expect(summary).toEqual({ gmv: 0, orders: 0, avgCheck: 0 });
+            });
+        });
+
+        describe('revenueSeries', () => {
+            it('маппит {_id,gmv,orders} в {date,gmv,orders}; период в $match', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([
+                    { _id: '2026-06-01', gmv: 500, orders: 2 },
+                    { _id: '2026-06-02', gmv: 300, orders: 1 },
+                ]);
+
+                const series = await service.revenueSeries('v1', from, to);
+
+                expect(series).toEqual([
+                    { date: '2026-06-01', gmv: 500, orders: 2 },
+                    { date: '2026-06-02', gmv: 300, orders: 1 },
+                ]);
+                const pipeline = vendorOrdersRepo.aggregate.mock.calls[0]?.[0] as Record<
+                    string,
+                    unknown
+                >[];
+                expect(pipeline[0]).toEqual({
+                    $match: { vendorId: 'v1', createdAt: { $gte: from, $lte: to } },
+                });
+            });
+        });
+
+        describe('statusFunnel', () => {
+            it('маппит {_id,count} в {status,count}; $match только по vendorId', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([
+                    { _id: 'accepted', count: 3 },
+                    { _id: 'delivered', count: 5 },
+                ]);
+
+                const funnel = await service.statusFunnel('v1');
+
+                expect(funnel).toEqual([
+                    { status: 'accepted', count: 3 },
+                    { status: 'delivered', count: 5 },
+                ]);
+                const pipeline = vendorOrdersRepo.aggregate.mock.calls[0]?.[0] as Record<
+                    string,
+                    unknown
+                >[];
+                expect(pipeline[0]).toEqual({ $match: { vendorId: 'v1' } });
+            });
+        });
+
+        describe('topProducts', () => {
+            it('маппит {_id,qty,revenue} в {productId,qty,revenue}; $limit в пайплайне', async () => {
+                vendorOrdersRepo.aggregate.mockResolvedValue([
+                    { _id: 'p1', qty: 10, revenue: 1000 },
+                    { _id: 'p2', qty: 4, revenue: 200 },
+                ]);
+
+                const top = await service.topProducts('v1', 5);
+
+                expect(top).toEqual([
+                    { productId: 'p1', qty: 10, revenue: 1000 },
+                    { productId: 'p2', qty: 4, revenue: 200 },
+                ]);
+                const pipeline = vendorOrdersRepo.aggregate.mock.calls[0]?.[0] as Record<
+                    string,
+                    unknown
+                >[];
+                expect(pipeline).toContainEqual({ $match: { vendorId: 'v1' } });
+                expect(pipeline).toContainEqual({ $limit: 5 });
+            });
         });
     });
 });

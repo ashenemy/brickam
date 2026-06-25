@@ -6,6 +6,8 @@ import {
     ValidationException,
 } from '@brickam/core-kit';
 import {
+    type AnalyticsBucket,
+    type AnalyticsSummary,
     applyDiscount,
     CatalogServiceContract,
     calcCommission,
@@ -16,9 +18,12 @@ import {
     LoyaltyServiceContract,
     type OrderLineInput,
     OrderStatus,
+    OrdersAnalyticsContract,
     OrdersServiceContract,
     PaymentStatus,
     PaymentsServiceContract,
+    type StatusFunnelItem,
+    type TopProductItem,
     type VendorOrderForReview,
 } from '@brickam/domain-kit';
 import { Injectable } from '@nestjs/common';
@@ -53,7 +58,7 @@ const ORDER_TRANSITIONS: Readonly<Record<OrderStatus, readonly OrderStatus[]>> =
  * каждого вендора + один платёж с разбивкой splits[]. Эскроу нет.
  */
 @Injectable()
-export class OrdersService implements OrdersServiceContract {
+export class OrdersService implements OrdersServiceContract, OrdersAnalyticsContract {
     constructor(
         private readonly cartsRepository: CartsRepository,
         private readonly ordersRepository: OrdersRepository,
@@ -413,6 +418,75 @@ export class OrdersService implements OrdersServiceContract {
             data: page.data.map((doc) => this.toOrderContract(doc)),
             meta: page.meta,
         };
+    }
+
+    /**
+     * Сводка аналитики вендора за период (OrdersAnalyticsContract). GMV/заказы
+     * по саб-заказам вендора; средний чек = gmv/orders (0 при отсутствии заказов).
+     */
+    async vendorSummary(vendorId: string, from: Date, to: Date): Promise<AnalyticsSummary> {
+        const rows = await this.vendorOrdersRepository.aggregate<{
+            gmv: number;
+            orders: number;
+        }>([
+            { $match: { vendorId, createdAt: { $gte: from, $lte: to } } },
+            { $group: { _id: null, gmv: { $sum: '$subtotal' }, orders: { $sum: 1 } } },
+        ]);
+        const row = rows[0];
+        const gmv = row?.gmv ?? 0;
+        const orders = row?.orders ?? 0;
+        return { gmv, orders, avgCheck: orders === 0 ? 0 : gmv / orders };
+    }
+
+    /** Дневной временной ряд выручки вендора за период (OrdersAnalyticsContract). */
+    async revenueSeries(vendorId: string, from: Date, to: Date): Promise<AnalyticsBucket[]> {
+        const rows = await this.vendorOrdersRepository.aggregate<{
+            _id: string;
+            gmv: number;
+            orders: number;
+        }>([
+            { $match: { vendorId, createdAt: { $gte: from, $lte: to } } },
+            {
+                $group: {
+                    _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+                    gmv: { $sum: '$subtotal' },
+                    orders: { $sum: 1 },
+                },
+            },
+            { $sort: { _id: 1 } },
+        ]);
+        return rows.map((row) => ({ date: row._id, gmv: row.gmv, orders: row.orders }));
+    }
+
+    /** Воронка по статусам доставки саб-заказов вендора (OrdersAnalyticsContract). */
+    async statusFunnel(vendorId: string): Promise<StatusFunnelItem[]> {
+        const rows = await this.vendorOrdersRepository.aggregate<{
+            _id: string;
+            count: number;
+        }>([{ $match: { vendorId } }, { $group: { _id: '$deliveryStatus', count: { $sum: 1 } } }]);
+        return rows.map((row) => ({ status: row._id, count: row.count }));
+    }
+
+    /** Топ-товары вендора по проданному количеству (OrdersAnalyticsContract). */
+    async topProducts(vendorId: string, limit: number): Promise<TopProductItem[]> {
+        const rows = await this.vendorOrdersRepository.aggregate<{
+            _id: string;
+            qty: number;
+            revenue: number;
+        }>([
+            { $match: { vendorId } },
+            { $unwind: '$items' },
+            {
+                $group: {
+                    _id: '$items.productId',
+                    qty: { $sum: '$items.qty' },
+                    revenue: { $sum: '$items.lineTotal' },
+                },
+            },
+            { $sort: { qty: -1 } },
+            { $limit: limit },
+        ]);
+        return rows.map((row) => ({ productId: row._id, qty: row.qty, revenue: row.revenue }));
     }
 
     /** Грузит заказ и проверяет владельца (404 если нет, 403 если чужой). */
