@@ -43,6 +43,7 @@ export const configSchema = z.object({
     }),
     providers: z.object({
         sms: z.string().min(1),
+        email: z.string().min(1),
         llm: z.string().min(1),
         embeddings: z.string().min(1),
         image: z.string().min(1),
@@ -85,6 +86,17 @@ export const configSchema = z.object({
         s3PublicUrl: z.string().optional(),
         paymentApiKey: z.string().optional(),
         paymentMerchantId: z.string().optional(),
+        // ArCa (карточный VPOS, redirect-флоу)
+        arcaGatewayUrl: z.string().optional(),
+        arcaUsername: z.string().optional(),
+        arcaPassword: z.string().optional(),
+        // Idram (карты/кошелёк, redirect + callback с MD5-подписью)
+        idramGatewayUrl: z.string().optional(),
+        idramRecAccount: z.string().optional(),
+        idramSecretKey: z.string().optional(),
+        // Email (SES)
+        emailFrom: z.string().optional(),
+        sesRegion: z.string().optional(),
         exchangeRatesApiKey: z.string().optional(),
     }),
 });

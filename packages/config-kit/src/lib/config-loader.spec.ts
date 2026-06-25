@@ -32,6 +32,7 @@ commissionPercent = 7.5
 
 [providers]
 sms = "mock"
+email = "mock"
 llm = "anthropic"
 embeddings = "voyage"
 image = "fal"

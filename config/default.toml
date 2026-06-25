@@ -34,6 +34,7 @@ commissionPercent = 7.5    # комиссия с продавца, на сумм
 
 [providers]                # выбор реализации; ключи — в env
 sms = "mock"               # twilio | infobip | vonage | mock
+email = "mock"             # ses | mock
 llm = "anthropic"
 embeddings = "voyage"
 image = "fal"
