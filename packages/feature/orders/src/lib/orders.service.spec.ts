@@ -456,4 +456,73 @@ describe('OrdersService', () => {
             expect(result.data[0]?.total).toBe(2400);
         });
     });
+
+    describe('createFromInvoice', () => {
+        beforeEach(() => {
+            ordersRepo.create.mockImplementation((data: Record<string, unknown>) =>
+                Promise.resolve({ id: 'order1', _id: { toString: () => 'order1' }, ...data }),
+            );
+            vendorOrdersRepo.create.mockImplementation((data: Record<string, unknown>) =>
+                Promise.resolve({ id: 'vo1', _id: { toString: () => 'vo1' }, ...data }),
+            );
+            ordersRepo.updateById.mockResolvedValue(undefined);
+        });
+
+        it('считает заказ из инвойса со скидкой и комиссией §11', async () => {
+            const result = await service.createFromInvoice({
+                invoiceId: 'inv1',
+                buyerId: 'b1',
+                vendorId: 'v1',
+                lineItems: [
+                    { title: 'Цемент', qty: 2, price: 1000 },
+                    { title: 'Доставка', qty: 1, price: 500 },
+                ],
+                discount: { type: 'percent', value: 10 },
+                currency: 'AMD',
+            });
+
+            const orderArg = ordersRepo.create.mock.calls[0]?.[0] as Record<string, number>;
+            expect(orderArg['subtotal']).toBe(2500);
+            expect(orderArg['total']).toBe(2250); // 2500 − 10%
+            expect(orderArg['productDiscountTotal']).toBe(250);
+
+            const voArg = vendorOrdersRepo.create.mock.calls[0]?.[0] as Record<string, number>;
+            expect(voArg['subtotal']).toBe(2250);
+            expect(voArg['commissionAmount']).toBe(225);
+            expect(voArg['payoutAmount']).toBe(2025);
+
+            const payArg = payments.createForOrder.mock.calls[0]?.[0] as {
+                amount: number;
+                splits: Array<{ amount: number; commissionAmount: number; payoutAmount: number }>;
+            };
+            expect(payArg.amount).toBe(2250);
+            expect(payArg.splits[0]).toMatchObject({
+                amount: 2250,
+                commissionAmount: 225,
+                payoutAmount: 2025,
+            });
+            expect(result.total).toBe(2250);
+            expect(result.paymentId).toBe('pay1');
+            expect(result.orderNumber).toBeTruthy();
+        });
+
+        it('без скидки и без адреса — total=subtotal, дефолтный адрес', async () => {
+            const result = await service.createFromInvoice({
+                invoiceId: 'inv2',
+                buyerId: 'b1',
+                vendorId: 'v1',
+                lineItems: [{ title: 'Кирпич', qty: 10, price: 100 }],
+                currency: 'AMD',
+            });
+
+            const orderArg = ordersRepo.create.mock.calls[0]?.[0] as Record<string, unknown>;
+            expect(orderArg['subtotal']).toBe(1000);
+            expect(orderArg['total']).toBe(1000);
+            expect(orderArg['productDiscountTotal']).toBe(0);
+            expect((orderArg['deliveryAddressSnapshot'] as { label: string }).label).toBe(
+                'Invoice',
+            );
+            expect(result.total).toBe(1000);
+        });
+    });
 });
