@@ -15,6 +15,7 @@ import { InvoicesModule } from '@brickam/invoices';
 import { LoyaltyModule } from '@brickam/loyalty';
 import { NotificationsModule } from '@brickam/notifications';
 import { OrdersModule } from '@brickam/orders';
+import { PagesModule } from '@brickam/pages';
 import { PaymentsModule } from '@brickam/payments';
 import { ReviewsModule } from '@brickam/reviews';
 import { ServerKitModule } from '@brickam/server-kit';
@@ -80,6 +81,7 @@ import { HealthModule } from './health/health.module';
         AiAssistantModule,
         AuditModule,
         DisputesModule,
+        PagesModule,
         HealthModule,
     ],
 })
