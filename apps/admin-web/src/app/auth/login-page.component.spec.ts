@@ -51,6 +51,11 @@ describe('LoginPageComponent', () => {
             data: { tokens: { accessToken: 'a', refreshToken: 'r' } },
         });
 
+        // applyTokens() сразу тянет профиль с GET /auth/me — отвечаем заглушкой.
+        httpMock
+            .expectOne('http://api.test/api/auth/me')
+            .flush({ success: true, data: { id: 'u1', role: 'admin', permissions: [] } });
+
         expect(TestBed.inject(SessionStore).isAuthenticated()).toBe(true);
         expect(tokenStore.get()).toBe('a');
         expect(navSpy).toHaveBeenCalledWith(['/']);

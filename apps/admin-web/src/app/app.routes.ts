@@ -1,11 +1,12 @@
 import { Route } from '@angular/router';
-import { roleGuard } from '@brickam/config-kit/browser';
-import { authGuard } from './auth/auth.guard';
 import { LoginPageComponent } from './auth/login-page.component';
+import { roleGuard } from './auth/role.guard';
 import { ForbiddenComponent } from './forbidden.component';
 import { HomeComponent } from './home.component';
 
-const admin = [authGuard, roleGuard(['admin'])];
+// Все маршруты админки приватны. roleGuard сам редиректит на /login,
+// если не вошёл, и на /forbidden, если роль не admin.
+const admin = [roleGuard(['admin'])];
 
 export const appRoutes: Route[] = [
     { path: 'login', component: LoginPageComponent },

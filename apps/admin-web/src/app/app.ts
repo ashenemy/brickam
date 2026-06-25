@@ -1,4 +1,12 @@
-import { ChangeDetectionStrategy, Component, computed, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import {
+    ChangeDetectionStrategy,
+    Component,
+    computed,
+    inject,
+    type OnInit,
+    PLATFORM_ID,
+} from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { LangSwitcherComponent, LanguageService } from '@brickam/i18n-kit/browser';
 import { ButtonComponent, FooterComponent, NavbarComponent } from '@brickam/ui-kit';
@@ -51,13 +59,21 @@ const NAV: readonly AdminNavItem[] = [
         <bh-footer />
     `,
 })
-export class App {
+export class App implements OnInit {
     private readonly router = inject(Router);
     private readonly i18n = inject(LanguageService);
     private readonly session = inject(SessionStore);
+    private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
     /** Признак аутентификации — управляет навигацией/кнопками шелла. */
     protected readonly isAuthenticated = this.session.isAuthenticated;
+
+    ngOnInit(): void {
+        // Подтянуть роль из GET /auth/me, если сессия жива (после перезагрузки).
+        if (this.isBrowser && this.session.isAuthenticated()) {
+            this.session.loadProfile();
+        }
+    }
 
     /** Подписи для navbar: только когда вошли, иначе пусто (разделы скрыты). */
     protected readonly adminNav = computed(() =>

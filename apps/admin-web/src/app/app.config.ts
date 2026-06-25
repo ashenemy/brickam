@@ -1,7 +1,7 @@
 import { provideHttpClient, withFetch, withInterceptors } from '@angular/common/http';
 import { ApplicationConfig, provideBrowserGlobalErrorListeners } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideRole, provideRuntimeConfig } from '@brickam/config-kit/browser';
+import { provideRuntimeConfig } from '@brickam/config-kit/browser';
 import { appRoutes } from './app.routes';
 import { authInterceptor } from './auth/auth.interceptor';
 
@@ -12,7 +12,7 @@ export const appConfig: ApplicationConfig = {
         // HttpClient на fetch; authInterceptor добавляет Bearer-токен из TokenStore.
         provideHttpClient(withFetch(), withInterceptors([authInterceptor])),
         ...provideRuntimeConfig(),
-        // Гейт входа по роли (admin-web = администратор).
-        provideRole('admin'),
+        // Роль больше не задаётся статически: источник истины — SessionStore
+        // (GET /auth/me), roleGuard гейтит маршруты по реальной роли.
     ],
 };

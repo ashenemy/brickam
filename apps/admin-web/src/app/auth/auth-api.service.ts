@@ -22,6 +22,18 @@ export type LoginData = {
 };
 
 /**
+ * Профиль текущего пользователя (GET /auth/me). Роль — источник истины для
+ * гейта маршрутов: токен в httpOnly-cookie, JS его не читает, поэтому роль
+ * берётся с бэкенда, а не из JWT-декода.
+ */
+export type UserProfile = {
+    id: string;
+    role: string;
+    permissions: string[];
+    vendorId?: string;
+};
+
+/**
  * API аутентификации админки. Только вход — регистрации нет
  * (админ создаётся сидом/другим админом).
  */
@@ -38,6 +50,16 @@ export class AuthApiService {
     login(phone: string, password: string): Observable<LoginData> {
         return this.http
             .post<ApiResponse<LoginData>>(`${this.base}/auth/login`, { phone, password })
+            .pipe(map((res) => res.data));
+    }
+
+    /**
+     * Профиль текущего пользователя (роль/права). Доступ по cookie/Bearer —
+     * withCredentials шлёт httpOnly-cookie с токеном.
+     */
+    me(): Observable<UserProfile> {
+        return this.http
+            .get<ApiResponse<UserProfile>>(`${this.base}/auth/me`, { withCredentials: true })
             .pipe(map((res) => res.data));
     }
 

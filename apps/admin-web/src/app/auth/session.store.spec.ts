@@ -12,6 +12,7 @@ const CONFIG: RuntimeConfig = {
 };
 
 const AUTHED_KEY = 'buildhub.authed';
+const ME_URL = 'http://api.test/api/auth/me';
 
 describe('SessionStore', () => {
     let session: SessionStore;
@@ -37,22 +38,47 @@ describe('SessionStore', () => {
         localStorage.clear();
     });
 
+    /** applyTokens сразу дёргает /auth/me — отвечаем профилем админа. */
+    function flushMe(role = 'admin'): void {
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: true, data: { id: 'u1', role, permissions: [] } });
+    }
+
     it('токен НЕ персистится в localStorage (только в памяти)', () => {
         session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+        flushMe();
         expect(tokenStore.get()).toBe('a');
         expect(localStorage.getItem('buildhub.token')).toBeNull();
     });
 
-    it('applyTokens сохраняет accessToken, поднимает authed-флаг и isAuthenticated', () => {
+    it('applyTokens поднимает флаг, isAuthenticated и грузит роль из /auth/me', () => {
         expect(session.isAuthenticated()).toBe(false);
         session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+        flushMe('admin');
         expect(tokenStore.get()).toBe('a');
         expect(session.isAuthenticated()).toBe(true);
+        expect(session.role()).toBe('admin');
         expect(localStorage.getItem(AUTHED_KEY)).toBe('1');
     });
 
-    it('logout шлёт POST /auth/logout и чистит токен + флаг', () => {
+    it('loadProfile при 401 сбрасывает профиль и сессию, НЕ кидает', () => {
         session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: false, data: null }, { status: 401, statusText: 'Unauthorized' });
+        expect(session.role()).toBeNull();
+        expect(session.profile()).toBeNull();
+        expect(session.isAuthenticated()).toBe(false);
+    });
+
+    it('loadProfile без аутентификации не шлёт запрос', () => {
+        session.loadProfile();
+        httpMock.expectNone(ME_URL);
+        expect(session.profile()).toBeNull();
+    });
+
+    it('logout шлёт POST /auth/logout и чистит токен/флаг/профиль', () => {
+        session.applyTokens({ accessToken: 'a', refreshToken: 'r' });
+        flushMe();
 
         session.logout();
 
@@ -63,6 +89,7 @@ describe('SessionStore', () => {
 
         expect(tokenStore.get()).toBeNull();
         expect(session.isAuthenticated()).toBe(false);
+        expect(session.profile()).toBeNull();
         expect(localStorage.getItem(AUTHED_KEY)).toBeNull();
     });
 });

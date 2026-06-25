@@ -45,4 +45,21 @@ describe('AuthApiService', () => {
 
         expect(result?.tokens.accessToken).toBe('a');
     });
+
+    it('me шлёт GET /auth/me (withCredentials) и отдаёт профиль', () => {
+        let profile: { role: string } | undefined;
+        service.me().subscribe((p) => {
+            profile = p;
+        });
+
+        const req = httpMock.expectOne('http://api.test/api/auth/me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.withCredentials).toBe(true);
+        req.flush({
+            success: true,
+            data: { id: 'u1', role: 'admin', permissions: [] },
+        });
+
+        expect(profile?.role).toBe('admin');
+    });
 });
