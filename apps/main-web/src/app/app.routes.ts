@@ -1,9 +1,8 @@
 import { Route } from '@angular/router';
-import { roleGuard } from '@brickam/config-kit/browser';
 import { AiSearchPageComponent } from './ai-search/ai-search-page.component';
-import { authGuard } from './auth/auth.guard';
 import { LoginPageComponent } from './auth/login-page.component';
 import { RegisterPageComponent } from './auth/register-page.component';
+import { roleGuard } from './auth/role.guard';
 import { CalculatorsPageComponent } from './calculators/calculators-page.component';
 import { CartPageComponent } from './cart/cart-page.component';
 import { CatalogListComponent } from './catalog/catalog-list.component';
@@ -17,48 +16,26 @@ import { OrderDetailComponent } from './orders/order-detail.component';
 import { OrderHistoryComponent } from './orders/order-history.component';
 import { WishlistPageComponent } from './wishlist/wishlist-page.component';
 
+// Приватные маршруты покупателя: roleGuard сам редиректит на /login,
+// если не вошёл, и на /forbidden, если роль не buyer.
+const buyer = [roleGuard(['buyer'])];
+
 export const appRoutes: Route[] = [
-    { path: '', component: HomeComponent, canActivate: [roleGuard(['buyer'])] },
-    { path: 'catalog', component: CatalogListComponent, canActivate: [roleGuard(['buyer'])] },
-    { path: 'ai', component: AiSearchPageComponent, canActivate: [roleGuard(['buyer'])] },
-    {
-        path: 'calculators',
-        component: CalculatorsPageComponent,
-        canActivate: [roleGuard(['buyer'])],
-    },
-    {
-        path: 'product/:slug',
-        component: ProductDetailComponent,
-        canActivate: [roleGuard(['buyer'])],
-    },
-    {
-        path: 'wishlist',
-        component: WishlistPageComponent,
-        canActivate: [authGuard, roleGuard(['buyer'])],
-    },
-    {
-        path: 'loyalty',
-        component: LoyaltyPageComponent,
-        canActivate: [authGuard, roleGuard(['buyer'])],
-    },
-    { path: 'chat', component: ChatPageComponent, canActivate: [authGuard, roleGuard(['buyer'])] },
+    // Публичные витрины — доступны гостю, без гейта роли.
+    { path: '', component: HomeComponent },
+    { path: 'catalog', component: CatalogListComponent },
+    { path: 'ai', component: AiSearchPageComponent },
+    { path: 'calculators', component: CalculatorsPageComponent },
+    { path: 'product/:slug', component: ProductDetailComponent },
     // Корзина доступна без логина (у гостя пуста); оформление потребует авторизации.
-    { path: 'cart', component: CartPageComponent, canActivate: [roleGuard(['buyer'])] },
-    {
-        path: 'checkout',
-        component: CheckoutPageComponent,
-        canActivate: [authGuard, roleGuard(['buyer'])],
-    },
-    {
-        path: 'orders',
-        component: OrderHistoryComponent,
-        canActivate: [authGuard, roleGuard(['buyer'])],
-    },
-    {
-        path: 'orders/:id',
-        component: OrderDetailComponent,
-        canActivate: [authGuard, roleGuard(['buyer'])],
-    },
+    { path: 'cart', component: CartPageComponent },
+    // Приватные разделы покупателя.
+    { path: 'wishlist', component: WishlistPageComponent, canActivate: buyer },
+    { path: 'loyalty', component: LoyaltyPageComponent, canActivate: buyer },
+    { path: 'chat', component: ChatPageComponent, canActivate: buyer },
+    { path: 'checkout', component: CheckoutPageComponent, canActivate: buyer },
+    { path: 'orders', component: OrderHistoryComponent, canActivate: buyer },
+    { path: 'orders/:id', component: OrderDetailComponent, canActivate: buyer },
     { path: 'login', component: LoginPageComponent },
     { path: 'register', component: RegisterPageComponent },
     { path: 'forbidden', component: ForbiddenComponent },

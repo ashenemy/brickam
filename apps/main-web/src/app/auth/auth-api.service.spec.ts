@@ -68,4 +68,18 @@ describe('AuthApiService', () => {
         req.flush({ success: true, data: { tokens: TOKENS } });
         expect(result?.tokens.accessToken).toBe('acc');
     });
+
+    it('me шлёт GET /auth/me (withCredentials) и распаковывает профиль', () => {
+        let result: { role: string } | undefined;
+        service.me().subscribe((p) => (result = p));
+
+        const req = httpMock.expectOne('http://api.test/api/auth/me');
+        expect(req.request.method).toBe('GET');
+        expect(req.request.withCredentials).toBe(true);
+        req.flush({
+            success: true,
+            data: { id: 'u1', role: 'buyer', permissions: [] },
+        });
+        expect(result?.role).toBe('buyer');
+    });
 });

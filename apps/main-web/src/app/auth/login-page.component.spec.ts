@@ -61,6 +61,11 @@ describe('LoginPageComponent', () => {
         req.flush({ success: true, data: { tokens: { accessToken: 'acc', refreshToken: 'ref' } } });
         fixture.detectChanges();
 
+        // applyTokens() сразу тянет профиль с GET /auth/me — отвечаем заглушкой.
+        httpMock
+            .expectOne('http://api.test/api/auth/me')
+            .flush({ success: true, data: { id: 'u1', role: 'buyer', permissions: [] } });
+
         expect(tokenStore.get()).toBe('acc');
         expect(navSpy).toHaveBeenCalledWith(['/']);
     });

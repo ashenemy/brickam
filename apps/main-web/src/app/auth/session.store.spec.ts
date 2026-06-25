@@ -12,6 +12,7 @@ const CONFIG: RuntimeConfig = {
 };
 
 const AUTHED_KEY = 'buildhub.authed';
+const ME_URL = 'http://api.test/api/auth/me';
 
 describe('SessionStore', () => {
     let session: SessionStore;
@@ -37,8 +38,15 @@ describe('SessionStore', () => {
         localStorage.clear();
     });
 
+    /** applyTokens сразу дёргает /auth/me — отвечаем профилем покупателя. */
+    function flushMe(role = 'buyer'): void {
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: true, data: { id: 'u1', role, permissions: [] } });
+    }
+
     it('токен НЕ персистится в localStorage (только в памяти)', () => {
         session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe();
         expect(tokenStore.get()).toBe('acc');
         expect(localStorage.getItem('buildhub.token')).toBeNull();
     });
@@ -46,13 +54,37 @@ describe('SessionStore', () => {
     it('applyTokens кладёт accessToken, поднимает authed-флаг и isAuthenticated=true', () => {
         expect(session.isAuthenticated()).toBe(false);
         session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe();
         expect(tokenStore.get()).toBe('acc');
         expect(session.isAuthenticated()).toBe(true);
         expect(localStorage.getItem(AUTHED_KEY)).toBe('1');
     });
 
-    it('logout шлёт POST /auth/logout и чистит токен + флаг', () => {
+    it('applyTokens грузит профиль через /auth/me → появляется role', () => {
         session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe('buyer');
+        expect(session.role()).toBe('buyer');
+        expect(session.profile()?.id).toBe('u1');
+    });
+
+    it('loadProfile при ошибке (401) сбрасывает профиль и сессию, НЕ кидает', () => {
+        session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: false, data: null }, { status: 401, statusText: 'Unauthorized' });
+        expect(session.role()).toBeNull();
+        expect(session.profile()).toBeNull();
+        expect(session.isAuthenticated()).toBe(false);
+    });
+
+    it('loadProfile без аутентификации не шлёт запрос и держит profile=null', () => {
+        session.loadProfile();
+        httpMock.expectNone(ME_URL);
+        expect(session.profile()).toBeNull();
+    });
+
+    it('logout шлёт POST /auth/logout, чистит токен/флаг/профиль', () => {
+        session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe();
         expect(session.isAuthenticated()).toBe(true);
 
         session.logout();
@@ -64,6 +96,7 @@ describe('SessionStore', () => {
 
         expect(tokenStore.get()).toBeNull();
         expect(session.isAuthenticated()).toBe(false);
+        expect(session.profile()).toBeNull();
         expect(localStorage.getItem(AUTHED_KEY)).toBeNull();
     });
 });

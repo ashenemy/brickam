@@ -13,3 +13,15 @@ export type RegisterResult = {
 export type AuthResult = {
     tokens: AuthTokens;
 };
+
+/**
+ * Профиль текущего пользователя с эндпоинта GET /auth/me.
+ * Роль — источник истины для гейта маршрутов (токен в httpOnly-cookie,
+ * JS его не читает, поэтому роль берётся с бэкенда, а не из JWT-декода).
+ */
+export type UserProfile = {
+    id: string;
+    role: string;
+    permissions: string[];
+    vendorId?: string;
+};

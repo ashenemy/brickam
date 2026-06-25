@@ -45,6 +45,10 @@ export class App implements OnInit {
         // Подтягиваем счётчики вишлиста/чата и валюты при старте — только в браузере.
         // load()/loadChats() глушат 401/ошибку через catchError и не падают.
         if (this.isBrowser) {
+            // Подтянуть роль из GET /auth/me, если сессия жива (после перезагрузки).
+            if (this.session.isAuthenticated()) {
+                this.session.loadProfile();
+            }
             this.wishlistStore.load();
             this.cartStore.load();
             this.chatStore.loadChats();

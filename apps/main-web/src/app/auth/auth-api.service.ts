@@ -3,7 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { RUNTIME_CONFIG } from '@brickam/config-kit/browser';
 import { map, type Observable } from 'rxjs';
 import type { ApiResponse } from '../catalog/models';
-import type { AuthResult, RegisterResult } from './models';
+import type { AuthResult, RegisterResult, UserProfile } from './models';
 
 /**
  * Доступ к публичным auth-эндпоинтам бэкенда. База — RUNTIME_CONFIG.apiBaseUrl.
@@ -42,6 +42,16 @@ export class AuthApiService {
     login(phone: string, password: string): Observable<AuthResult> {
         return this.http
             .post<ApiResponse<AuthResult>>(`${this.base}/auth/login`, { phone, password })
+            .pipe(map((res) => res.data));
+    }
+
+    /**
+     * Профиль текущего пользователя (роль/права). Доступ по cookie/Bearer —
+     * withCredentials шлёт httpOnly-cookie с токеном.
+     */
+    me(): Observable<UserProfile> {
+        return this.http
+            .get<ApiResponse<UserProfile>>(`${this.base}/auth/me`, { withCredentials: true })
             .pipe(map((res) => res.data));
     }
 
