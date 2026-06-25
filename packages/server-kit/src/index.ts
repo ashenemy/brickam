@@ -22,6 +22,11 @@ export * from './lib/interceptors/request-context.interceptor';
 export * from './lib/interceptors/response-transform.interceptor';
 export * from './lib/interceptors/serialize.interceptor';
 export * from './lib/interceptors/timeout.interceptor';
+// kv
+export * from './lib/kv/in-memory-key-value.store';
+export * from './lib/kv/key-value.store';
+export * from './lib/kv/redis.module';
+export * from './lib/kv/redis-key-value.store';
 export * from './lib/pipes/validation';
 // module
 export * from './lib/server-kit.module';
