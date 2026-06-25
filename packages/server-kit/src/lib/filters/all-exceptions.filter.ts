@@ -9,6 +9,7 @@ import {
     Logger,
     Optional,
 } from '@nestjs/common';
+import * as Sentry from '@sentry/node';
 import type { RequestWithContext } from '../../@types';
 
 const STATUS_TO_CODE: Record<number, ErrorCode> = {
@@ -68,6 +69,11 @@ export class AllExceptionsFilter implements ExceptionFilter {
                 `${resolved.code} trace=${traceId ?? '-'}`,
                 exception instanceof Error ? exception.stack : String(exception),
             );
+            // Отправка в Sentry (no-op, если Sentry.init не вызван — напр. в dev/тестах
+            // без SENTRY_DSN). traceId связывает событие с логами/ответом.
+            Sentry.captureException(exception, {
+                tags: { traceId: traceId ?? 'none', code: resolved.code },
+            });
         }
 
         const error: ErrorEnvelope['error'] = {
