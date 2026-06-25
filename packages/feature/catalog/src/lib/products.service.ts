@@ -9,10 +9,11 @@ import {
     type ProductBulkView,
     type ProductSearchHit,
     type ProductSnapshot,
+    type TxSession,
 } from '@brickam/domain-kit';
 import { BaseCrudService } from '@brickam/server-kit';
 import { Injectable, Logger } from '@nestjs/common';
-import type { PipelineStage } from 'mongoose';
+import type { ClientSession, PipelineStage } from 'mongoose';
 import type { ProductDetail, ProductListItem } from '../@types';
 import { CategoriesRepository } from './categories.repository';
 import { computeFinalPrice } from './discount.util';
@@ -231,18 +232,18 @@ export class ProductsService
         };
     }
 
-    /** Списывает остаток с проверкой наличия (CatalogServiceContract). */
-    async decrementStock(productId: string, qty: number): Promise<void> {
-        const doc = await this.productsRepository.findById(productId);
+    /** Списывает остаток с проверкой наличия (CatalogServiceContract). В рамках
+     * транзакции checkout — при передаче session чтение и запись идут в ней. */
+    async decrementStock(productId: string, qty: number, session?: TxSession): Promise<void> {
+        const s = session as ClientSession | undefined;
+        const doc = await this.productsRepository.findById(productId, s);
         if (!doc) {
             throw new NotFoundException();
         }
         if (doc.stock < qty) {
             throw new ValidationException('errors.catalog.outOfStock', { productId });
         }
-        await this.productsRepository.updateById(productId, {
-            $inc: { stock: -qty },
-        } as never);
+        await this.productsRepository.updateById(productId, { $inc: { stock: -qty } } as never, s);
     }
 
     /**
