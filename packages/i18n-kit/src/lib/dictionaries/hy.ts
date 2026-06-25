@@ -52,6 +52,8 @@ export const hy: Dictionary = {
     'errors.admin.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'errors.pages.notFound': 'Էջը չի գտնվել',
     'errors.orders.noVendor': 'Վաճառողի պատվերները հասանելի են միայն վաճառողներին',
+    'errors.idempotency.keyConflict': 'Idempotency-Key-ը կրկնակի օգտագործվել է այլ հարցումով',
+    'errors.idempotency.inProgress': 'Այս Idempotency-Key-ով հարցումը դեռ մշակվում է',
     'errors.disputes.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'errors.audit.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'common.appName': 'BuildHub',

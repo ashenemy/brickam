@@ -52,6 +52,8 @@ export const en: Dictionary = {
     'errors.admin.notAdmin': 'Administrator role required',
     'errors.pages.notFound': 'Page not found',
     'errors.orders.noVendor': 'Vendor orders are available to vendors only',
+    'errors.idempotency.keyConflict': 'Idempotency-Key was reused with a different request',
+    'errors.idempotency.inProgress': 'A request with this Idempotency-Key is still being processed',
     'errors.disputes.notAdmin': 'Administrator role required',
     'errors.audit.notAdmin': 'Administrator role required',
     'common.appName': 'BuildHub',

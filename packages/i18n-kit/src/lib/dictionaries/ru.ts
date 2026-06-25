@@ -52,6 +52,8 @@ export const ru: Dictionary = {
     'errors.admin.notAdmin': 'Требуется роль администратора',
     'errors.pages.notFound': 'Страница не найдена',
     'errors.orders.noVendor': 'Заказы вендора доступны только продавцам',
+    'errors.idempotency.keyConflict': 'Idempotency-Key повторно использован с другим запросом',
+    'errors.idempotency.inProgress': 'Запрос с этим Idempotency-Key ещё обрабатывается',
     'errors.disputes.notAdmin': 'Требуется роль администратора',
     'errors.audit.notAdmin': 'Требуется роль администратора',
     'common.appName': 'BuildHub',
