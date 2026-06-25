@@ -3,7 +3,25 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/calc-kit/src",
     "projectType": "library",
-    "tags": ["type:kit", "scope:shared"],
-    "// targets": "to see all targets run: nx show project calc-kit --web",
-    "targets": {}
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/calc-kit",
+                "main": "packages/calc-kit/src/index.ts",
+                "tsConfig": "packages/calc-kit/tsconfig.lib.json",
+                "assets": ["packages/calc-kit/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/calc-kit",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:kit", "scope:shared"]
 }
