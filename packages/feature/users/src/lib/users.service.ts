@@ -1,5 +1,7 @@
 import {
     type CreateUserContract,
+    type LoyaltyMetric,
+    type LoyaltyUpdate,
     type UserContract,
     UsersServiceContract,
 } from '@brickam/domain-kit';
@@ -70,5 +72,31 @@ export class UsersService
 
     async updatePassword(id: string, passwordHash: string): Promise<void> {
         await this.usersRepository.updateById(id, { passwordHash });
+    }
+
+    /** Метрика лояльности покупателя (users.loyalty). */
+    async getLoyaltyMetric(userId: string): Promise<LoyaltyMetric> {
+        const doc = await this.usersRepository.findById(userId);
+        const loyalty = doc?.loyalty;
+        return {
+            totalSpend: loyalty?.totalSpend ?? 0,
+            totalOrders: loyalty?.totalOrders ?? 0,
+            ...(loyalty?.currentTierId !== undefined
+                ? { currentTierId: loyalty.currentTierId }
+                : {}),
+        };
+    }
+
+    /** Обновляет метрику лояльности покупателя (users.loyalty). */
+    async updateLoyalty(userId: string, update: LoyaltyUpdate): Promise<void> {
+        await this.usersRepository.updateById(userId, {
+            loyalty: {
+                totalSpend: update.totalSpend,
+                totalOrders: update.totalOrders,
+                ...(update.currentTierId !== undefined
+                    ? { currentTierId: update.currentTierId }
+                    : {}),
+            },
+        } as Partial<User>);
     }
 }
