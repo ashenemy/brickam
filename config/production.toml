@@ -1,3 +1,27 @@
+# ── Прод-оверлей поверх default.toml ──────────────────────────────────────────
+# Здесь — только НЕсекретные прод-настройки. Все ключи/пароли — в env
+# (AWS Secrets Manager), см. .env.example. ВПИШИТЕ свои значения, помеченные TODO.
+
+[server]
+# TODO: замените на ваши реальные домены (нужно для CORS + httpOnly-cookie).
+corsOrigins = [
+    "https://example.am",          # main-web (покупатели)
+    "https://vendor.example.am",   # vendor-web (продавцы)
+    "https://admin.example.am",    # admin-web (админка)
+]
+
 [providers]
-sms = "twilio"
-payment = "idram"
+sms = "twilio"        # SMS-OTP через Twilio (ключи TWILIO_* в env)
+email = "ses"         # письма через AWS SES (EMAIL_FROM/SES_REGION в env)
+payment = "idram"     # приём карт: "idram" или "arca" (ключи в env)
+storage = "s3"        # медиа в S3 (S3_* в env; на AWS — IAM-роль)
+video = "ffmpeg"      # рендер видео-обложек (ffmpeg есть в образе сервера)
+
+# Напоминание (через env / Secrets Manager):
+#   JWT_ACCESS_SECRET / JWT_REFRESH_SECRET — длинные случайные строки
+#   MONGO_URI — Atlas replica set (нужен для транзакций checkout)
+#   REDIS_URL — ElastiCache
+#   SITE_URL — https://<ваш-домен> (sitemap/SEO/return-url платежей)
+#   COOKIE_DOMAIN — .example.am (cookie на поддоменах)
+#   ARCA_* / IDRAM_* — параметры мерчанта PSP
+#   SENTRY_DSN, S3_*, ANTHROPIC_API_KEY/VOYAGE_API_KEY/FAL_API_KEY (если AI)
