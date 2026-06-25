@@ -5,5 +5,24 @@
     "projectType": "library",
     "tags": ["type:feature", "scope:server"],
     "// targets": "to see all targets run: nx show project vendor-bulk --web",
-    "targets": {}
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/vendor-bulk",
+                "main": "packages/feature/vendor-bulk/src/index.ts",
+                "tsConfig": "packages/feature/vendor-bulk/tsconfig.lib.json",
+                "assets": ["packages/feature/vendor-bulk/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/vendor-bulk",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    }
 }
