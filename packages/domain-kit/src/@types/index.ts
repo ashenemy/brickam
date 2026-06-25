@@ -239,6 +239,22 @@ export type MemberAccess = {
     role: string;
 };
 
+/** Запись аудита ключевого действия (audit_logs, §15). */
+export type AuditEntry = {
+    actorId: string;
+    action: string;
+    targetType?: string;
+    targetId?: string;
+    meta?: Record<string, unknown>;
+};
+
+/** Платформенная сводка для админ-аналитики (§14). */
+export type PlatformAnalyticsSummary = {
+    gmv: number;
+    platformRevenue: number;
+    orders: number;
+};
+
 /** Базовые промпт-шаблоны платформы (platform_settings.aiPrompts, §13). */
 export type AiPrompts = {
     description: string;

@@ -1,4 +1,4 @@
-import type { AiPrompts, MediaInput, ProductAiContext } from '../@types';
+import type { AiPrompts, AuditEntry, MediaInput, ProductAiContext } from '../@types';
 
 /**
  * Контракт настроек платформы (Foundations §13/§15). Реализует `catalog`
@@ -7,6 +7,20 @@ import type { AiPrompts, MediaInput, ProductAiContext } from '../@types';
 export abstract class PlatformSettingsContract {
     /** Базовые промпт-шаблоны (description/image/video) из platform_settings. */
     abstract getAiPrompts(): Promise<AiPrompts>;
+    /** Переопределение комиссии из настроек (null → использовать дефолт конфига). */
+    abstract getCommissionPercent(): Promise<number | null>;
+    /** Произвольная настройка по ключу (media-лимиты, бот-UA, и т.п.). */
+    abstract getSetting(key: string): Promise<Record<string, unknown> | null>;
+    /** Сохраняет/обновляет настройку (админ, §17). */
+    abstract saveSetting(key: string, value: Record<string, unknown>): Promise<void>;
+}
+
+/**
+ * Контракт аудита ключевых действий (Foundations §15). Реализует feature
+ * `audit`; админ-фичи пишут события только через контракт.
+ */
+export abstract class AuditServiceContract {
+    abstract record(entry: AuditEntry): Promise<void>;
 }
 
 /**

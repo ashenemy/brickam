@@ -1,6 +1,7 @@
 import type {
     AnalyticsBucket,
     AnalyticsSummary,
+    PlatformAnalyticsSummary,
     StatusFunnelItem,
     TopProductItem,
 } from '../@types';
@@ -19,4 +20,6 @@ export abstract class OrdersAnalyticsContract {
     abstract statusFunnel(vendorId: string): Promise<StatusFunnelItem[]>;
     /** Топ-товары вендора по продажам. */
     abstract topProducts(vendorId: string, limit: number): Promise<TopProductItem[]>;
+    /** Платформенная сводка (GMV, выручка платформы = комиссии, заказы) за период. */
+    abstract platformSummary(from: Date, to: Date): Promise<PlatformAnalyticsSummary>;
 }
