@@ -1,3 +1,5 @@
+import { AiKitModule } from '@brickam/ai-kit';
+import { AiSearchModule } from '@brickam/ai-search';
 import { AuthModule } from '@brickam/auth';
 import { CatalogModule } from '@brickam/catalog';
 import { ChatModule } from '@brickam/chat';
@@ -29,6 +31,8 @@ import { HealthModule } from './health/health.module';
         ScheduleModule.forRoot(),
         // Глобальные interceptors/filter/pipe платформы.
         ServerKitModule.forRoot(),
+        // AI-провайдеры (@Global): LlmProvider/EmbeddingProvider — до catalog/ai-search.
+        AiKitModule,
         // Фичи: templates → notifications → users → auth (контракты/guard'ы глобальные).
         TemplatesModule,
         NotificationsModule,
@@ -43,6 +47,7 @@ import { HealthModule } from './health/health.module';
         ChatModule,
         InvoicesModule,
         CurrencyModule,
+        AiSearchModule,
         HealthModule,
     ],
 })
