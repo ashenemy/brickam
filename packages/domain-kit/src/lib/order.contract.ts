@@ -8,13 +8,20 @@ import type {
 import type { PaymentStatus } from './order-status';
 
 /**
+ * Непрозрачный токен транзакционной сессии (Mongoose ClientSession). Объявлен
+ * как unknown, чтобы domain-kit не зависел от mongoose; реализации приводят тип.
+ * Когда передан — запись выполняется в рамках транзакции checkout (§11).
+ */
+export type TxSession = unknown;
+
+/**
  * Контракт каталога. Реализует feature `catalog`; `orders`/`reviews` зависят
  * только от контракта (не импортируют catalog напрямую).
  */
 export abstract class CatalogServiceContract {
     abstract getProductSnapshot(productId: string): Promise<ProductSnapshot | null>;
     /** Списывает остаток (проверяет наличие; недостаток → ошибка). */
-    abstract decrementStock(productId: string, qty: number): Promise<void>;
+    abstract decrementStock(productId: string, qty: number, session?: TxSession): Promise<void>;
     /** Проставляет агрегированный рейтинг товара (пересчёт в reviews, Stage 7). */
     abstract setProductRating(
         productId: string,
@@ -52,7 +59,7 @@ export type PaymentResult = {
  * на сумму заказа с разбивкой `splits[]` по вендорам (Foundations §11).
  */
 export abstract class PaymentsServiceContract {
-    abstract createForOrder(input: CreatePaymentInput): Promise<PaymentResult>;
+    abstract createForOrder(input: CreatePaymentInput, session?: TxSession): Promise<PaymentResult>;
     abstract confirm(paymentId: string): Promise<PaymentResult>;
     abstract getByOrder(orderId: string): Promise<{ id: string; status: PaymentStatus } | null>;
 }
