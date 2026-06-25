@@ -21,6 +21,18 @@ export type LoyaltyProgramView = {
     tiers: Tier[];
 };
 
+/** POJO создания программы из админ-конструктора (создаётся НЕ активной). */
+export type CreateProgramData = {
+    basis: LoyaltyBasis;
+    tiers: Tier[];
+};
+
+/** POJO частичного обновления программы. */
+export type UpdateProgramData = {
+    basis?: LoyaltyBasis;
+    tiers?: Tier[];
+};
+
 /**
  * Статус лояльности покупателя для UI: метрика, текущий уровень и
  * «сколько осталось» до следующего уровня (если он есть).

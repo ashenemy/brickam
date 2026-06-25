@@ -1,3 +1,4 @@
+import { NotFoundException } from '@brickam/core-kit';
 import {
     type LoyaltyBasis,
     type LoyaltyDiscountPreview,
@@ -6,9 +7,16 @@ import {
     UsersServiceContract,
 } from '@brickam/domain-kit';
 import { Injectable } from '@nestjs/common';
-import type { LoyaltyProgramView, LoyaltyStatusView, Tier } from '../@types';
+import type {
+    CreateProgramData,
+    LoyaltyProgramView,
+    LoyaltyStatusView,
+    Tier,
+    UpdateProgramData,
+} from '../@types';
 import { DEFAULT_PROGRAM } from './default-program';
 import { LoyaltyLedgerRepository } from './loyalty-ledger.repository';
+import type { LoyaltyProgramDocument } from './loyalty-program.schema';
 import { LoyaltyProgramsRepository } from './loyalty-programs.repository';
 import { computeLoyaltyDiscount, selectTier, tierId } from './tier.util';
 
@@ -42,6 +50,47 @@ export class LoyaltyService implements LoyaltyServiceContract {
                 discountValue: tier.discountValue,
             })),
         };
+    }
+
+    /** Все программы (админ-конструктор). */
+    listPrograms(): Promise<LoyaltyProgramDocument[]> {
+        return this.programs.findAllPrograms();
+    }
+
+    /** Создаёт программу (по умолчанию НЕ активна). */
+    createProgram(dto: CreateProgramData): Promise<LoyaltyProgramDocument> {
+        return this.programs.create({
+            basis: dto.basis,
+            tiers: dto.tiers,
+            active: false,
+        }) as unknown as Promise<LoyaltyProgramDocument>;
+    }
+
+    /** Обновляет программу по id (basis/tiers). */
+    async updateProgram(id: string, dto: UpdateProgramData): Promise<LoyaltyProgramDocument> {
+        const updated = await this.programs.updateById(id, {
+            ...(dto.basis !== undefined ? { basis: dto.basis } : {}),
+            ...(dto.tiers !== undefined ? { tiers: dto.tiers } : {}),
+        });
+        if (!updated) {
+            throw new NotFoundException();
+        }
+        return updated;
+    }
+
+    /**
+     * Активирует программу `id`: сначала снимает active со всех (`deactivateAll`),
+     * затем ставит active этой — гарантирует ровно одну активную. Кеша нет:
+     * `getActiveProgram` читает `findActive` из БД, поэтому новая программа сразу
+     * применяется к скидке покупателя на следующем заказе.
+     */
+    async activateProgram(id: string): Promise<LoyaltyProgramDocument> {
+        await this.programs.deactivateAll();
+        const activated = await this.programs.setActive(id, true);
+        if (!activated) {
+            throw new NotFoundException();
+        }
+        return activated;
     }
 
     /** Значение метрики по basis программы. */

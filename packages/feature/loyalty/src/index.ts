@@ -4,6 +4,7 @@ export * from './lib/dto/loyalty.dto';
 export * from './lib/loyalty.controller';
 export * from './lib/loyalty.module';
 export * from './lib/loyalty.service';
+export * from './lib/loyalty-admin.controller';
 export * from './lib/loyalty-ledger.repository';
 export * from './lib/loyalty-ledger.schema';
 export * from './lib/loyalty-program.schema';

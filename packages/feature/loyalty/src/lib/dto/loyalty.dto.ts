@@ -1,10 +1,22 @@
 import type { LoyaltyBasis, LoyaltyMetric } from '@brickam/domain-kit';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { Type } from 'class-transformer';
+import {
+    IsArray,
+    IsIn,
+    IsNumber,
+    IsOptional,
+    IsString,
+    Min,
+    ValidateNested,
+} from 'class-validator';
 import type {
+    CreateProgramData,
     LoyaltyDiscountType,
     LoyaltyProgramView,
     LoyaltyStatusView,
     Tier,
+    UpdateProgramData,
 } from '../../@types';
 
 /** Swagger-модель уровня программы лояльности. */
@@ -43,4 +55,57 @@ export class LoyaltyStatusDto implements LoyaltyStatusView {
     nextTier?: Tier;
     @ApiProperty({ required: false, description: 'Сколько осталось до следующего уровня' })
     toNext?: number;
+}
+
+/** Входной уровень программы (админ-конструктор). */
+export class TierInputDto implements Tier {
+    @ApiProperty({ description: 'Номер уровня' })
+    @IsNumber()
+    level!: number;
+
+    @ApiProperty({ description: 'Название уровня' })
+    @IsString()
+    name!: string;
+
+    @ApiProperty({ description: 'Минимальная метрика для уровня' })
+    @IsNumber()
+    @Min(0)
+    threshold!: number;
+
+    @ApiProperty({ description: 'Тип скидки', enum: ['percent', 'amount'] })
+    @IsIn(['percent', 'amount'])
+    discountType!: LoyaltyDiscountType;
+
+    @ApiProperty({ description: 'Значение скидки (% или AMD)' })
+    @IsNumber()
+    @Min(0)
+    discountValue!: number;
+}
+
+/** Создание программы лояльности (админ). Создаётся НЕ активной. */
+export class CreateProgramDto implements CreateProgramData {
+    @ApiProperty({ description: 'Основа расчёта', enum: ['total_spend', 'order_count'] })
+    @IsIn(['total_spend', 'order_count'])
+    basis!: LoyaltyBasis;
+
+    @ApiProperty({ type: [TierInputDto], description: 'Уровни программы' })
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TierInputDto)
+    tiers!: Tier[];
+}
+
+/** Частичное обновление программы лояльности (админ). */
+export class UpdateProgramDto implements UpdateProgramData {
+    @ApiPropertyOptional({ enum: ['total_spend', 'order_count'] })
+    @IsOptional()
+    @IsIn(['total_spend', 'order_count'])
+    basis?: LoyaltyBasis;
+
+    @ApiPropertyOptional({ type: [TierInputDto] })
+    @IsOptional()
+    @IsArray()
+    @ValidateNested({ each: true })
+    @Type(() => TierInputDto)
+    tiers?: Tier[];
 }

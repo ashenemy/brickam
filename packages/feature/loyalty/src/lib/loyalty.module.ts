@@ -3,6 +3,7 @@ import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { LoyaltyController } from './loyalty.controller';
 import { LoyaltyService } from './loyalty.service';
+import { LoyaltyAdminController } from './loyalty-admin.controller';
 import { LoyaltyLedgerRepository } from './loyalty-ledger.repository';
 import { LoyaltyLedger, LoyaltyLedgerSchema } from './loyalty-ledger.schema';
 import { LoyaltyProgram, LoyaltyProgramSchema } from './loyalty-program.schema';
@@ -21,7 +22,7 @@ import { LoyaltyProgramsRepository } from './loyalty-programs.repository';
             { name: LoyaltyLedger.name, schema: LoyaltyLedgerSchema },
         ]),
     ],
-    controllers: [LoyaltyController],
+    controllers: [LoyaltyController, LoyaltyAdminController],
     providers: [
         LoyaltyProgramsRepository,
         LoyaltyLedgerRepository,

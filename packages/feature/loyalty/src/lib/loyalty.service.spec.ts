@@ -19,6 +19,11 @@ const makeProgramDoc = (over: Record<string, unknown> = {}) => ({
 describe('LoyaltyService', () => {
     let programs: {
         findActive: ReturnType<typeof vi.fn>;
+        findAllPrograms: ReturnType<typeof vi.fn>;
+        create: ReturnType<typeof vi.fn>;
+        updateById: ReturnType<typeof vi.fn>;
+        deactivateAll: ReturnType<typeof vi.fn>;
+        setActive: ReturnType<typeof vi.fn>;
     };
     let ledger: { create: ReturnType<typeof vi.fn> };
     let users: {
@@ -34,7 +39,14 @@ describe('LoyaltyService', () => {
     });
 
     beforeEach(() => {
-        programs = { findActive: vi.fn().mockResolvedValue(null) };
+        programs = {
+            findActive: vi.fn().mockResolvedValue(null),
+            findAllPrograms: vi.fn().mockResolvedValue([]),
+            create: vi.fn().mockResolvedValue({ id: 'p1' }),
+            updateById: vi.fn().mockResolvedValue({ id: 'p1' }),
+            deactivateAll: vi.fn().mockResolvedValue(undefined),
+            setActive: vi.fn().mockResolvedValue({ id: 'p1', active: true }),
+        };
         ledger = { create: vi.fn().mockResolvedValue(undefined) };
         users = {
             getLoyaltyMetric: vi.fn().mockResolvedValue(metric()),
@@ -180,6 +192,49 @@ describe('LoyaltyService', () => {
             expect(status.currentTier?.level).toBe(3);
             expect(status.nextTier).toBeUndefined();
             expect(status.toNext).toBeUndefined();
+        });
+    });
+
+    describe('admin: конструктор программ', () => {
+        it('listPrograms делегирует репозиторию', async () => {
+            const items = [{ id: 'p1' }];
+            programs.findAllPrograms.mockResolvedValue(items);
+            expect(await service.listPrograms()).toBe(items);
+        });
+
+        it('createProgram создаёт НЕ активную программу', async () => {
+            await service.createProgram({ basis: 'total_spend', tiers: [] });
+            expect(programs.create).toHaveBeenCalledWith(
+                expect.objectContaining({ basis: 'total_spend', active: false }),
+            );
+        });
+
+        it('updateProgram обновляет по id', async () => {
+            programs.updateById.mockResolvedValue({ id: 'p1', basis: 'order_count' });
+            await service.updateProgram('p1', { basis: 'order_count' });
+            expect(programs.updateById).toHaveBeenCalledWith(
+                'p1',
+                expect.objectContaining({ basis: 'order_count' }),
+            );
+        });
+
+        it('activateProgram деактивирует прочие и активирует одну', async () => {
+            await service.activateProgram('p1');
+            expect(programs.deactivateAll).toHaveBeenCalledTimes(1);
+            expect(programs.setActive).toHaveBeenCalledWith('p1', true);
+            // deactivateAll должен вызваться ДО setActive (ровно одна active).
+            expect(programs.deactivateAll.mock.invocationCallOrder[0]).toBeLessThan(
+                programs.setActive.mock.invocationCallOrder[0] as number,
+            );
+        });
+
+        it('после activate getActiveProgram видит НОВУЮ активную (findActive из БД)', async () => {
+            await service.activateProgram('p1');
+            programs.findActive.mockResolvedValue(
+                makeProgramDoc({ basis: 'order_count', tiers: [] }),
+            );
+            const active = await service.getActiveProgram();
+            expect(active.basis).toBe('order_count');
         });
     });
 });

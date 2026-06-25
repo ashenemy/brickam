@@ -15,4 +15,21 @@ export class LoyaltyProgramsRepository extends BaseRepository<LoyaltyProgram> {
     findActive(): Promise<LoyaltyProgramDocument | null> {
         return this.findOne({ active: true });
     }
+
+    /** Все программы (админ-конструктор), новые сверху. */
+    findAllPrograms(): Promise<LoyaltyProgramDocument[]> {
+        return this.find({}, { sort: { createdAt: -1 } }) as unknown as Promise<
+            LoyaltyProgramDocument[]
+        >;
+    }
+
+    /** Снимает флаг active со всех программ (перед активацией одной). */
+    async deactivateAll(): Promise<void> {
+        await this.model.updateMany({ active: true }, { $set: { active: false } }).exec();
+    }
+
+    /** Ставит флаг active программе по id. */
+    setActive(id: string, active: boolean): Promise<LoyaltyProgramDocument | null> {
+        return this.updateById(id, { active });
+    }
 }
