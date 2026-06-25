@@ -1,0 +1,27 @@
+{
+    "name": "idempotency",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/feature/idempotency/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/idempotency",
+                "main": "packages/feature/idempotency/src/index.ts",
+                "tsConfig": "packages/feature/idempotency/tsconfig.lib.json",
+                "assets": ["packages/feature/idempotency/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/idempotency",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:feature", "scope:server"]
+}
