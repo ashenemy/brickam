@@ -7,7 +7,7 @@ import {
 import { DEFAULT_LANG, type Lang, SUPPORTED_LANGS } from '@brickam/i18n-kit';
 import { BaseCrudService } from '@brickam/server-kit';
 import { Injectable, Logger, type OnModuleInit } from '@nestjs/common';
-import type { CreateTemplateData, UpdateTemplateData } from '../@types';
+import type { CreateTemplateData, UpdateTemplateData, UpsertTemplateData } from '../@types';
 import { DEFAULT_TEMPLATES } from './default-templates';
 import type { Template } from './template.schema';
 import { TemplateRenderer } from './template-renderer';
@@ -85,6 +85,54 @@ export class TemplatesService
             throw new NotFoundException();
         }
         return updated as unknown as Template;
+    }
+
+    /** Список всех шаблонов (админ-редактор, без пагинации). */
+    list(): Promise<Template[]> {
+        return this.templatesRepository.find() as unknown as Promise<Template[]>;
+    }
+
+    /**
+     * Создаёт или обновляет шаблон по ключу (админ-редактор). Если шаблона нет —
+     * создаёт; иначе обновляет content/variables/subject?/type с bump'ом версии.
+     */
+    async upsert(key: string, dto: UpsertTemplateData): Promise<Template> {
+        const existing = await this.templatesRepository.findByKey(key);
+        if (!existing) {
+            const created = await this.templatesRepository.create({
+                key,
+                name: dto.name ?? key,
+                type: dto.type ?? 'email',
+                content: dto.content,
+                variables: dto.variables ?? [],
+                ...(dto.subject !== undefined ? { subject: dto.subject } : {}),
+                isActive: dto.isActive ?? true,
+                version: 1,
+            } as Partial<Template>);
+            return created as unknown as Template;
+        }
+        const updated = await this.templatesRepository.updateById(existing.id, {
+            ...(dto.content !== undefined ? { content: dto.content } : {}),
+            ...(dto.variables !== undefined ? { variables: dto.variables } : {}),
+            ...(dto.subject !== undefined ? { subject: dto.subject } : {}),
+            ...(dto.type !== undefined ? { type: dto.type } : {}),
+            ...(dto.name !== undefined ? { name: dto.name } : {}),
+            ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
+            version: (existing.version ?? 1) + 1,
+        });
+        if (!updated) {
+            throw new NotFoundException();
+        }
+        return updated as unknown as Template;
+    }
+
+    /**
+     * Превью рендера шаблона: рендерит шаблон по ключу с переданными значениями
+     * переменных (подстановка `{{name}}` → значение через Handlebars). Возвращает
+     * {subject?, body}. То же поведение, что у `renderByKey`.
+     */
+    previewRender(key: string, lang: string, sampleVars: TemplateVars): Promise<RenderedTemplate> {
+        return this.renderByKey(key, lang, sampleVars);
     }
 
     /** Удаляет шаблон по ключу (админ). */

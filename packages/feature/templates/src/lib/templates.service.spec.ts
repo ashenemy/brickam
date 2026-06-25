@@ -28,6 +28,7 @@ describe('TemplatesService', () => {
         create: ReturnType<typeof vi.fn>;
         updateById: ReturnType<typeof vi.fn>;
         deleteById: ReturnType<typeof vi.fn>;
+        find: ReturnType<typeof vi.fn>;
     };
     let service: TemplatesService;
 
@@ -37,6 +38,7 @@ describe('TemplatesService', () => {
             create: vi.fn(),
             updateById: vi.fn(),
             deleteById: vi.fn(),
+            find: vi.fn(),
         };
         service = new TemplatesService(
             repo as unknown as TemplatesRepository,
@@ -145,5 +147,128 @@ describe('TemplatesService', () => {
     it('onModuleInit не падает при ошибке Mongo', async () => {
         repo.findByKey.mockRejectedValue(new Error('no mongo'));
         await expect(service.onModuleInit()).resolves.toBeUndefined();
+    });
+
+    it('list делегирует репозиторию find', async () => {
+        const items = [makeTemplate()];
+        repo.find.mockResolvedValue(items);
+        expect(await service.list()).toBe(items);
+        expect(repo.find).toHaveBeenCalled();
+    });
+
+    it('upsert создаёт новый шаблон, если его нет', async () => {
+        repo.findByKey.mockResolvedValue(null);
+        repo.create.mockImplementation((d) => Promise.resolve(d));
+        const created = await service.upsert('greet', {
+            content: { hy: '', ru: '{{name}}', en: '' },
+            variables: ['name'],
+            type: 'sms',
+        });
+        expect(repo.create).toHaveBeenCalledWith(
+            expect.objectContaining({ key: 'greet', variables: ['name'], version: 1 }),
+        );
+        expect((created as { key: string }).key).toBe('greet');
+    });
+
+    it('upsert обновляет существующий шаблон с bump версии', async () => {
+        repo.findByKey.mockResolvedValue(makeTemplate({ version: 2 }));
+        repo.updateById.mockResolvedValue(makeTemplate({ version: 3 }));
+        await service.upsert('auth.otp', {
+            content: { hy: 'a', ru: 'b', en: 'c' },
+            variables: ['code'],
+        });
+        expect(repo.updateById).toHaveBeenCalledWith(
+            't1',
+            expect.objectContaining({ version: 3, variables: ['code'] }),
+        );
+    });
+
+    it('upsert при создании заполняет дефолты (name=key, type=email, vars=[])', async () => {
+        repo.findByKey.mockResolvedValue(null);
+        repo.create.mockImplementation((d) => Promise.resolve(d));
+        await service.upsert('news', { content: { hy: 'a', ru: 'b', en: 'c' } });
+        expect(repo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                name: 'news',
+                type: 'email',
+                variables: [],
+                isActive: true,
+            }),
+        );
+    });
+
+    it('upsert при создании сохраняет subject/isActive из dto', async () => {
+        repo.findByKey.mockResolvedValue(null);
+        repo.create.mockImplementation((d) => Promise.resolve(d));
+        await service.upsert('mail', {
+            content: { hy: 'a', ru: 'b', en: 'c' },
+            subject: { hy: 's', ru: 's', en: 's' },
+            isActive: false,
+            name: 'Mail',
+        });
+        expect(repo.create).toHaveBeenCalledWith(
+            expect.objectContaining({
+                subject: { hy: 's', ru: 's', en: 's' },
+                isActive: false,
+                name: 'Mail',
+            }),
+        );
+    });
+
+    it('upsert обновляет subject/type/name/isActive выборочно', async () => {
+        repo.findByKey.mockResolvedValue(makeTemplate({ version: 1 }));
+        repo.updateById.mockResolvedValue(makeTemplate({ version: 2 }));
+        await service.upsert('auth.otp', {
+            content: { hy: 'a', ru: 'b', en: 'c' },
+            subject: { hy: 's', ru: 's', en: 's' },
+            type: 'email',
+            name: 'New',
+            isActive: false,
+        });
+        expect(repo.updateById).toHaveBeenCalledWith(
+            't1',
+            expect.objectContaining({
+                subject: { hy: 's', ru: 's', en: 's' },
+                type: 'email',
+                name: 'New',
+                isActive: false,
+                version: 2,
+            }),
+        );
+    });
+
+    it('upsert бросает NotFound, если updateById вернул null', async () => {
+        repo.findByKey.mockResolvedValue(makeTemplate());
+        repo.updateById.mockResolvedValue(null);
+        await expect(
+            service.upsert('auth.otp', { content: { hy: 'a', ru: 'b', en: 'c' } }),
+        ).rejects.toBeInstanceOf(NotFoundException);
+    });
+
+    it('previewRender рендерит subject для email-шаблона', async () => {
+        repo.findByKey.mockResolvedValue(
+            makeTemplate({
+                key: 'order',
+                type: 'email',
+                subject: { hy: '{{n}}', ru: 'Заказ {{n}}', en: '{{n}}' },
+                content: { hy: '{{n}}', ru: 'Тело {{n}}', en: '{{n}}' },
+                variables: ['n'],
+            }),
+        );
+        const result = await service.previewRender('order', 'ru', { n: '5' });
+        expect(result.subject).toBe('Заказ 5');
+        expect(result.body).toBe('Тело 5');
+    });
+
+    it('previewRender подставляет переменные (рендер {{name}} → значение)', async () => {
+        repo.findByKey.mockResolvedValue(
+            makeTemplate({
+                key: 'greet',
+                content: { hy: 'Բարև {{name}}', ru: 'Привет {{name}}', en: 'Hi {{name}}' },
+                variables: ['name'],
+            }),
+        );
+        const result = await service.previewRender('greet', 'ru', { name: 'Вася' });
+        expect(result.body).toBe('Привет Вася');
     });
 });

@@ -6,6 +6,7 @@ import { TemplateRenderer } from './template-renderer';
 import { TemplatesController } from './templates.controller';
 import { TemplatesRepository } from './templates.repository';
 import { TemplatesService } from './templates.service';
+import { TemplatesAdminController } from './templates-admin.controller';
 
 /**
  * Глобальный модуль шаблонов (Foundations §10). Биндит `TemplatesService` к
@@ -15,7 +16,7 @@ import { TemplatesService } from './templates.service';
 @Global()
 @Module({
     imports: [MongooseModule.forFeature([{ name: Template.name, schema: TemplateSchema }])],
-    controllers: [TemplatesController],
+    controllers: [TemplatesController, TemplatesAdminController],
     providers: [
         TemplatesRepository,
         TemplateRenderer,

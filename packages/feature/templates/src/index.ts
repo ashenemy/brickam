@@ -7,3 +7,4 @@ export * from './lib/templates.controller';
 export * from './lib/templates.module';
 export * from './lib/templates.repository';
 export * from './lib/templates.service';
+export * from './lib/templates-admin.controller';

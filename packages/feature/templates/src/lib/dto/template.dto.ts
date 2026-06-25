@@ -1,7 +1,15 @@
-import type { LocalizedText, TemplateType } from '@brickam/domain-kit';
+import type { LocalizedText, TemplateType, TemplateVars } from '@brickam/domain-kit';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator';
+import {
+    IsArray,
+    IsBoolean,
+    IsIn,
+    IsObject,
+    IsOptional,
+    IsString,
+    ValidateNested,
+} from 'class-validator';
 
 /** Мультиязычный текст в DTO. */
 export class LocalizedTextDto implements LocalizedText {
@@ -93,4 +101,50 @@ export class UpdateTemplateDto {
     @IsOptional()
     @IsString()
     updatedBy?: string;
+}
+
+/** Upsert шаблона из админ-редактора (PUT /admin/templates/:key). */
+export class UpsertTemplateDto {
+    @ApiProperty({ type: LocalizedTextDto, description: 'Тело шаблона по локалям' })
+    @ValidateNested()
+    @Type(() => LocalizedTextDto)
+    content!: LocalizedTextDto;
+
+    @ApiPropertyOptional({ type: [String], description: 'Белый список переменных' })
+    @IsOptional()
+    @IsArray()
+    @IsString({ each: true })
+    variables?: string[];
+
+    @ApiPropertyOptional({ type: LocalizedTextDto, description: 'Тема (для email)' })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => LocalizedTextDto)
+    subject?: LocalizedTextDto;
+
+    @ApiPropertyOptional({ enum: ['email', 'sms'], description: 'Канал шаблона' })
+    @IsOptional()
+    @IsIn(['email', 'sms'])
+    type?: TemplateType;
+
+    @ApiPropertyOptional({ description: 'Человекочитаемое имя' })
+    @IsOptional()
+    @IsString()
+    name?: string;
+
+    @ApiPropertyOptional({ description: 'Активен ли шаблон' })
+    @IsOptional()
+    @IsBoolean()
+    isActive?: boolean;
+}
+
+/** Тело превью рендера (POST /admin/templates/:key/preview). */
+export class PreviewTemplateDto {
+    @ApiProperty({ description: 'Язык рендера', example: 'ru' })
+    @IsString()
+    lang!: string;
+
+    @ApiProperty({ description: 'Значения переменных для подстановки', type: Object })
+    @IsObject()
+    vars!: TemplateVars;
 }

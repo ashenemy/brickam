@@ -16,6 +16,19 @@ export type UpdateTemplateData = Partial<Omit<CreateTemplateData, 'key'>> & {
     updatedBy?: string;
 };
 
+/**
+ * POJO для upsert шаблона из админ-редактора. `content` обязателен (для создания);
+ * остальные поля опциональны и при обновлении применяются выборочно.
+ */
+export type UpsertTemplateData = {
+    content: LocalizedText;
+    variables?: string[];
+    subject?: LocalizedText;
+    type?: TemplateType;
+    name?: string;
+    isActive?: boolean;
+};
+
 // Реэкспорт контрактов шаблонов из domain-kit для удобства потребителей.
 export type {
     LocalizedText,
