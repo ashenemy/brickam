@@ -12,7 +12,7 @@ export default [
                 'error',
                 {
                     type: 'attribute',
-                    prefix: 'lib',
+                    prefix: 'bh',
                     style: 'camelCase',
                 },
             ],
@@ -20,15 +20,19 @@ export default [
                 'error',
                 {
                     type: 'element',
-                    prefix: 'lib',
+                    prefix: 'bh',
                     style: 'kebab-case',
                 },
             ],
+            '@angular-eslint/no-output-native': 'off',
         },
     },
     {
         files: ['**/*.html'],
-        // Override or add rules here
-        rules: {},
+        rules: {
+            '@angular-eslint/template/click-events-have-key-events': 'off',
+            '@angular-eslint/template/interactive-supports-focus': 'off',
+            '@angular-eslint/template/eqeqeq': 'off',
+        },
     },
 ];
