@@ -1,23 +1,41 @@
 import type { AppConfigService } from '@brickam/config-kit';
 import { describe, expect, it } from 'vitest';
-import { createEmbeddingProvider, createLlmProvider } from './ai-kit.module';
+import {
+    createEmbeddingProvider,
+    createImageProvider,
+    createLlmProvider,
+    createVideoProvider,
+} from './ai-kit.module';
 import { AnthropicLlmProvider } from './anthropic-llm.provider';
+import { FalImageProvider } from './fal-image.provider';
+import { FfmpegVideoProvider } from './ffmpeg-video.provider';
 import { MockEmbeddingProvider } from './mock-embedding.provider';
+import { MockImageProvider } from './mock-image.provider';
 import { MockLlmProvider } from './mock-llm.provider';
+import { MockVideoProvider } from './mock-video.provider';
 import { VoyageEmbeddingProvider } from './voyage-embedding.provider';
 
 /** Минимальный стаб AppConfigService — нужны только providers и secrets. */
 function fakeConfig(opts: {
     llm: string;
     embeddings: string;
+    image?: string;
+    video?: string;
     anthropicApiKey?: string;
     voyageApiKey?: string;
+    falApiKey?: string;
 }): AppConfigService {
     return {
-        providers: { llm: opts.llm, embeddings: opts.embeddings },
+        providers: {
+            llm: opts.llm,
+            embeddings: opts.embeddings,
+            image: opts.image ?? 'fal',
+            video: opts.video ?? 'ffmpeg',
+        },
         secrets: {
             anthropicApiKey: opts.anthropicApiKey,
             voyageApiKey: opts.voyageApiKey,
+            falApiKey: opts.falApiKey,
         },
     } as unknown as AppConfigService;
 }
@@ -71,9 +89,63 @@ describe('ai-kit фабрики провайдеров (Foundations §13)', () =
         });
     });
 
-    it('без ключей выбираются оба mock-провайдера', () => {
-        const config = fakeConfig({ llm: 'anthropic', embeddings: 'voyage' });
+    describe('createImageProvider', () => {
+        it('fal + ключ → FalImageProvider', () => {
+            const p = createImageProvider(
+                fakeConfig({
+                    llm: 'mock',
+                    embeddings: 'mock',
+                    image: 'fal',
+                    falApiKey: 'fal-test',
+                }),
+            );
+            expect(p).toBeInstanceOf(FalImageProvider);
+            expect(p.name).toBe('fal');
+        });
+
+        it('fal, но без ключа → MockImageProvider', () => {
+            const p = createImageProvider(
+                fakeConfig({ llm: 'mock', embeddings: 'mock', image: 'fal' }),
+            );
+            expect(p).toBeInstanceOf(MockImageProvider);
+            expect(p.name).toBe('mock');
+        });
+
+        it('провайдер не fal → MockImageProvider даже с ключом', () => {
+            const p = createImageProvider(
+                fakeConfig({
+                    llm: 'mock',
+                    embeddings: 'mock',
+                    image: 'mock',
+                    falApiKey: 'fal-test',
+                }),
+            );
+            expect(p).toBeInstanceOf(MockImageProvider);
+        });
+    });
+
+    describe('createVideoProvider', () => {
+        it('ffmpeg → FfmpegVideoProvider', () => {
+            const p = createVideoProvider(
+                fakeConfig({ llm: 'mock', embeddings: 'mock', video: 'ffmpeg' }),
+            );
+            expect(p).toBeInstanceOf(FfmpegVideoProvider);
+            expect(p.name).toBe('ffmpeg');
+        });
+
+        it('не ffmpeg → MockVideoProvider', () => {
+            const p = createVideoProvider(
+                fakeConfig({ llm: 'mock', embeddings: 'mock', video: 'mock' }),
+            );
+            expect(p).toBeInstanceOf(MockVideoProvider);
+            expect(p.name).toBe('mock');
+        });
+    });
+
+    it('без ключей выбираются mock llm/embedding/image, ffmpeg-видео по конфигу', () => {
+        const config = fakeConfig({ llm: 'anthropic', embeddings: 'voyage', image: 'fal' });
         expect(createLlmProvider(config)).toBeInstanceOf(MockLlmProvider);
         expect(createEmbeddingProvider(config)).toBeInstanceOf(MockEmbeddingProvider);
+        expect(createImageProvider(config)).toBeInstanceOf(MockImageProvider);
     });
 });
