@@ -1,10 +1,10 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
-import { provideRouter } from '@angular/router';
+import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { CatalogListComponent } from './catalog-list.component';
-import type { ApiListResponse, PageMeta, ProductListItem } from './models';
+import type { ApiListResponse, Category, PageMeta, ProductListItem } from './models';
 
 const CONFIG: RuntimeConfig = {
     apiBaseUrl: 'http://api.test/api',
@@ -124,5 +124,68 @@ describe('CatalogListComponent', () => {
         const second = httpMock.expectOne((r) => r.url === 'http://api.test/api/catalog/products');
         expect(second.request.params.get('q')).toBe('cement');
         second.flush(listBody([], meta({ total: 0 })));
+    });
+});
+
+function category(id: string, slug: string): Category {
+    return { id, slug, name: { hy: slug, ru: slug, en: slug }, order: 0 };
+}
+
+describe('CatalogListComponent — предвыбор категории из query', () => {
+    let fixture: ComponentFixture<CatalogListComponent>;
+    let httpMock: HttpTestingController;
+
+    beforeEach(async () => {
+        await TestBed.configureTestingModule({
+            imports: [CatalogListComponent],
+            providers: [
+                provideRouter([]),
+                provideHttpClient(withFetch()),
+                provideHttpClientTesting(),
+                { provide: RUNTIME_CONFIG, useValue: CONFIG },
+                {
+                    provide: ActivatedRoute,
+                    useValue: {
+                        snapshot: { queryParamMap: convertToParamMap({ category: 'paint' }) },
+                    },
+                },
+            ],
+        }).compileComponents();
+
+        fixture = TestBed.createComponent(CatalogListComponent);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        for (const r of httpMock.match(() => true)) {
+            if (!r.cancelled) {
+                r.flush({ success: true, data: [] });
+            }
+        }
+        httpMock.verify();
+    });
+
+    it('при query category=<slug> предвыбирает соответствующую категорию по slug', () => {
+        fixture.detectChanges();
+
+        // Категории приходят асинхронно; отдаём список со slug 'paint'.
+        const catReq = httpMock.expectOne('http://api.test/api/catalog/categories');
+        catReq.flush({
+            success: true,
+            data: [category('c-paint', 'paint'), category('c-tile', 'tile')],
+        });
+        fixture.detectChanges();
+
+        // После выбора категории идёт запрос товаров с categoryId предвыбранной категории.
+        const prodReqs = httpMock.match((r) => r.url === 'http://api.test/api/catalog/products');
+        const last = prodReqs[prodReqs.length - 1];
+        expect(last.request.params.get('categoryId')).toBe('c-paint');
+        last.flush(listBody([], meta({ total: 0 })));
+
+        expect(
+            (
+                fixture.componentInstance as unknown as { categoryId(): string | undefined }
+            ).categoryId(),
+        ).toBe('c-paint');
     });
 });

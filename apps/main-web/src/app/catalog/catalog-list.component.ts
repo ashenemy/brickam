@@ -8,7 +8,7 @@ import {
     signal,
 } from '@angular/core';
 import { Meta, Title } from '@angular/platform-browser';
-import { Router } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import {
     ButtonComponent,
@@ -151,6 +151,7 @@ const PAGE_SIZE = 12;
 export class CatalogListComponent implements OnInit {
     private readonly api = inject(CatalogApiService);
     private readonly router = inject(Router);
+    private readonly route = inject(ActivatedRoute);
     private readonly i18n = inject(LanguageService);
     private readonly title = inject(Title);
     private readonly metaService = inject(Meta);
@@ -212,8 +213,19 @@ export class CatalogListComponent implements OnInit {
     }
 
     ngOnInit(): void {
+        // Slug категории из query-параметра (?category=<slug>), напр. из калькуляторов.
+        const categorySlug = this.route.snapshot.queryParamMap.get('category') ?? undefined;
         this.api.getCategories().subscribe({
-            next: (cats) => this.categories.set(cats),
+            next: (cats) => {
+                this.categories.set(cats);
+                if (categorySlug) {
+                    const match = cats.find((c) => c.slug === categorySlug);
+                    if (match) {
+                        this.categoryId.set(match.id);
+                        this.page.set(1);
+                    }
+                }
+            },
             error: () => this.categories.set([]),
         });
     }

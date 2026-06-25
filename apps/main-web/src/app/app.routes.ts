@@ -1,5 +1,6 @@
 import { Route } from '@angular/router';
 import { roleGuard } from '@brickam/config-kit/browser';
+import { CalculatorsPageComponent } from './calculators/calculators-page.component';
 import { CatalogListComponent } from './catalog/catalog-list.component';
 import { ProductDetailComponent } from './catalog/product-detail.component';
 import { ChatPageComponent } from './chat/chat-page.component';
@@ -10,6 +11,11 @@ import { WishlistPageComponent } from './wishlist/wishlist-page.component';
 export const appRoutes: Route[] = [
     { path: '', component: HomeComponent, canActivate: [roleGuard(['buyer'])] },
     { path: 'catalog', component: CatalogListComponent, canActivate: [roleGuard(['buyer'])] },
+    {
+        path: 'calculators',
+        component: CalculatorsPageComponent,
+        canActivate: [roleGuard(['buyer'])],
+    },
     {
         path: 'product/:slug',
         component: ProductDetailComponent,

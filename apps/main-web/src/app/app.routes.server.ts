@@ -4,6 +4,8 @@ export const serverRoutes: ServerRoute[] = [
     // Статические страницы — пререндер на билде.
     { path: '', renderMode: RenderMode.Prerender },
     { path: 'forbidden', renderMode: RenderMode.Prerender },
+    // Калькуляторы — статическая страница, данные из calc-kit; пререндер на билде.
+    { path: 'calculators', renderMode: RenderMode.Prerender },
     // Каталог и товары — SSR on-demand (список товаров неизвестен на билде).
     { path: 'catalog', renderMode: RenderMode.Server },
     { path: 'product/:slug', renderMode: RenderMode.Server },
