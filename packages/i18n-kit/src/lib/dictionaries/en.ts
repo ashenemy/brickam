@@ -50,6 +50,8 @@ export const en: Dictionary = {
     'errors.aiAssistant.notAttachable': 'This result cannot be attached',
     'errors.aiAssistant.noVendor': 'AI assistant is available to vendors only',
     'errors.admin.notAdmin': 'Administrator role required',
+    'errors.pages.notFound': 'Page not found',
+    'errors.orders.noVendor': 'Vendor orders are available to vendors only',
     'errors.disputes.notAdmin': 'Administrator role required',
     'errors.audit.notAdmin': 'Administrator role required',
     'common.appName': 'BuildHub',

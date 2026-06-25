@@ -50,6 +50,8 @@ export const hy: Dictionary = {
     'errors.aiAssistant.notAttachable': 'Այս արդյունքը հնարավոր չէ կցել',
     'errors.aiAssistant.noVendor': 'AI-օգնականը հասանելի է միայն վաճառողներին',
     'errors.admin.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
+    'errors.pages.notFound': 'Էջը չի գտնվել',
+    'errors.orders.noVendor': 'Վաճառողի պատվերները հասանելի են միայն վաճառողներին',
     'errors.disputes.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'errors.audit.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'common.appName': 'BuildHub',

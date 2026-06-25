@@ -50,6 +50,8 @@ export const ru: Dictionary = {
     'errors.aiAssistant.notAttachable': 'Этот результат нельзя прикрепить',
     'errors.aiAssistant.noVendor': 'AI-ассистент доступен только продавцам',
     'errors.admin.notAdmin': 'Требуется роль администратора',
+    'errors.pages.notFound': 'Страница не найдена',
+    'errors.orders.noVendor': 'Заказы вендора доступны только продавцам',
     'errors.disputes.notAdmin': 'Требуется роль администратора',
     'errors.audit.notAdmin': 'Требуется роль администратора',
     'common.appName': 'BuildHub',
