@@ -56,14 +56,17 @@ describe('PaymentsService', () => {
                 splits,
             });
 
-            expect(repo.create).toHaveBeenCalledWith({
-                orderId: 'o1',
-                buyerId: 'b1',
-                amount: 1000,
-                provider: 'mock',
-                status: PaymentStatus.Pending,
-                splits,
-            });
+            expect(repo.create).toHaveBeenCalledWith(
+                {
+                    orderId: 'o1',
+                    buyerId: 'b1',
+                    amount: 1000,
+                    provider: 'mock',
+                    status: PaymentStatus.Pending,
+                    splits,
+                },
+                undefined,
+            );
             expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Pending });
         });
 

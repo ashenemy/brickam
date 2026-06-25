@@ -5,8 +5,10 @@ import {
     type PaymentResult,
     PaymentStatus,
     PaymentsServiceContract,
+    type TxSession,
 } from '@brickam/domain-kit';
 import { Injectable } from '@nestjs/common';
+import type { ClientSession } from 'mongoose';
 import type { PaymentByOrder } from '../@types';
 import type { PaymentDocument } from './payment.schema';
 import { PaymentsRepository } from './payments.repository';
@@ -29,20 +31,23 @@ export class PaymentsService implements PaymentsServiceContract {
      * `config.providers.payment` на момент создания. Мягко проверяет, что сумма
      * сплитов равна сумме платежа (расхождение не блокирует — только лог).
      */
-    async createForOrder(input: CreatePaymentInput): Promise<PaymentResult> {
+    async createForOrder(input: CreatePaymentInput, session?: TxSession): Promise<PaymentResult> {
         const splitsTotal = input.splits.reduce((sum, split) => sum + split.amount, 0);
         if (splitsTotal !== input.amount) {
             // Мягкая валидация: не блокируем создание, доверяем расчёту orders.
         }
 
-        const doc = await this.paymentsRepository.create({
-            orderId: input.orderId,
-            buyerId: input.buyerId,
-            amount: input.amount,
-            provider: this.config.providers.payment,
-            status: PaymentStatus.Pending,
-            splits: input.splits,
-        });
+        const doc = await this.paymentsRepository.create(
+            {
+                orderId: input.orderId,
+                buyerId: input.buyerId,
+                amount: input.amount,
+                provider: this.config.providers.payment,
+                status: PaymentStatus.Pending,
+                splits: input.splits,
+            },
+            session as ClientSession | undefined,
+        );
 
         return { paymentId: doc.id ?? doc._id.toString(), status: doc.status };
     }
