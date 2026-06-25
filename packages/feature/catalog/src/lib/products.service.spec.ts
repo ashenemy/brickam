@@ -422,4 +422,25 @@ describe('ProductsService', () => {
             expect(result).toEqual({ modified: 1 });
         });
     });
+
+    describe('setStatus', () => {
+        it('approve-сценарий: проставляет active', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ status: 'active' }));
+            await service.setStatus('p1', 'active');
+            expect(repo.updateById).toHaveBeenCalledWith('p1', { status: 'active' });
+        });
+
+        it('reject-сценарий: проставляет hidden', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ status: 'hidden' }));
+            await service.setStatus('p1', 'hidden');
+            expect(repo.updateById).toHaveBeenCalledWith('p1', { status: 'hidden' });
+        });
+
+        it('нет товара → NotFound', async () => {
+            repo.updateById.mockResolvedValue(null);
+            await expect(service.setStatus('pX', 'active')).rejects.toBeInstanceOf(
+                NotFoundException,
+            );
+        });
+    });
 });

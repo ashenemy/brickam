@@ -7,6 +7,7 @@ import {
 } from '@brickam/domain-kit';
 import { Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { CatalogAdminController } from './catalog-admin.controller';
 import { CatalogAiService } from './catalog-ai.service';
 import { CategoriesController } from './categories.controller';
 import { CategoriesRepository } from './categories.repository';
@@ -34,7 +35,7 @@ import { ProductsService } from './products.service';
             { name: PlatformSettings.name, schema: PlatformSettingsSchema },
         ]),
     ],
-    controllers: [CategoriesController, ProductsController],
+    controllers: [CategoriesController, ProductsController, CatalogAdminController],
     providers: [
         CategoriesRepository,
         ProductsRepository,

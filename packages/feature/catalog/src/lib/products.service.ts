@@ -245,6 +245,17 @@ export class ProductsService
         } as never);
     }
 
+    /**
+     * Модерация товара админом (§17): проставляет статус ('active' при approve,
+     * 'hidden' при reject). 404, если товара нет.
+     */
+    async setStatus(productId: string, status: 'active' | 'hidden'): Promise<void> {
+        const doc = await this.productsRepository.updateById(productId, { status });
+        if (!doc) {
+            throw new NotFoundException();
+        }
+    }
+
     /** Проставляет агрегированный рейтинг товара (пересчёт в reviews, CatalogServiceContract). */
     async setProductRating(
         productId: string,

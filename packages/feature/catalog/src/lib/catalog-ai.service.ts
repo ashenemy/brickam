@@ -58,6 +58,32 @@ export class CatalogAiService implements PlatformSettingsContract, ProductMediaC
     }
 
     /**
+     * Переопределение комиссии платформы из platform_settings (key='default',
+     * value.commissionPercent). Число → возвращается как есть; нет записи/поля или
+     * не число → null (вызывающий падает на дефолт конфига).
+     */
+    async getCommissionPercent(): Promise<number | null> {
+        const doc = await this.platformSettingsRepository.findByKey(AI_PROMPTS_KEY);
+        const value = doc?.value as { commissionPercent?: unknown } | undefined;
+        const commission = value?.commissionPercent;
+        return typeof commission === 'number' ? commission : null;
+    }
+
+    /**
+     * Произвольная настройка платформы по ключу → её value (Record) или null,
+     * если записи нет (media-лимиты, бот-UA, и т.п.).
+     */
+    async getSetting(key: string): Promise<Record<string, unknown> | null> {
+        const doc = await this.platformSettingsRepository.findByKey(key);
+        return doc?.value ?? null;
+    }
+
+    /** Сохраняет/обновляет настройку по ключу (upsert, админ §17). */
+    async saveSetting(key: string, value: Record<string, unknown>): Promise<void> {
+        await this.platformSettingsRepository.upsertByKey(key, value);
+    }
+
+    /**
      * Контекст товара вендора для сборки промпта. Проверяет принадлежность по
      * vendorId — чужой/несуществующий товар → null. gallery маппится в список URL.
      */

@@ -8,16 +8,59 @@ describe('CatalogAiService', () => {
         findById: ReturnType<typeof vi.fn>;
         updateOwned: ReturnType<typeof vi.fn>;
     };
-    let settingsRepository: { findByKey: ReturnType<typeof vi.fn> };
+    let settingsRepository: {
+        findByKey: ReturnType<typeof vi.fn>;
+        upsertByKey: ReturnType<typeof vi.fn>;
+    };
     let service: CatalogAiService;
 
     beforeEach(() => {
         productsRepository = { findById: vi.fn(), updateOwned: vi.fn(() => Promise.resolve(1)) };
-        settingsRepository = { findByKey: vi.fn() };
+        settingsRepository = { findByKey: vi.fn(), upsertByKey: vi.fn(() => Promise.resolve()) };
         service = new CatalogAiService(
             productsRepository as unknown as ProductsRepository,
             settingsRepository as unknown as PlatformSettingsRepository,
         );
+    });
+
+    describe('getCommissionPercent', () => {
+        it('value.commissionPercent — число → возвращает его', async () => {
+            settingsRepository.findByKey.mockResolvedValue({ value: { commissionPercent: 7 } });
+            expect(await service.getCommissionPercent()).toBe(7);
+            expect(settingsRepository.findByKey).toHaveBeenCalledWith('default');
+        });
+
+        it('нет поля/записи → null', async () => {
+            settingsRepository.findByKey.mockResolvedValue(null);
+            expect(await service.getCommissionPercent()).toBeNull();
+        });
+
+        it('не число → null', async () => {
+            settingsRepository.findByKey.mockResolvedValue({ value: { commissionPercent: 'x' } });
+            expect(await service.getCommissionPercent()).toBeNull();
+        });
+    });
+
+    describe('getSetting', () => {
+        it('есть запись → value (Record)', async () => {
+            settingsRepository.findByKey.mockResolvedValue({ value: { maxVideo: 5 } });
+            expect(await service.getSetting('media')).toEqual({ maxVideo: 5 });
+            expect(settingsRepository.findByKey).toHaveBeenCalledWith('media');
+        });
+
+        it('нет записи → null', async () => {
+            settingsRepository.findByKey.mockResolvedValue(null);
+            expect(await service.getSetting('media')).toBeNull();
+        });
+    });
+
+    describe('saveSetting', () => {
+        it('делегирует upsert по ключу', async () => {
+            await service.saveSetting('seo', { botUserAgents: ['Googlebot'] });
+            expect(settingsRepository.upsertByKey).toHaveBeenCalledWith('seo', {
+                botUserAgents: ['Googlebot'],
+            });
+        });
     });
 
     describe('getAiPrompts', () => {

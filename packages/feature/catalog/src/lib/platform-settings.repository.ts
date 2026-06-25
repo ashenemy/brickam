@@ -18,4 +18,9 @@ export class PlatformSettingsRepository {
     findByKey(key: string): Promise<PlatformSettingsDocument | null> {
         return this.model.findOne({ key }).exec();
     }
+
+    /** Создаёт/обновляет настройку по ключу (upsert документа platform_settings). */
+    async upsertByKey(key: string, value: Record<string, unknown>): Promise<void> {
+        await this.model.updateOne({ key }, { $set: { key, value } }, { upsert: true }).exec();
+    }
 }
