@@ -139,6 +139,29 @@ export type CreatePaymentInput = {
     splits: VendorSplit[];
 };
 
+/** Основа расчёта уровня лояльности (Foundations §11/§15). */
+export type LoyaltyBasis = 'total_spend' | 'order_count';
+
+/** Сводка-метрика лояльности покупателя (хранится в users.loyalty). */
+export type LoyaltyMetric = {
+    totalSpend: number;
+    totalOrders: number;
+    currentTierId?: string;
+};
+
+/** Патч метрики лояльности при завершении заказа. */
+export type LoyaltyUpdate = {
+    totalSpend: number;
+    totalOrders: number;
+    currentTierId?: string;
+};
+
+/** Предпросмотр скидки лояльности на оформлении (несёт платформа). */
+export type LoyaltyDiscountPreview = {
+    loyaltyDiscount: number;
+    tierId?: string;
+};
+
 /** Позиция инвойса. */
 export type InvoiceLineItem = {
     title: string;
