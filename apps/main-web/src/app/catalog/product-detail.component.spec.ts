@@ -4,6 +4,7 @@ import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { of } from 'rxjs';
+import { SeoService } from '../seo/seo.service';
 import type { MediaType, ProductDetail } from './models';
 import { ProductDetailComponent } from './product-detail.component';
 
@@ -46,7 +47,9 @@ function detail(coverType: MediaType, thumbnailUrl?: string): ProductDetail {
 async function setup(): Promise<{
     fixture: ComponentFixture<ProductDetailComponent>;
     httpMock: HttpTestingController;
+    seoSet: ReturnType<typeof vi.fn>;
 }> {
+    const seoSet = vi.fn();
     await TestBed.configureTestingModule({
         imports: [ProductDetailComponent],
         providers: [
@@ -54,6 +57,7 @@ async function setup(): Promise<{
             provideHttpClient(withFetch()),
             provideHttpClientTesting(),
             { provide: RUNTIME_CONFIG, useValue: CONFIG },
+            { provide: SeoService, useValue: { set: seoSet } },
             {
                 provide: ActivatedRoute,
                 useValue: { paramMap: of(convertToParamMap({ slug: 'item-1' })) },
@@ -63,7 +67,7 @@ async function setup(): Promise<{
 
     const fixture = TestBed.createComponent(ProductDetailComponent);
     const httpMock = TestBed.inject(HttpTestingController);
-    return { fixture, httpMock };
+    return { fixture, httpMock, seoSet };
 }
 
 describe('ProductDetailComponent', () => {
@@ -97,6 +101,23 @@ describe('ProductDetailComponent', () => {
         expect(el.querySelector('video')).toBeFalsy();
         const img = el.querySelector('img');
         expect(img?.getAttribute('src')).toBe('http://media/cover.jpg');
+        httpMock.verify();
+    });
+
+    it('выставляет SEO-мету товара через SeoService (title + og:image=cover.url)', async () => {
+        const { fixture, httpMock, seoSet } = await setup();
+        fixture.detectChanges();
+
+        const req = httpMock.expectOne('http://api.test/api/catalog/products/item-1');
+        req.flush({ success: true, data: detail('image') });
+        fixture.detectChanges();
+
+        expect(seoSet).toHaveBeenCalled();
+        const arg = seoSet.mock.calls.at(-1)?.[0];
+        // LanguageService по умолчанию hy (DEFAULT_LANG) — берётся title.hy = 'A'.
+        expect(arg.title).toBe('A');
+        expect(arg.image).toBe('http://media/cover.jpg');
+        expect(arg.type).toBe('product');
         httpMock.verify();
     });
 

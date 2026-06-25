@@ -1,4 +1,4 @@
-import { isPlatformBrowser } from '@angular/common';
+import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -12,12 +12,12 @@ import {
     signal,
     viewChild,
 } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import { BreadcrumbComponent, ButtonComponent } from '@brickam/ui-kit';
 import { CartStore } from '../cart/cart.store';
 import { CurrencyDisplayPipe } from '../currency/currency-display.pipe';
+import { SeoService } from '../seo/seo.service';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Media, ProductDetail } from './models';
@@ -31,7 +31,13 @@ import type { Media, ProductDetail } from './models';
     selector: 'app-product-detail',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [BreadcrumbComponent, ButtonComponent, WishlistHeartComponent, CurrencyDisplayPipe],
+    imports: [
+        BreadcrumbComponent,
+        ButtonComponent,
+        WishlistHeartComponent,
+        CurrencyDisplayPipe,
+        NgOptimizedImage,
+    ],
     template: `
         @if (loading()) {
             <div class="py-16 text-center text-text-secondary" style="font: var(--type-product)">
@@ -67,15 +73,21 @@ import type { Media, ProductDetail } from './models';
                                     </video>
                                 } @else if (m.mediaType === 'video' && videoFailed()) {
                                     <img
-                                        [src]="m.thumbnailUrl ?? ''"
+                                        [ngSrc]="m.thumbnailUrl ?? ''"
                                         [alt]="heading()"
-                                        class="h-full w-full object-cover"
+                                        fill
+                                        priority
+                                        sizes="(min-width: 1024px) 50vw, 100vw"
+                                        class="object-cover"
                                     />
                                 } @else {
                                     <img
-                                        [src]="m.url"
+                                        [ngSrc]="m.url"
                                         [alt]="heading()"
-                                        class="h-full w-full object-cover"
+                                        fill
+                                        priority
+                                        sizes="(min-width: 1024px) 50vw, 100vw"
+                                        class="object-cover"
                                     />
                                 }
                             }
@@ -161,8 +173,7 @@ export class ProductDetailComponent implements OnDestroy {
     private readonly route = inject(ActivatedRoute);
     private readonly router = inject(Router);
     private readonly i18n = inject(LanguageService);
-    private readonly title = inject(Title);
-    private readonly meta = inject(Meta);
+    private readonly seo = inject(SeoService);
     private readonly platformId = inject(PLATFORM_ID);
     private readonly isBrowser = isPlatformBrowser(this.platformId);
     private readonly cart = inject(CartStore);
@@ -203,15 +214,13 @@ export class ProductDetailComponent implements OnDestroy {
             if (!p) {
                 return;
             }
-            const t = p.title[this.lang()];
-            const desc = p.description[this.lang()];
-            const image = p.cover.thumbnailUrl ?? p.cover.url;
-            this.title.setTitle(t);
-            this.meta.updateTag({ name: 'description', content: desc });
-            this.meta.updateTag({ property: 'og:title', content: t });
-            this.meta.updateTag({ property: 'og:description', content: desc });
-            this.meta.updateTag({ property: 'og:image', content: image });
-            this.meta.updateTag({ property: 'og:type', content: 'product' });
+            const lang = this.lang();
+            this.seo.set({
+                title: p.title[lang],
+                description: p.description[lang],
+                image: p.cover.url,
+                type: 'product',
+            });
         });
     }
 

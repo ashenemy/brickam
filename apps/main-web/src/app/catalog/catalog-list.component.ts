@@ -7,7 +7,6 @@ import {
     type OnInit,
     signal,
 } from '@angular/core';
-import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import {
@@ -17,6 +16,7 @@ import {
     SelectComponent,
 } from '@brickam/ui-kit';
 import { CurrencyStore } from '../currency/currency.store';
+import { SeoService } from '../seo/seo.service';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Category, PageMeta, ProductFilters, ProductListItem, ProductSort } from './models';
@@ -154,8 +154,7 @@ export class CatalogListComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly route = inject(ActivatedRoute);
     private readonly i18n = inject(LanguageService);
-    private readonly title = inject(Title);
-    private readonly metaService = inject(Meta);
+    private readonly seo = inject(SeoService);
     private readonly currencyStore = inject(CurrencyStore);
 
     protected readonly lang = this.i18n.lang;
@@ -204,13 +203,11 @@ export class CatalogListComponent implements OnInit {
 
         // SEO-метаданные (статические для листинга, реагируют на язык).
         effect(() => {
-            const t = this.heading();
-            const desc = this.ph('seoDescription');
-            this.title.setTitle(t);
-            this.metaService.updateTag({ name: 'description', content: desc });
-            this.metaService.updateTag({ property: 'og:title', content: t });
-            this.metaService.updateTag({ property: 'og:description', content: desc });
-            this.metaService.updateTag({ property: 'og:type', content: 'website' });
+            this.seo.set({
+                title: this.seoTitle(),
+                description: this.ph('seoDescription'),
+                type: 'website',
+            });
         });
     }
 
@@ -288,6 +285,13 @@ export class CatalogListComponent implements OnInit {
     }
 
     protected readonly heading = computed(() => this.ph('title'));
+
+    // Заголовок для <title>/og:title — отдельный SEO-ключ с фолбэком на heading.
+    protected readonly seoTitle = computed(() => {
+        const key = 'seo.catalogTitle';
+        const translated = this.i18n.t(key);
+        return translated === key ? this.heading() : translated;
+    });
 
     protected readonly categoryOptions = computed(() => {
         const lang = this.lang();

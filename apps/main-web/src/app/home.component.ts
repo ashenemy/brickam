@@ -1,5 +1,7 @@
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject } from '@angular/core';
+import { LanguageService } from '@brickam/i18n-kit/browser';
 import { BadgeComponent, ButtonComponent, FeatureBarComponent } from '@brickam/ui-kit';
+import { SeoService } from './seo/seo.service';
 
 @Component({
     selector: 'app-home',
@@ -23,4 +25,25 @@ import { BadgeComponent, ButtonComponent, FeatureBarComponent } from '@brickam/u
         </section>
     `,
 })
-export class HomeComponent {}
+export class HomeComponent {
+    private readonly i18n = inject(LanguageService);
+    private readonly seo = inject(SeoService);
+
+    constructor() {
+        // Дефолтные мета сайта; реагируют на смену языка (i18n.lang() — зависимость).
+        effect(() => {
+            this.i18n.lang();
+            const title = this.tr('seo.siteTitle', 'BuildHub — Construction materials marketplace');
+            const description = this.tr(
+                'seo.siteDescription',
+                'BuildHub — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
+            );
+            this.seo.set({ title, description, type: 'website' });
+        });
+    }
+
+    private tr(key: string, fallback: string): string {
+        const value = this.i18n.t(key);
+        return value === key ? fallback : value;
+    }
+}

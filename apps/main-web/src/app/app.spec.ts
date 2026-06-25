@@ -30,5 +30,6 @@ describe('App', () => {
         const el = fixture.nativeElement as HTMLElement;
         expect(el.querySelector('bh-navbar')).toBeTruthy();
         expect(el.querySelector('bh-footer')).toBeTruthy();
+        expect(el.querySelector('app-footer')).toBeTruthy();
     });
 });

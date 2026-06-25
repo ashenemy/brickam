@@ -14,6 +14,8 @@ export const serverRoutes: ServerRoute[] = [
     // Каталог и товары — SSR on-demand (список товаров неизвестен на билде).
     { path: 'catalog', renderMode: RenderMode.Server },
     { path: 'product/:slug', renderMode: RenderMode.Server },
+    // CMS-страницы — контент динамический (с бэкенда); SSR on-demand, не пререндер.
+    { path: 'p/:slug', renderMode: RenderMode.Server },
     // Вишлист — данные требуют токена; SSR on-demand, не пререндер.
     { path: 'wishlist', renderMode: RenderMode.Server },
     // Лояльность — статус требует токена; SSR on-demand, не пререндер.

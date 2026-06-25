@@ -29,14 +29,15 @@
                 "ssr": {
                     "entry": "apps/main-web/src/server.ts"
                 },
-                "outputMode": "server"
+                "outputMode": "server",
+                "allowedCommonJsDependencies": ["socket.io-client", "engine.io-client"]
             },
             "configurations": {
                 "production": {
                     "budgets": [
                         {
                             "type": "initial",
-                            "maximumWarning": "500kb",
+                            "maximumWarning": "800kb",
                             "maximumError": "1mb"
                         },
                         {

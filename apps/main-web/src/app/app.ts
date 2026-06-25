@@ -2,7 +2,7 @@ import { isPlatformBrowser } from '@angular/common';
 import { Component, inject, type OnInit, PLATFORM_ID } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
 import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
-import { FooterComponent, NavbarComponent } from '@brickam/ui-kit';
+import { NavbarComponent, FooterComponent as UiFooterComponent } from '@brickam/ui-kit';
 import { SessionStore } from './auth/session.store';
 import { CartStore } from './cart/cart.store';
 import { CartBadgeComponent } from './cart/cart-badge.component';
@@ -12,6 +12,7 @@ import { CurrencyStore } from './currency/currency.store';
 import { CurrencySwitcherComponent } from './currency/currency-switcher.component';
 import { LoyaltyStore } from './loyalty/loyalty.store';
 import { LoyaltyBadgeComponent } from './loyalty/loyalty-badge.component';
+import { FooterComponent } from './shared/footer.component';
 import { WishlistStore } from './wishlist/wishlist.store';
 import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
 
@@ -19,6 +20,7 @@ import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
     imports: [
         RouterModule,
         NavbarComponent,
+        UiFooterComponent,
         FooterComponent,
         LangSwitcherComponent,
         WishlistBadgeComponent,
