@@ -1,0 +1,144 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "graphTooltip": 0,
+    "schemaVersion": 39,
+    "tags": ["buildhub"],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-6h",
+        "to": "now"
+    },
+    "timezone": "",
+    "title": "BuildHub — Server",
+    "uid": "buildhub-server",
+    "panels": [
+        {
+            "id": 1,
+            "title": "Доступность (up)",
+            "type": "stat",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 0,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "up{job=\"buildhub-server\"}",
+                    "legendFormat": "up"
+                }
+            ]
+        },
+        {
+            "id": 2,
+            "title": "Память процесса (RSS)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 9,
+                "x": 6,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "process_resident_memory_bytes{job=\"buildhub-server\"}",
+                    "legendFormat": "rss"
+                }
+            ]
+        },
+        {
+            "id": 3,
+            "title": "Лаг event loop",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 9,
+                "x": 15,
+                "y": 0
+            },
+            "targets": [
+                {
+                    "expr": "nodejs_eventloop_lag_seconds{job=\"buildhub-server\"}",
+                    "legendFormat": "lag"
+                }
+            ]
+        },
+        {
+            "id": 4,
+            "title": "CPU (process_cpu_seconds rate)",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percentunit"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 0,
+                "y": 6
+            },
+            "targets": [
+                {
+                    "expr": "rate(process_cpu_seconds_total{job=\"buildhub-server\"}[5m])",
+                    "legendFormat": "cpu"
+                }
+            ]
+        },
+        {
+            "id": 5,
+            "title": "Активные хэндлы Node",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 12,
+                "x": 12,
+                "y": 6
+            },
+            "targets": [
+                {
+                    "expr": "nodejs_active_handles_total{job=\"buildhub-server\"}",
+                    "legendFormat": "handles"
+                }
+            ]
+        }
+    ]
+}

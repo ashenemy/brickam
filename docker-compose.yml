@@ -196,8 +196,27 @@ services:
         ports:
             - '9093:9093'
 
+    # Дашборды поверх Prometheus (UI http://localhost:3001; datasource+дашборд
+    # подключаются автоматически из infra/monitoring/grafana/).
+    grafana:
+        image: grafana/grafana
+        restart: unless-stopped
+        depends_on:
+            - prometheus
+        environment:
+            GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+            GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+            GF_USERS_ALLOW_SIGN_UP: 'false'
+        volumes:
+            - ./infra/monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+            - ./infra/monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+            - grafana-data:/var/lib/grafana
+        ports:
+            - '3001:3000'
+
 volumes:
     mongo-data:
     minio-data:
     pg-data:
     prometheus-data:
+    grafana-data:

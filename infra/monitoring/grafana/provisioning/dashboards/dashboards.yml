@@ -1,0 +1,10 @@
+# Провайдер дашбордов: подхватывает JSON из смонтированной папки.
+apiVersion: 1
+providers:
+  - name: BuildHub
+    type: file
+    folder: BuildHub
+    allowUiUpdates: true
+    options:
+      path: /var/lib/grafana/dashboards
+      foldersFromFilesStructure: false
