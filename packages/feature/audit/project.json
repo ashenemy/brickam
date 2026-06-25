@@ -1,0 +1,27 @@
+{
+    "name": "audit",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/feature/audit/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/audit",
+                "main": "packages/feature/audit/src/index.ts",
+                "tsConfig": "packages/feature/audit/tsconfig.lib.json",
+                "assets": ["packages/feature/audit/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/audit",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:feature", "scope:server"]
+}

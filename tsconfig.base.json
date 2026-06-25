@@ -61,7 +61,8 @@
             "@brickam/ai-assistant": ["./packages/feature/ai-assistant/src/index.ts"],
             "@brickam/notifications": ["./packages/feature/notifications/src/index.ts"],
             "@brickam/analytics": ["./packages/feature/analytics/src/index.ts"],
-            "@brickam/disputes": ["./packages/feature/disputes/src/index.ts"]
+            "@brickam/disputes": ["./packages/feature/disputes/src/index.ts"],
+            "@brickam/audit": ["./packages/feature/audit/src/index.ts"]
         }
     },
     "exclude": ["node_modules", "tmp"]
