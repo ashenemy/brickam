@@ -2,6 +2,7 @@ import { buildCategories } from './builders/categories';
 import { buildChats, type ChatSeedClock } from './builders/chats';
 import { buildExchangeRates } from './builders/currency';
 import { buildLoyaltyProgram } from './builders/loyalty';
+import { buildPages } from './builders/pages';
 import { buildPlatformSettings } from './builders/platform-settings';
 import { buildProducts } from './builders/products';
 import { buildReviews, computeRatingAggregates } from './builders/reviews';
@@ -65,6 +66,7 @@ export function buildDataset(clock: SeedClock = DEFAULT_CLOCK): SeedDataset {
     const templates = buildTemplates();
     const loyalty = buildLoyaltyProgram();
     const settings = buildPlatformSettings();
+    const pages = buildPages();
 
     return [
         ...categories,
@@ -77,6 +79,7 @@ export function buildDataset(clock: SeedClock = DEFAULT_CLOCK): SeedDataset {
         ...templates,
         ...loyalty,
         ...settings,
+        ...pages,
     ];
 }
 
@@ -94,4 +97,5 @@ export const COLLECTION_ORDER: string[] = [
     COLLECTIONS.templates,
     COLLECTIONS.loyaltyPrograms,
     COLLECTIONS.platformSettings,
+    COLLECTIONS.pages,
 ];

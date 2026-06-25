@@ -24,6 +24,7 @@ export const COLLECTIONS = {
     templates: 'templates',
     loyaltyPrograms: 'loyaltyprograms',
     platformSettings: 'platform_settings',
+    pages: 'pages',
 } as const;
 
 export type CollectionName = (typeof COLLECTIONS)[keyof typeof COLLECTIONS];

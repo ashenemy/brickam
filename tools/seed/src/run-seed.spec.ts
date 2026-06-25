@@ -80,6 +80,37 @@ describe('runSeed — объём и качество', () => {
     });
 });
 
+describe('легальные CMS-страницы', () => {
+    it('сид содержит about/terms/privacy с тремя языками и status published', async () => {
+        const store = new InMemorySeedStore();
+        await runSeed(store);
+
+        const pages = store.documents(COLLECTIONS.pages);
+        expect(pages).toHaveLength(3);
+
+        const bySlug = new Map(pages.map((p) => [p['slug'] as string, p]));
+        for (const slug of ['about', 'terms', 'privacy']) {
+            const page = bySlug.get(slug);
+            expect(page).toBeDefined();
+            expect(page?.['status']).toBe('published');
+
+            for (const field of ['title', 'content', 'seoTitle', 'seoDescription']) {
+                const text = page?.[field] as { hy: string; ru: string; en: string };
+                expect(text.hy.length).toBeGreaterThan(0);
+                expect(text.ru.length).toBeGreaterThan(0);
+                expect(text.en.length).toBeGreaterThan(0);
+            }
+        }
+    });
+
+    it('повторный прогон апсертит страницы без дублей (идемпотентность)', async () => {
+        const store = new InMemorySeedStore();
+        await runSeed(store);
+        await runSeed(store);
+        expect(store.count(COLLECTIONS.pages)).toBe(3);
+    });
+});
+
 describe('целостность перекрёстных ссылок', () => {
     it('product.vendorId/categoryId, review/chat/invoice ссылки и vendor.ownerUserId валидны', async () => {
         const store = new InMemorySeedStore();
