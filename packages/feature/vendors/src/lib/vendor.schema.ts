@@ -28,7 +28,7 @@ export class Vendor extends BaseSchema {
     @Prop({ type: String, required: false })
     city?: string;
 
-    @Prop({ type: String, enum: ['active', 'suspended'], default: 'active' })
+    @Prop({ type: String, enum: ['pending', 'active', 'suspended'], default: 'active' })
     status!: VendorStatus;
 
     @Prop({ type: Number, default: 0 })

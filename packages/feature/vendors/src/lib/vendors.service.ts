@@ -1,8 +1,9 @@
 import { ForbiddenException, NotFoundException } from '@brickam/core-kit';
+import { VendorsServiceContract } from '@brickam/domain-kit';
 import { Injectable } from '@nestjs/common';
 import type { VendorContract, VendorStatus } from '../@types';
 import type { CreateVendorDto, UpdateVendorDto } from './dto/vendor.dto';
-import type { VendorDocument } from './vendor.schema';
+import type { Vendor, VendorDocument } from './vendor.schema';
 import { VendorsRepository } from './vendors.repository';
 
 /**
@@ -11,8 +12,32 @@ import { VendorsRepository } from './vendors.repository';
  * рейтинга из reviews (recomputeRating). Границы feature: только kit/domain.
  */
 @Injectable()
-export class VendorsService {
+export class VendorsService implements VendorsServiceContract {
     constructor(private readonly vendorsRepository: VendorsRepository) {}
+
+    /**
+     * Онбординг владельца (VendorsServiceContract): создаёт вендора в статусе
+     * `pending` с автогенерированным slug и плейсхолдер-именем. Возвращает vendorId.
+     */
+    async createForOwner(ownerUserId: string): Promise<{ vendorId: string }> {
+        const existing = await this.vendorsRepository.findByOwner(ownerUserId);
+        if (existing) {
+            return { vendorId: existing.id ?? existing._id.toString() };
+        }
+        const created = await this.vendorsRepository.create({
+            slug: `vendor-${ownerUserId}`,
+            name: `Vendor ${ownerUserId}`,
+            ownerUserId,
+            region: '-',
+            status: 'pending',
+        } as Partial<Vendor>);
+        return { vendorId: created.id ?? created._id.toString() };
+    }
+
+    /** Денормализует агрегат рейтинга вендора (VendorsServiceContract). */
+    async setRating(vendorId: string, ratingAvg: number, ratingCount: number): Promise<void> {
+        await this.vendorsRepository.updateById(vendorId, { ratingAvg, ratingCount });
+    }
 
     /** Маппит документ вендора в плоский контракт. */
     private toContract(doc: VendorDocument): VendorContract {

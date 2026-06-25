@@ -166,4 +166,31 @@ describe('VendorsService', () => {
             expect(repo.updateById).toHaveBeenCalledWith('v1', { ratingAvg: 4.5, ratingCount: 2 });
         });
     });
+
+    describe('createForOwner (VendorsServiceContract)', () => {
+        it('создаёт вендора pending и возвращает vendorId', async () => {
+            repo.findByOwner.mockResolvedValue(null);
+            repo.create.mockResolvedValue(makeDoc({ id: 'v9', status: 'pending' }));
+            const res = await service.createForOwner('u9');
+            expect(res).toEqual({ vendorId: 'v9' });
+            const arg = repo.create.mock.calls[0]?.[0] as Record<string, unknown>;
+            expect(arg['ownerUserId']).toBe('u9');
+            expect(arg['status']).toBe('pending');
+        });
+
+        it('идемпотентно: у владельца уже есть вендор → возвращает его', async () => {
+            repo.findByOwner.mockResolvedValue(makeDoc({ id: 'v1' }));
+            const res = await service.createForOwner('u1');
+            expect(res).toEqual({ vendorId: 'v1' });
+            expect(repo.create).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('setRating (VendorsServiceContract)', () => {
+        it('денормализует рейтинг в документ вендора', async () => {
+            repo.updateById.mockResolvedValue(makeDoc());
+            await service.setRating('v1', 4.2, 7);
+            expect(repo.updateById).toHaveBeenCalledWith('v1', { ratingAvg: 4.2, ratingCount: 7 });
+        });
+    });
 });

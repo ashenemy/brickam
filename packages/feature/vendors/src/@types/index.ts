@@ -1,5 +1,5 @@
-/** Статус вендора. `suspended` — временно отключён платформой. */
-export type VendorStatus = 'active' | 'suspended';
+/** Статус вендора. `pending` — на модерации; `suspended` — отключён платформой. */
+export type VendorStatus = 'pending' | 'active' | 'suspended';
 
 /** Вендор (публичный API-контракт, без Mongoose-документа). */
 export type VendorContract = {
