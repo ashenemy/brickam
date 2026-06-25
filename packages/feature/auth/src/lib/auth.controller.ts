@@ -1,5 +1,6 @@
 import { AppConfigService } from '@brickam/config-kit';
-import { Body, Controller, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
+import { Auth, type AuthUser, CurrentUser } from '@brickam/server-kit';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
@@ -88,6 +89,17 @@ export class AuthController {
     logout(@Res({ passthrough: true }) res: Response): { success: true } {
         clearAuthCookies(res);
         return { success: true };
+    }
+
+    /**
+     * Профиль текущего пользователя из валидированного JWT (роль/права/vendorId).
+     * Нужен фронту: токен в httpOnly-cookie не читается из JS, роль берётся отсюда.
+     */
+    @Auth()
+    @Get('me')
+    @ApiOperation({ summary: 'Текущий пользователь (роль/права/vendorId)' })
+    me(@CurrentUser() user: AuthUser): AuthUser {
+        return user;
     }
 
     @Public()

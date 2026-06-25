@@ -73,4 +73,10 @@ describe('AuthController', () => {
         await controller.reset(dto);
         expect(auth.reset).toHaveBeenCalledWith(dto);
     });
+
+    it('me возвращает текущего пользователя из JWT', () => {
+        const { controller } = makeController();
+        const user = { id: 'u1', role: Role.Buyer, permissions: [] };
+        expect(controller.me(user as never)).toBe(user);
+    });
 });
