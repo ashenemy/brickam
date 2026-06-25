@@ -299,6 +299,7 @@ describe('Orders e2e (checkout→split, in-process, без Mongo)', () => {
         expect(decrementStock).toHaveBeenCalledTimes(2);
         expect(createForOrder).toHaveBeenCalledWith(
             expect.objectContaining({ amount: 2400, orderId: 'order1' }),
+            undefined, // session: без Mongo-транзакции в e2e
         );
     });
 
