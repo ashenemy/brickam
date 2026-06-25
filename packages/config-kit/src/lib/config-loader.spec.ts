@@ -47,6 +47,11 @@ wishlist = true
 loyalty = true
 botOnlySsr = true
 
+[ai]
+cacheTtlSeconds = 300
+maxThemes = 6
+throttlePerMinute = 60
+
 [queue]
 redisUrl = "env:REDIS_URL"
 `;

@@ -43,6 +43,10 @@ export class AppConfigService {
         return this.config.features;
     }
 
+    get ai(): AppConfig['ai'] {
+        return this.config.ai;
+    }
+
     get database(): AppConfig['database'] {
         return this.config.database;
     }

@@ -58,6 +58,11 @@ export const configSchema = z.object({
         loyalty: z.boolean(),
         botOnlySsr: z.boolean(),
     }),
+    ai: z.object({
+        cacheTtlSeconds: z.number().int().min(0),
+        maxThemes: z.number().int().min(1),
+        throttlePerMinute: z.number().int().min(0),
+    }),
     queue: z.object({
         redisUrl: z.string().min(1, 'REDIS_URL обязателен'),
     }),

@@ -49,5 +49,10 @@ wishlist = true
 loyalty = true
 botOnlySsr = true
 
+[ai]                       # бюджет/троттлинг платных AI-вызовов
+cacheTtlSeconds = 300      # кеш частых запросов
+maxThemes = 6              # потолок тем в ответе LLM
+throttlePerMinute = 60     # лимит платных вызовов в минуту
+
 [queue]
 redisUrl = "env:REDIS_URL"
