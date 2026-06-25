@@ -1,7 +1,7 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { AppConfigService } from '@brickam/config-kit';
-import { Logger } from '@nestjs/common';
+import { Logger, VERSION_NEUTRAL, VersioningType } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import * as Sentry from '@sentry/node';
@@ -105,6 +105,10 @@ async function bootstrap(): Promise<void> {
     await setupWsRedisAdapter(app, config);
 
     app.setGlobalPrefix(globalPrefix);
+    // Версионирование API через URI: маршруты доступны как /api/v1/... (основная
+    // версия) И как /api/... (VERSION_NEUTRAL — обратная совместимость без рипла
+    // для текущих клиентов; новые/внешние потребители используют явный /v1).
+    app.enableVersioning({ type: VersioningType.URI, defaultVersion: ['1', VERSION_NEUTRAL] });
     app.enableCors({ origin: corsOrigins, credentials: true });
 
     const document = SwaggerModule.createDocument(app, buildSwaggerConfig());
