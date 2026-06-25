@@ -2,6 +2,9 @@ import { Route } from '@angular/router';
 import { roleGuard } from '@brickam/config-kit/browser';
 import { AiAssistantPageComponent } from './ai-assistant/ai-assistant-page.component';
 import { AnalyticsComponent } from './analytics/analytics.component';
+import { authGuard } from './auth/auth.guard';
+import { LoginPageComponent } from './auth/login-page.component';
+import { RegisterPageComponent } from './auth/register-page.component';
 import { BulkComponent } from './bulk/bulk.component';
 import { ForbiddenComponent } from './forbidden.component';
 import { HomeComponent } from './home.component';
@@ -11,9 +14,11 @@ import { OrdersComponent } from './orders/orders.component';
 import { ProductsComponent } from './products/products.component';
 import { SubscriptionComponent } from './subscription/subscription.component';
 
-const vendor = [roleGuard(['vendor'])];
+const vendor = [authGuard, roleGuard(['vendor'])];
 
 export const appRoutes: Route[] = [
+    { path: 'login', component: LoginPageComponent },
+    { path: 'register', component: RegisterPageComponent },
     { path: '', component: HomeComponent, canActivate: vendor },
     { path: 'products', component: ProductsComponent, canActivate: vendor },
     { path: 'bulk', component: BulkComponent, canActivate: vendor },

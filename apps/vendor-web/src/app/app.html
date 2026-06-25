@@ -67,8 +67,27 @@
             style="font: var(--type-label)"
             >AI-ассистент</a
         >
-        <span class="ml-auto">
+        <span class="ml-auto flex items-center gap-2">
             <bh-lang-switcher />
+            @if (isAuthenticated()) {
+                <button
+                    type="button"
+                    class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                    style="font: var(--type-label)"
+                    (click)="logout()"
+                >
+                    Выйти
+                </button>
+            } @else {
+                <a
+                    href="/login"
+                    routerLink="/login"
+                    routerLinkActive="text-accent"
+                    class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                    style="font: var(--type-label)"
+                    >Войти</a
+                >
+            }
         </span>
     </nav>
 </header>
