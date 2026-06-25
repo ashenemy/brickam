@@ -35,4 +35,7 @@ export abstract class UsersServiceContract {
      * в JWT и проверяются PermissionsGuard). Дефолт — no-op; реализует `users`.
      */
     async setMemberAccess(_userId: string, _access: MemberAccess): Promise<void> {}
+
+    /** Привязывает пользователя к вендору (онбординг owner). Дефолт — no-op. */
+    async setVendorId(_userId: string, _vendorId: string): Promise<void> {}
 }
