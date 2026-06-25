@@ -139,6 +139,42 @@ export type CreatePaymentInput = {
     splits: VendorSplit[];
 };
 
+/** Позиция инвойса. */
+export type InvoiceLineItem = {
+    title: string;
+    qty: number;
+    price: number;
+};
+
+/** Адрес доставки (снимок). */
+export type AddressInput = {
+    label: string;
+    region: string;
+    city: string;
+    line1: string;
+    line2?: string;
+    phone: string;
+};
+
+/** Вход создания заказа из оплаченного инвойса (Stage 9 → §11). */
+export type InvoiceOrderInput = {
+    invoiceId: string;
+    buyerId: string;
+    vendorId: string;
+    lineItems: InvoiceLineItem[];
+    discount?: DiscountInput;
+    currency: string;
+    deliveryAddress?: AddressInput;
+};
+
+/** Результат создания заказа из инвойса. */
+export type InvoiceOrderResult = {
+    orderId: string;
+    orderNumber: string;
+    paymentId: string;
+    total: number;
+};
+
 /** Саб-заказ вендора в форме, нужной для проверки права на отзыв (Stage 7). */
 export type VendorOrderForReview = {
     id: string;

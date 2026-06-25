@@ -1,4 +1,10 @@
-import type { CreatePaymentInput, ProductSnapshot, VendorOrderForReview } from '../@types';
+import type {
+    CreatePaymentInput,
+    InvoiceOrderInput,
+    InvoiceOrderResult,
+    ProductSnapshot,
+    VendorOrderForReview,
+} from '../@types';
 import type { PaymentStatus } from './order-status';
 
 /**
@@ -23,6 +29,16 @@ export abstract class CatalogServiceContract {
  */
 export abstract class OrdersServiceContract {
     abstract getVendorOrderForReview(vendorOrderId: string): Promise<VendorOrderForReview | null>;
+    /** Создаёт заказ из оплаченного инвойса (один вендор, комиссия по §11). */
+    abstract createFromInvoice(input: InvoiceOrderInput): Promise<InvoiceOrderResult>;
+}
+
+/**
+ * Контракт чата для постинга инвойс-сообщения. Реализует feature `chat`;
+ * `invoices` зависит только от контракта.
+ */
+export abstract class ChatServiceContract {
+    abstract postInvoiceMessage(chatId: string, senderId: string, invoiceId: string): Promise<void>;
 }
 
 /** Результат операций платежа. */
