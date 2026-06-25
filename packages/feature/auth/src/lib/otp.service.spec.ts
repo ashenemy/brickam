@@ -1,6 +1,7 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { RateLimitedException, ValidationException } from '@brickam/core-kit';
 import type { NotificationsServiceContract } from '@brickam/domain-kit';
+import type { KeyValueStore } from '@brickam/server-kit';
 import bcrypt from 'bcryptjs';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { OtpService } from './otp.service';
@@ -119,8 +120,8 @@ describe('OtpService', () => {
         const service = new OtpService(makeConfig({ length: 6 }), notifications);
         await service.request('+37412345678', 'verify');
         const code = lastSentCode(notifications);
-        const store = (service as unknown as { store: Map<string, { hash: string }> }).store;
-        const record = store.get('verify:+37412345678');
+        const store = (service as unknown as { store: KeyValueStore }).store;
+        const record = await store.get<{ hash: string }>('otp:verify:+37412345678');
         expect(record).toBeDefined();
         expect(record?.hash).not.toBe(code);
         expect(await bcrypt.compare(code, record?.hash ?? '')).toBe(true);

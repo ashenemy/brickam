@@ -2,7 +2,8 @@ import { AppConfigService } from '@brickam/config-kit';
 import { RateLimitedException, ValidationException } from '@brickam/core-kit';
 import { NotificationsServiceContract } from '@brickam/domain-kit';
 import { DEFAULT_LANG } from '@brickam/i18n-kit';
-import { Injectable } from '@nestjs/common';
+import { InMemoryKeyValueStore, KeyValueStore } from '@brickam/server-kit';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import type { OtpPurpose, OtpRecord, OtpRequestResult } from '../@types';
 
@@ -23,19 +24,23 @@ const TEMPLATE_KEY: Record<OtpPurpose, string> = {
 };
 
 /**
- * Сервис одноразовых кодов (OTP). In-memory стор; отправка — через notifications
- * по шаблону (Foundations §10), а не строкой в коде.
+ * Сервис одноразовых кодов (OTP). Хранение — через {@link KeyValueStore}
+ * (Redis в проде → мультиинстансная консистентность, in-memory в dev/тестах).
+ * KV инжектится как @Optional с фолбэком на внутренний InMemoryKeyValueStore.
+ * Отправка — через notifications по шаблону (Foundations §10), а не строкой в коде.
  */
 @Injectable()
 export class OtpService {
-    private readonly store = new Map<string, OtpRecord>();
+    private readonly store: KeyValueStore;
     private readonly config: OtpConfig;
 
     constructor(
         config: AppConfigService,
         private readonly notifications: NotificationsServiceContract,
+        @Optional() @Inject(KeyValueStore) kv?: KeyValueStore,
     ) {
         this.config = config.auth.otp;
+        this.store = kv ?? new InMemoryKeyValueStore();
     }
 
     /** Запрос OTP: cooldown, генерация и хеш кода, отправка SMS по шаблону. */
@@ -46,7 +51,7 @@ export class OtpService {
     ): Promise<OtpRequestResult> {
         const key = this.key(phone, purpose);
         const now = Date.now();
-        const existing = this.store.get(key);
+        const existing = await this.store.get<OtpRecord>(key);
         if (existing) {
             const elapsed = (now - existing.lastSentAt) / 1000;
             if (elapsed < this.config.resendCooldownSeconds) {
@@ -57,7 +62,8 @@ export class OtpService {
         const code = this.generateCode(this.config.length);
         const hash = await bcrypt.hash(code, BCRYPT_ROUNDS);
         const expiresAt = now + this.config.ttlSeconds * 1000;
-        this.store.set(key, { hash, expiresAt, attempts: 0, lastSentAt: now });
+        const record: OtpRecord = { hash, expiresAt, attempts: 0, lastSentAt: now };
+        await this.store.set(key, record, this.config.ttlSeconds);
 
         // Текст уходит из шаблона auth.otp/auth.passwordReset; код — переменная.
         await this.notifications.sendSms(phone, TEMPLATE_KEY[purpose], lang, {
@@ -71,10 +77,10 @@ export class OtpService {
     /** Проверка OTP: TTL, лимит попыток, сверка хеша. Успех удаляет запись. */
     async verify(phone: string, purpose: OtpPurpose, code: string): Promise<void> {
         const key = this.key(phone, purpose);
-        const record = this.store.get(key);
+        const record = await this.store.get<OtpRecord>(key);
         const now = Date.now();
         if (!record || record.expiresAt < now) {
-            this.store.delete(key);
+            await this.store.del(key);
             throw new ValidationException('errors.auth.otpInvalid');
         }
         if (record.attempts >= this.config.maxAttempts) {
@@ -83,13 +89,17 @@ export class OtpService {
         const matches = await bcrypt.compare(code, record.hash);
         if (!matches) {
             record.attempts += 1;
+            // TTL продлевать нельзя — переписываем по остаточному времени окна.
+            const remainingMs = Math.max(0, record.expiresAt - now);
+            const remainingSeconds = Math.max(1, Math.ceil(remainingMs / 1000));
+            await this.store.set(key, record, remainingSeconds);
             throw new ValidationException('errors.auth.otpInvalid');
         }
-        this.store.delete(key);
+        await this.store.del(key);
     }
 
     private key(phone: string, purpose: OtpPurpose): string {
-        return `${purpose}:${phone}`;
+        return `otp:${purpose}:${phone}`;
     }
 
     private generateCode(length: number): string {

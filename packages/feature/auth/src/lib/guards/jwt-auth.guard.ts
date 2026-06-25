@@ -26,12 +26,11 @@ export class JwtAuthGuard implements CanActivate {
         }
 
         const request = context.switchToHttp().getRequest<RequestWithContext>();
-        const header = request.headers['authorization'];
-        if (!header?.startsWith('Bearer ')) {
+        const token = this.extractToken(request);
+        if (!token) {
             throw new UnauthorizedException('errors.unauthorized');
         }
 
-        const token = header.slice('Bearer '.length).trim();
         const payload = this.tokenService.verifyAccess(token);
 
         request.user = {
@@ -42,5 +41,22 @@ export class JwtAuthGuard implements CanActivate {
         };
 
         return true;
+    }
+
+    /**
+     * Достаёт access-токен из httpOnly-cookie `access_token` (веб-клиенты) ИЛИ
+     * из заголовка `Authorization: Bearer` (API/мобильные). Dual-mode.
+     */
+    private extractToken(request: RequestWithContext): string | null {
+        const cookies = (request as { cookies?: Record<string, string> }).cookies;
+        const fromCookie = cookies?.['access_token'];
+        if (fromCookie) {
+            return fromCookie;
+        }
+        const header = request.headers['authorization'];
+        if (header?.startsWith('Bearer ')) {
+            return header.slice('Bearer '.length).trim();
+        }
+        return null;
     }
 }

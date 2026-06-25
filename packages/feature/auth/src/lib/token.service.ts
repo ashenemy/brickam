@@ -2,25 +2,49 @@ import { randomUUID } from 'node:crypto';
 import { AppConfigService } from '@brickam/config-kit';
 import { UnauthorizedException } from '@brickam/core-kit';
 import type { AuthTokens, JwtPayload } from '@brickam/domain-kit';
-import { Injectable } from '@nestjs/common';
+import { InMemoryKeyValueStore, KeyValueStore } from '@brickam/server-kit';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import { JwtService, type JwtSignOptions } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import type { RefreshRecord, RefreshTokenPayload } from '../@types';
 
 const BCRYPT_ROUNDS = 10;
 
+/** Множители единиц TTL (формат `\d+[smhdw]`, валидируется config-kit). */
+const TTL_UNIT_SECONDS: Record<string, number> = {
+    s: 1,
+    m: 60,
+    h: 3600,
+    d: 86_400,
+    w: 604_800,
+};
+
+/** Парсит TTL вида `30d`/`15m` в секунды (формат гарантирован config-kit). */
+function ttlToSeconds(ttl: string): number {
+    const match = /^(\d+)([smhdw])$/.exec(ttl);
+    if (!match) {
+        return 0;
+    }
+    return Number(match[1]) * TTL_UNIT_SECONDS[match[2]];
+}
+
 /**
  * Выпуск/проверка/ротация JWT. Access и refresh подписаны разными секретами.
- * Refresh-токены отслеживаются в in-memory сторе по jti для инвалидации.
+ * Refresh-токены отслеживаются в {@link KeyValueStore} по jti для инвалидации
+ * (Redis в проде → мультиинстансная консистентность, in-memory в dev/тестах).
+ * KV инжектится как @Optional с фолбэком на внутренний InMemoryKeyValueStore.
  */
 @Injectable()
 export class TokenService {
-    private readonly refreshStore = new Map<string, RefreshRecord>();
+    private readonly store: KeyValueStore;
 
     constructor(
         private readonly jwt: JwtService,
         private readonly config: AppConfigService,
-    ) {}
+        @Optional() @Inject(KeyValueStore) kv?: KeyValueStore,
+    ) {
+        this.store = kv ?? new InMemoryKeyValueStore();
+    }
 
     /** Выпускает пару токенов и регистрирует refresh в сторе ротации. */
     async issueTokens(payload: JwtPayload): Promise<AuthTokens> {
@@ -41,7 +65,8 @@ export class TokenService {
         const refreshToken = await this.jwt.signAsync(refreshPayload, refreshOptions);
 
         const tokenHash = await bcrypt.hash(refreshToken, BCRYPT_ROUNDS);
-        this.refreshStore.set(jti, { userId: payload.sub, tokenHash, payload });
+        const record: RefreshRecord = { userId: payload.sub, tokenHash, payload };
+        await this.store.set(this.key(jti), record, ttlToSeconds(jwtConfig.refreshTtl));
 
         return { accessToken, refreshToken };
     }
@@ -71,7 +96,7 @@ export class TokenService {
             throw new UnauthorizedException('errors.unauthorized');
         }
 
-        const record = this.refreshStore.get(decoded.jti);
+        const record = await this.store.get<RefreshRecord>(this.key(decoded.jti));
         if (!record) {
             throw new UnauthorizedException('errors.unauthorized');
         }
@@ -82,8 +107,12 @@ export class TokenService {
         }
 
         // Инвалидация старого refresh (одноразовость).
-        this.refreshStore.delete(decoded.jti);
+        await this.store.del(this.key(decoded.jti));
 
         return this.issueTokens(record.payload);
+    }
+
+    private key(jti: string): string {
+        return `refresh:${jti}`;
     }
 }
