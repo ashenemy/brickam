@@ -5,6 +5,7 @@ import {
     type Page,
     ValidationException,
 } from '@brickam/core-kit';
+import { TransactionRunner } from '@brickam/db-kit';
 import {
     type AnalyticsBucket,
     type AnalyticsSummary,
@@ -29,6 +30,7 @@ import {
     type VendorOrderForReview,
 } from '@brickam/domain-kit';
 import { Inject, Injectable, Optional } from '@nestjs/common';
+import type { ClientSession } from 'mongoose';
 import type {
     CheckoutResult,
     OrderContract,
@@ -75,7 +77,23 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
         @Optional()
         @Inject(PlatformSettingsContract)
         private readonly platformSettings?: PlatformSettingsContract,
+        // Транзакционная обёртка checkout (§11). Опционально: без неё (юнит/e2e
+        // без Mongo) записи идут без сессии — прежнее поведение.
+        @Optional()
+        @Inject(TransactionRunner)
+        private readonly txRunner?: TransactionRunner,
     ) {}
+
+    /**
+     * Выполняет группу записей атомарно: при наличии TransactionRunner — в
+     * Mongo-транзакции (откат при сбое); иначе — без сессии (dev/тесты).
+     */
+    private runInTransaction<T>(work: (session?: ClientSession) => Promise<T>): Promise<T> {
+        if (this.txRunner) {
+            return this.txRunner.run((ctx) => work(ctx.session));
+        }
+        return work(undefined);
+    }
 
     /** Эффективная комиссия: override из настроек платформы ?? дефолт конфига (§11/§17). */
     private async effectiveCommissionPercent(): Promise<number> {
@@ -199,62 +217,84 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
         const finalTotal = result.total - loyaltyDiscount;
 
         const orderNumber = generateOrderNumber();
-        const orderDoc = await this.ordersRepository.create({
-            orderNumber,
-            buyerId,
-            status: OrderStatus.Created,
-            subtotal: result.subtotal,
-            productDiscountTotal: result.productDiscountTotal,
-            loyaltyDiscount,
-            total: finalTotal,
-            currencyShown: this.config.marketplace.baseCurrency,
-            ...(preview.tierId !== undefined ? { loyaltyTierSnapshot: preview.tierId } : {}),
-            deliveryAddressSnapshot: {
-                label: dto.deliveryAddress.label,
-                region: dto.deliveryAddress.region,
-                city: dto.deliveryAddress.city,
-                line1: dto.deliveryAddress.line1,
-                phone: dto.deliveryAddress.phone,
-                ...(dto.deliveryAddress.line2 !== undefined
-                    ? { line2: dto.deliveryAddress.line2 }
-                    : {}),
+
+        // Все записи (Order + VendorOrders + списание остатков + платёж + очистка
+        // корзины) — атомарно: при сбое любой из них транзакция откатывается, и
+        // не остаётся «полузаказа»/списанного остатка без оплаты (§11).
+        const { orderDoc, vendorOrderDocs, payment, updated } = await this.runInTransaction(
+            async (session) => {
+                const orderDoc = await this.ordersRepository.create(
+                    {
+                        orderNumber,
+                        buyerId,
+                        status: OrderStatus.Created,
+                        subtotal: result.subtotal,
+                        productDiscountTotal: result.productDiscountTotal,
+                        loyaltyDiscount,
+                        total: finalTotal,
+                        currencyShown: this.config.marketplace.baseCurrency,
+                        ...(preview.tierId !== undefined
+                            ? { loyaltyTierSnapshot: preview.tierId }
+                            : {}),
+                        deliveryAddressSnapshot: {
+                            label: dto.deliveryAddress.label,
+                            region: dto.deliveryAddress.region,
+                            city: dto.deliveryAddress.city,
+                            line1: dto.deliveryAddress.line1,
+                            phone: dto.deliveryAddress.phone,
+                            ...(dto.deliveryAddress.line2 !== undefined
+                                ? { line2: dto.deliveryAddress.line2 }
+                                : {}),
+                        },
+                    } as Partial<Order>,
+                    session,
+                );
+                const orderId = orderDoc.id ?? orderDoc._id.toString();
+
+                const vendorOrderDocs: VendorOrderDocument[] = [];
+                for (const vendor of result.vendors) {
+                    const vendorOrder = await this.vendorOrdersRepository.create(
+                        {
+                            orderId,
+                            vendorId: vendor.vendorId,
+                            items: vendor.items,
+                            subtotal: vendor.subtotal,
+                            commissionPercentSnapshot: vendor.commissionPercent,
+                            commissionAmount: vendor.commissionAmount,
+                            payoutAmount: vendor.payoutAmount,
+                        } as Partial<VendorOrder>,
+                        session,
+                    );
+                    vendorOrderDocs.push(vendorOrder);
+                }
+
+                // Списываем остатки по каждой позиции (бросит при нехватке → откат).
+                for (const item of cart.items) {
+                    await this.catalog.decrementStock(item.productId, item.qty, session);
+                }
+
+                // Покупатель платит сумму после лояльности; splits прежние —
+                // скидку лояльности абсорбирует платформа из своей комиссии.
+                const payment = await this.payments.createForOrder(
+                    { orderId, buyerId, amount: finalTotal, splits: result.splits },
+                    session,
+                );
+
+                const updated = await this.ordersRepository.updateById(
+                    orderId,
+                    { paymentId: payment.paymentId },
+                    session,
+                );
+
+                await this.cartsRepository.updateById(
+                    cart.id ?? cart._id.toString(),
+                    { items: [] },
+                    session,
+                );
+
+                return { orderDoc, vendorOrderDocs, payment, updated };
             },
-        } as Partial<Order>);
-        const orderId = orderDoc.id ?? orderDoc._id.toString();
-
-        const vendorOrderDocs: VendorOrderDocument[] = [];
-        for (const vendor of result.vendors) {
-            const vendorOrder = await this.vendorOrdersRepository.create({
-                orderId,
-                vendorId: vendor.vendorId,
-                items: vendor.items,
-                subtotal: vendor.subtotal,
-                commissionPercentSnapshot: vendor.commissionPercent,
-                commissionAmount: vendor.commissionAmount,
-                payoutAmount: vendor.payoutAmount,
-            } as Partial<VendorOrder>);
-            vendorOrderDocs.push(vendorOrder);
-        }
-
-        // Списываем остатки по каждой позиции (бросит при нехватке).
-        for (const item of cart.items) {
-            await this.catalog.decrementStock(item.productId, item.qty);
-        }
-
-        // Покупатель платит сумму после лояльности; разбивка по вендорам (splits)
-        // прежняя — скидку лояльности абсорбирует платформа из своей комиссии.
-        const payment = await this.payments.createForOrder({
-            orderId,
-            buyerId,
-            amount: finalTotal,
-            splits: result.splits,
-        });
-
-        const updated = await this.ordersRepository.updateById(orderId, {
-            paymentId: payment.paymentId,
-        });
-
-        await this.cartsRepository.updateById(cart.id ?? cart._id.toString(), { items: [] });
+        );
 
         return {
             order: this.toOrderContract(updated ?? orderDoc),
@@ -381,51 +421,69 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
             line1: '-',
             phone: '-',
         };
-        const orderDoc = await this.ordersRepository.create({
-            orderNumber,
-            buyerId: input.buyerId,
-            status: OrderStatus.Created,
-            subtotal,
-            productDiscountTotal: subtotal - total,
-            loyaltyDiscount: 0,
-            total,
-            currencyShown: input.currency,
-            deliveryAddressSnapshot: {
-                label: address.label,
-                region: address.region,
-                city: address.city,
-                line1: address.line1,
-                phone: address.phone,
-                ...(address.line2 !== undefined ? { line2: address.line2 } : {}),
-            },
-        } as Partial<Order>);
-        const orderId = orderDoc.id ?? orderDoc._id.toString();
+        // Заказ + саб-заказ + платёж из инвойса — атомарно (откат при сбое).
+        return this.runInTransaction(async (session) => {
+            const orderDoc = await this.ordersRepository.create(
+                {
+                    orderNumber,
+                    buyerId: input.buyerId,
+                    status: OrderStatus.Created,
+                    subtotal,
+                    productDiscountTotal: subtotal - total,
+                    loyaltyDiscount: 0,
+                    total,
+                    currencyShown: input.currency,
+                    deliveryAddressSnapshot: {
+                        label: address.label,
+                        region: address.region,
+                        city: address.city,
+                        line1: address.line1,
+                        phone: address.phone,
+                        ...(address.line2 !== undefined ? { line2: address.line2 } : {}),
+                    },
+                } as Partial<Order>,
+                session,
+            );
+            const orderId = orderDoc.id ?? orderDoc._id.toString();
 
-        await this.vendorOrdersRepository.create({
-            orderId,
-            vendorId: input.vendorId,
-            items: input.lineItems.map((li) => ({
-                productId: 'invoice',
-                qty: li.qty,
-                unitPrice: li.price,
-                discountApplied: 0,
-                lineTotal: li.price * li.qty,
-            })),
-            subtotal: total,
-            commissionPercentSnapshot: commissionPercent,
-            commissionAmount,
-            payoutAmount,
-        } as Partial<VendorOrder>);
+            await this.vendorOrdersRepository.create(
+                {
+                    orderId,
+                    vendorId: input.vendorId,
+                    items: input.lineItems.map((li) => ({
+                        productId: 'invoice',
+                        qty: li.qty,
+                        unitPrice: li.price,
+                        discountApplied: 0,
+                        lineTotal: li.price * li.qty,
+                    })),
+                    subtotal: total,
+                    commissionPercentSnapshot: commissionPercent,
+                    commissionAmount,
+                    payoutAmount,
+                } as Partial<VendorOrder>,
+                session,
+            );
 
-        const payment = await this.payments.createForOrder({
-            orderId,
-            buyerId: input.buyerId,
-            amount: total,
-            splits: [{ vendorId: input.vendorId, amount: total, commissionAmount, payoutAmount }],
+            const payment = await this.payments.createForOrder(
+                {
+                    orderId,
+                    buyerId: input.buyerId,
+                    amount: total,
+                    splits: [
+                        { vendorId: input.vendorId, amount: total, commissionAmount, payoutAmount },
+                    ],
+                },
+                session,
+            );
+            await this.ordersRepository.updateById(
+                orderId,
+                { paymentId: payment.paymentId },
+                session,
+            );
+
+            return { orderId, orderNumber, paymentId: payment.paymentId, total };
         });
-        await this.ordersRepository.updateById(orderId, { paymentId: payment.paymentId });
-
-        return { orderId, orderNumber, paymentId: payment.paymentId, total };
     }
 
     /** Постраничный список заказов покупателя. */

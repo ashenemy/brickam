@@ -1,5 +1,6 @@
 import type { AppConfigService } from '@brickam/config-kit';
 import { ForbiddenException, NotFoundException, ValidationException } from '@brickam/core-kit';
+import type { TransactionRunner, TxContext } from '@brickam/db-kit';
 import {
     type CatalogServiceContract,
     DeliveryStatus,
@@ -226,8 +227,9 @@ describe('OrdersService', () => {
             await service.checkout('b1', checkoutDto);
 
             expect(catalog.decrementStock).toHaveBeenCalledTimes(2);
-            expect(catalog.decrementStock).toHaveBeenCalledWith('p1', 2);
-            expect(catalog.decrementStock).toHaveBeenCalledWith('p2', 1);
+            // 3-й аргумент — session (undefined без TransactionRunner в юнит-тесте).
+            expect(catalog.decrementStock).toHaveBeenCalledWith('p1', 2, undefined);
+            expect(catalog.decrementStock).toHaveBeenCalledWith('p2', 1, undefined);
         });
 
         it('создаёт один платёж на total со splits (сумма splits === total)', async () => {
@@ -246,7 +248,39 @@ describe('OrdersService', () => {
 
         it('очищает корзину после оформления', async () => {
             await service.checkout('b1', checkoutDto);
-            expect(cartsRepo.updateById).toHaveBeenCalledWith('cart1', { items: [] });
+            expect(cartsRepo.updateById).toHaveBeenCalledWith('cart1', { items: [] }, undefined);
+        });
+
+        it('с TransactionRunner прокидывает session во все записи (атомарность §11)', async () => {
+            const SESSION = { id: 'sess' };
+            const txRunner = {
+                run: vi.fn((work: (ctx: TxContext) => Promise<unknown>) =>
+                    work({ session: SESSION as never }),
+                ),
+            };
+            const cfg = {
+                marketplace: { commissionPercent: 10, baseCurrency: 'AMD' },
+                pagination: { maxPageSize: 50 },
+            } as unknown as AppConfigService;
+            const txService = new OrdersService(
+                cartsRepo as unknown as CartsRepository,
+                ordersRepo as unknown as OrdersRepository,
+                vendorOrdersRepo as unknown as VendorOrdersRepository,
+                deliveryRepo as unknown as DeliveryAddressesRepository,
+                catalog as unknown as CatalogServiceContract,
+                payments as unknown as PaymentsServiceContract,
+                loyalty as unknown as LoyaltyServiceContract,
+                cfg,
+                undefined,
+                txRunner as unknown as TransactionRunner,
+            );
+
+            await txService.checkout('b1', checkoutDto);
+
+            expect(txRunner.run).toHaveBeenCalledTimes(1);
+            expect(ordersRepo.create).toHaveBeenCalledWith(expect.any(Object), SESSION);
+            expect(catalog.decrementStock).toHaveBeenCalledWith('p1', 2, SESSION);
+            expect(cartsRepo.updateById).toHaveBeenCalledWith('cart1', { items: [] }, SESSION);
         });
 
         it('бросает ValidationException на пустой корзине', async () => {
