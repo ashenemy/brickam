@@ -3,7 +3,25 @@
     "$schema": "../../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/feature/pages/src",
     "projectType": "library",
-    "tags": ["type:feature", "scope:server"],
-    "// targets": "to see all targets run: nx show project pages --web",
-    "targets": {}
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/pages",
+                "main": "packages/feature/pages/src/index.ts",
+                "tsConfig": "packages/feature/pages/tsconfig.lib.json",
+                "assets": ["packages/feature/pages/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/pages",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:feature", "scope:server"]
 }
