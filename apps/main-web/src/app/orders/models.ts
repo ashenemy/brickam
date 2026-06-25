@@ -61,11 +61,19 @@ export type VendorOrder = {
     deliveryEvents: DeliveryEvent[];
 };
 
+/** Результат платежа (с redirect-флоу карт ArCa/Idram). */
+export type PaymentResult = {
+    paymentId: string;
+    status: string;
+    /** URL платёжной страницы PSP: если задан — фронт редиректит сюда. */
+    redirectUrl?: string;
+};
+
 /** Результат оформления заказа (POST /orders/checkout). */
 export type CheckoutResult = {
     order: Order;
     vendorOrders: VendorOrder[];
-    payment?: unknown;
+    payment?: PaymentResult;
     splits?: unknown[];
 };
 

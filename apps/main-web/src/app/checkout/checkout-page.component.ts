@@ -228,6 +228,18 @@ export class CheckoutPageComponent implements OnInit {
         this.ordersApi.checkout(address).subscribe({
             next: (result) => {
                 const orderId = result.order.id;
+                const redirectUrl = result.payment?.redirectUrl;
+                // Redirect-флоу (карты ArCa/Idram): оплата завершается на стороне
+                // PSP, pay() не вызываем — перенаправляем покупателя на платёжную
+                // страницу. Только в браузере (SSR-безопасно).
+                if (redirectUrl) {
+                    this.cart.reset();
+                    if (this.isBrowser) {
+                        window.location.href = redirectUrl;
+                    }
+                    return;
+                }
+                // Синхронный провайдер (mock): прежний поток — confirm → /orders/:id.
                 this.ordersApi.pay(orderId).subscribe({
                     next: () => {
                         this.cart.reset();
@@ -272,5 +284,6 @@ const DEFAULTS: Record<string, string> = {
     total: 'Total',
     placeOrder: 'Place order',
     processing: 'Processing…',
+    redirecting: 'Redirecting to payment…',
     error: 'Could not place the order. Please try again.',
 };

@@ -90,6 +90,55 @@ describe('CheckoutPageComponent', () => {
         expect(store.isEmpty()).toBe(true);
     });
 
+    it('redirect-флоу: checkout c redirectUrl → window.location.href, без pay()', () => {
+        const router = TestBed.inject(Router);
+        vi.spyOn(router, 'navigate').mockResolvedValue(true);
+        const hrefSpy = vi.fn();
+        const original = window.location;
+        Object.defineProperty(window, 'location', {
+            configurable: true,
+            value: {
+                ...original,
+                set href(value: string) {
+                    hrefSpy(value);
+                },
+            },
+        });
+
+        fixture.detectChanges();
+        httpMock.expectOne('http://api.test/api/cart').flush({
+            success: true,
+            data: { items: [{ productId: 'p1', vendorId: 'v1', qty: 1, priceSnapshot: 5000 }] },
+        });
+        fixture.detectChanges();
+
+        fill(fixture.componentInstance);
+        (fixture.componentInstance as unknown as { submit(e: Event): void }).submit(
+            new Event('submit'),
+        );
+
+        const checkout = httpMock.expectOne('http://api.test/api/orders/checkout');
+        checkout.flush({
+            success: true,
+            data: {
+                order: { id: 'o1', orderNumber: 'BH-1', status: 'created' },
+                vendorOrders: [],
+                payment: {
+                    paymentId: 'p1',
+                    status: 'pending',
+                    redirectUrl: 'https://psp.test/pay/x',
+                },
+            },
+        });
+
+        // pay() НЕ вызывается при redirect-флоу.
+        httpMock.expectNone('http://api.test/api/orders/o1/pay');
+        expect(hrefSpy).toHaveBeenCalledWith('https://psp.test/pay/x');
+        expect(store.isEmpty()).toBe(true);
+
+        Object.defineProperty(window, 'location', { configurable: true, value: original });
+    });
+
     it('пустая корзина при сабмите → редирект на /cart', () => {
         const router = TestBed.inject(Router);
         const nav = vi.spyOn(router, 'navigate').mockResolvedValue(true);
