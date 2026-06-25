@@ -1,10 +1,12 @@
 import { AppConfigService } from '@brickam/config-kit';
 import { type DynamicModule, Global, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
+import { MongoTransactionRunner, TransactionRunner } from './transaction.runner';
 
 /**
  * Глобальное подключение к MongoDB. URI берётся из валидированного конфига
  * (config-kit), который, в свою очередь, читает MONGO_URI из env.
+ * Также провайдит TransactionRunner (единица работы поверх сессии).
  */
 @Global()
 @Module({})
@@ -24,7 +26,8 @@ export class DbKitModule {
                     }),
                 }),
             ],
-            exports: [MongooseModule],
+            providers: [{ provide: TransactionRunner, useClass: MongoTransactionRunner }],
+            exports: [MongooseModule, TransactionRunner],
         };
     }
 }

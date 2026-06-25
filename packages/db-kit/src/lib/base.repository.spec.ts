@@ -16,6 +16,7 @@ const chain = (result: unknown) => {
     query.sort = vi.fn(() => query);
     query.skip = vi.fn(() => query);
     query.limit = vi.fn(() => query);
+    query.session = vi.fn(() => query);
     query.exec = vi.fn(() => Promise.resolve(result));
     return query;
 };
@@ -103,5 +104,37 @@ describe('BaseRepository', () => {
         expect(await repo.exists({ name: 'a' })).toBe(true);
         model.exists = vi.fn(() => Promise.resolve(null));
         expect(await repo.exists({ name: 'z' })).toBe(false);
+    });
+
+    describe('транзакционная сессия', () => {
+        const session = { id: 'sess' } as never;
+
+        it('create в сессии шлёт массив + options', async () => {
+            model.create = vi.fn(() => Promise.resolve([{ _id: '1', name: 'x' }]));
+            const doc = await repo.create({ name: 'x' }, session);
+            expect(model.create).toHaveBeenCalledWith([{ name: 'x' }], { session });
+            expect(doc).toMatchObject({ name: 'x' });
+        });
+
+        it('updateById в сессии добавляет session в options', async () => {
+            await repo.updateById('1', { name: 'u' }, session);
+            expect(model.findByIdAndUpdate).toHaveBeenCalledWith(
+                '1',
+                { name: 'u' },
+                {
+                    new: true,
+                    session,
+                },
+            );
+        });
+
+        it('findById/findOne в сессии вызывают query.session', async () => {
+            await repo.findById('1', session);
+            const q1 = model.findById.mock.results[0].value;
+            expect(q1.session).toHaveBeenCalledWith(session);
+            await repo.findOne({ name: 'a' }, session);
+            const q2 = model.findOne.mock.results[0].value;
+            expect(q2.session).toHaveBeenCalledWith(session);
+        });
     });
 });

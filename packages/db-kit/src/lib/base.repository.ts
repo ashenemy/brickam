@@ -4,7 +4,7 @@ import {
     type PaginationParams,
     pageOffset,
 } from '@brickam/core-kit';
-import type { HydratedDocument, Model, UpdateQuery } from 'mongoose';
+import type { ClientSession, HydratedDocument, Model, UpdateQuery } from 'mongoose';
 import type { Filter, RepoQueryOptions } from '../@types';
 
 /**
@@ -19,16 +19,35 @@ export abstract class BaseRepository<TEntity> {
         return this.model as unknown as Model<any>;
     }
 
-    create(data: Partial<TEntity>): Promise<HydratedDocument<TEntity>> {
+    async create(
+        data: Partial<TEntity>,
+        session?: ClientSession,
+    ): Promise<HydratedDocument<TEntity>> {
+        if (session) {
+            // Запись в рамках транзакции (model.create с options требует массив).
+            const [doc] = await this.col.create([data], { session });
+            return doc as unknown as HydratedDocument<TEntity>;
+        }
         return this.model.create(data as TEntity) as unknown as Promise<HydratedDocument<TEntity>>;
     }
 
-    findById(id: string): Promise<HydratedDocument<TEntity> | null> {
-        return this.model.findById(id).exec();
+    findById(id: string, session?: ClientSession): Promise<HydratedDocument<TEntity> | null> {
+        const query = this.col.findById(id);
+        if (session) {
+            query.session(session);
+        }
+        return query.exec() as Promise<HydratedDocument<TEntity> | null>;
     }
 
-    findOne(filter: Filter<TEntity>): Promise<HydratedDocument<TEntity> | null> {
-        return this.col.findOne(filter).exec();
+    findOne(
+        filter: Filter<TEntity>,
+        session?: ClientSession,
+    ): Promise<HydratedDocument<TEntity> | null> {
+        const query = this.col.findOne(filter);
+        if (session) {
+            query.session(session);
+        }
+        return query.exec() as Promise<HydratedDocument<TEntity> | null>;
     }
 
     find(
@@ -66,8 +85,11 @@ export abstract class BaseRepository<TEntity> {
     updateById(
         id: string,
         update: UpdateQuery<TEntity>,
+        session?: ClientSession,
     ): Promise<HydratedDocument<TEntity> | null> {
-        return this.model.findByIdAndUpdate(id, update, { new: true }).exec();
+        return this.col
+            .findByIdAndUpdate(id, update, { new: true, ...(session ? { session } : {}) })
+            .exec() as Promise<HydratedDocument<TEntity> | null>;
     }
 
     async deleteById(id: string): Promise<boolean> {
