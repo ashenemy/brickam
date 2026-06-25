@@ -9,6 +9,37 @@ import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
+import { RedisIoAdapter } from './app/ws/redis-io.adapter';
+
+/**
+ * Подключает Socket.IO Redis-adapter для горизонтального масштабирования
+ * WS-чата (события рассылаются между инстансами через Redis). Активируется
+ * только в проде ИЛИ при явном `WS_REDIS_ADAPTER=1` и вне тестов — в dev/тестах
+ * остаётся дефолтный in-memory адаптер. При недоступности Redis НЕ роняем
+ * приложение: логируем предупреждение и продолжаем одноинстансово.
+ */
+async function setupWsRedisAdapter(
+    app: Awaited<ReturnType<typeof NestFactory.create>>,
+    config: AppConfigService,
+): Promise<void> {
+    const explicit = process.env.WS_REDIS_ADAPTER === '1';
+    const isTest = process.env.NODE_ENV === 'test';
+    if (!((config.isProduction || explicit) && !isTest)) {
+        return;
+    }
+    try {
+        const adapter = new RedisIoAdapter(app);
+        await adapter.connectToRedis(config.queue.redisUrl);
+        app.useWebSocketAdapter(adapter);
+        Logger.log('Socket.IO Redis-adapter подключён (горизонтальное масштабирование)', 'WS');
+    } catch (error) {
+        // Фолбэк: чат продолжит работать на дефолтном in-memory адаптере (один инстанс).
+        Logger.warn(
+            `Socket.IO Redis-adapter не подключён, используется in-memory: ${String(error)}`,
+            'WS',
+        );
+    }
+}
 
 /** Инициализирует Sentry, если задан SENTRY_DSN (иначе capture — no-op). */
 function initSentry(): void {
@@ -69,6 +100,9 @@ async function bootstrap(): Promise<void> {
     );
     // Грейсфул-шатдаун: закрытие Mongo/Redis/BullMQ по SIGTERM/SIGINT.
     app.enableShutdownHooks();
+
+    // WS-чат: Redis-adapter для масштабирования (прозрачен для ChatGateway).
+    await setupWsRedisAdapter(app, config);
 
     app.setGlobalPrefix(globalPrefix);
     app.enableCors({ origin: corsOrigins, credentials: true });

@@ -20,6 +20,7 @@ import { PagesModule } from '@brickam/pages';
 import { PaymentsModule } from '@brickam/payments';
 import { ReviewsModule } from '@brickam/reviews';
 import { RedisModule, ServerKitModule } from '@brickam/server-kit';
+import { StorageModule } from '@brickam/storage';
 import { SubscriptionsModule } from '@brickam/subscriptions';
 import { TemplatesModule } from '@brickam/templates';
 import { UsersModule } from '@brickam/users';
@@ -118,6 +119,7 @@ import { MetricsController } from './observability/metrics.controller';
         AuditModule,
         DisputesModule,
         PagesModule,
+        StorageModule,
         HealthModule,
     ],
     providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
