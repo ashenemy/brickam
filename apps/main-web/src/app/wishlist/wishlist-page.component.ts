@@ -15,6 +15,7 @@ import { LanguageService } from '@brickam/i18n-kit/browser';
 import { type Product, ProductCardComponent } from '@brickam/ui-kit';
 import { CatalogApiService } from '../catalog/catalog-api.service';
 import type { ProductListItem } from '../catalog/models';
+import { CurrencyStore } from '../currency/currency.store';
 import { WishlistStore } from './wishlist.store';
 import { WishlistHeartComponent } from './wishlist-heart.component';
 
@@ -72,6 +73,7 @@ export class WishlistPageComponent implements OnInit {
     private readonly router = inject(Router);
     private readonly i18n = inject(LanguageService);
     private readonly title = inject(Title);
+    private readonly currencyStore = inject(CurrencyStore);
 
     protected readonly lang = this.i18n.lang;
 
@@ -113,13 +115,16 @@ export class WishlistPageComponent implements OnInit {
         });
     }
 
-    protected readonly cards = computed(() =>
-        this.items().map((item) => ({
+    protected readonly cards = computed(() => {
+        // Зависимости от валюты — переформатирование карточек при её смене.
+        this.currencyStore.selected();
+        this.currencyStore.rates();
+        return this.items().map((item) => ({
             id: item.id,
             slug: item.slug,
             card: this.toCard(item),
-        })),
-    );
+        }));
+    });
 
     private toCard(item: ProductListItem): Product {
         const lang = this.lang();
@@ -139,7 +144,8 @@ export class WishlistPageComponent implements OnInit {
     }
 
     private formatPrice(value: number): string {
-        return `${value.toLocaleString('ru-RU')} ֏`;
+        // Цена в AMD; конвертация только для отображения.
+        return this.currencyStore.format(value);
     }
 
     protected openProduct(slug: string): void {

@@ -16,6 +16,7 @@ import {
     ProductCardComponent,
     SelectComponent,
 } from '@brickam/ui-kit';
+import { CurrencyStore } from '../currency/currency.store';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Category, PageMeta, ProductFilters, ProductListItem, ProductSort } from './models';
@@ -155,6 +156,7 @@ export class CatalogListComponent implements OnInit {
     private readonly i18n = inject(LanguageService);
     private readonly title = inject(Title);
     private readonly metaService = inject(Meta);
+    private readonly currencyStore = inject(CurrencyStore);
 
     protected readonly lang = this.i18n.lang;
 
@@ -253,12 +255,15 @@ export class CatalogListComponent implements OnInit {
         return this.metaSig();
     }
 
-    protected readonly cards = computed(() =>
-        this.items().map((item) => ({
+    protected readonly cards = computed(() => {
+        // Зависимости от валюты — чтобы карточки переформатировались при её смене.
+        this.currencyStore.selected();
+        this.currencyStore.rates();
+        return this.items().map((item) => ({
             slug: item.slug,
             card: this.toCard(item),
-        })),
-    );
+        }));
+    });
 
     private toCard(item: ProductListItem): Product {
         const lang = this.lang();
@@ -278,7 +283,8 @@ export class CatalogListComponent implements OnInit {
     }
 
     private formatPrice(value: number): string {
-        return `${value.toLocaleString('ru-RU')} ֏`;
+        // Цена приходит в AMD (целое); конвертируется только для отображения.
+        return this.currencyStore.format(value);
     }
 
     protected readonly heading = computed(() => this.ph('title'));

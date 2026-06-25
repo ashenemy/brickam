@@ -16,6 +16,7 @@ import { Meta, Title } from '@angular/platform-browser';
 import { ActivatedRoute, Router } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import { BreadcrumbComponent, ButtonComponent } from '@brickam/ui-kit';
+import { CurrencyDisplayPipe } from '../currency/currency-display.pipe';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
 import { CatalogApiService } from './catalog-api.service';
 import type { Media, ProductDetail } from './models';
@@ -29,7 +30,7 @@ import type { Media, ProductDetail } from './models';
     selector: 'app-product-detail',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [BreadcrumbComponent, ButtonComponent, WishlistHeartComponent],
+    imports: [BreadcrumbComponent, ButtonComponent, WishlistHeartComponent, CurrencyDisplayPipe],
     template: `
         @if (loading()) {
             <div class="py-16 text-center text-text-secondary" style="font: var(--type-product)">
@@ -108,14 +109,14 @@ import type { Media, ProductDetail } from './models';
 
                         <div class="flex items-baseline gap-3">
                             <span class="text-price" style="font: var(--type-price)">
-                                {{ formatPrice(product()!.finalPrice) }}
+                                {{ product()!.finalPrice | currencyDisplay }}
                             </span>
                             @if (product()!.discount) {
                                 <span
                                     class="text-danger line-through"
                                     style="font: var(--type-product)"
                                 >
-                                    {{ formatPrice(product()!.price) }}
+                                    {{ product()!.price | currencyDisplay }}
                                 </span>
                             }
                             <span class="text-text-secondary" style="font: var(--type-caption)">
@@ -286,10 +287,6 @@ export class ProductDetailComponent implements OnDestroy {
         { label: this.ph('catalog'), href: '/catalog' },
         { label: this.heading() },
     ]);
-
-    protected formatPrice(value: number): string {
-        return `${value.toLocaleString('ru-RU')} ֏`;
-    }
 
     protected onCrumb(href: string | undefined): void {
         if (href) {
