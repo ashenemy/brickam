@@ -11,11 +11,18 @@ const REFRESH_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // ~30 дней
  * `secure`+`sameSite:'none'` в проде (кросс-доменный фронт через https); в dev —
  * `lax` по http. Access/refresh — раздельные cookie с разным сроком и путём.
  */
+/** Домен cookie для поддоменов (web.example.am + api.example.am). Пусто — текущий хост. */
+const cookieDomain = (): { domain: string } | Record<string, never> => {
+    const domain = process.env['COOKIE_DOMAIN'];
+    return domain ? { domain } : {};
+};
+
 export function setAuthCookies(res: Response, tokens: AuthTokens, isProduction: boolean): void {
     const base = {
         httpOnly: true,
         secure: isProduction,
         sameSite: isProduction ? ('none' as const) : ('lax' as const),
+        ...cookieDomain(),
     };
     res.cookie(ACCESS_COOKIE, tokens.accessToken, {
         ...base,
@@ -31,6 +38,6 @@ export function setAuthCookies(res: Response, tokens: AuthTokens, isProduction: 
 
 /** Удаляет cookie с токенами (logout). */
 export function clearAuthCookies(res: Response): void {
-    res.clearCookie(ACCESS_COOKIE, { path: '/' });
-    res.clearCookie(REFRESH_COOKIE, { path: '/api/auth/refresh' });
+    res.clearCookie(ACCESS_COOKIE, { path: '/', ...cookieDomain() });
+    res.clearCookie(REFRESH_COOKIE, { path: '/api/auth/refresh', ...cookieDomain() });
 }
