@@ -35,7 +35,7 @@ export class LoyaltyStore {
      */
     readonly progressPercent = computed(() => {
         const s = this.status();
-        if (!s || !s.nextTier) {
+        if (!s?.nextTier) {
             return 100;
         }
         const next = s.nextTier.threshold;
