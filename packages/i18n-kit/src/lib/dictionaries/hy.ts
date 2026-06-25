@@ -35,6 +35,8 @@ export const hy: Dictionary = {
     'errors.invoices.notBuyer': 'Հաշիվը կարող է վճարել միայն գնորդը',
     'errors.invoices.notSent': 'Հաշիվը վճարման սպասում չէ',
     'errors.invoices.notCancellable': 'Հաշիվը հնարավոր չէ չեղարկել',
+    'errors.currency.providerUnavailable': 'Փոխարժեքի մատակարարը հասանելի չէ',
+    'errors.currency.rateUnavailable': 'Փոխարժեքը հասանելի չէ',
     'common.appName': 'BuildHub',
     'lang.hy': 'Հայերեն',
     'lang.ru': 'Ռուսերեն',
@@ -74,4 +76,5 @@ export const hy: Dictionary = {
     'calc.reserve': 'Պահուստ %',
     'calc.empty': 'Լրացրեք դաշտերը և սեղմեք «Հաշվել»',
     'calc.invalidInput': 'Մուտքագրեք վավեր թվային արժեքներ բոլոր դաշտերում',
+    'currency.label': 'Արժույթ',
 };

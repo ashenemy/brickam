@@ -35,6 +35,8 @@ export const ru: Dictionary = {
     'errors.invoices.notBuyer': 'Оплатить инвойс может только покупатель',
     'errors.invoices.notSent': 'Инвойс не ожидает оплаты',
     'errors.invoices.notCancellable': 'Инвойс нельзя отменить',
+    'errors.currency.providerUnavailable': 'Провайдер курсов недоступен',
+    'errors.currency.rateUnavailable': 'Курс валюты недоступен',
     'common.appName': 'BuildHub',
     'lang.hy': 'Армянский',
     'lang.ru': 'Русский',
@@ -74,4 +76,5 @@ export const ru: Dictionary = {
     'calc.reserve': 'Запас %',
     'calc.empty': 'Заполните поля и нажмите «Рассчитать»',
     'calc.invalidInput': 'Введите корректные числовые значения во все поля',
+    'currency.label': 'Валюта',
 };

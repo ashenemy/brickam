@@ -35,6 +35,8 @@ export const en: Dictionary = {
     'errors.invoices.notBuyer': 'Only the buyer can pay this invoice',
     'errors.invoices.notSent': 'Invoice is not awaiting payment',
     'errors.invoices.notCancellable': 'Invoice cannot be cancelled',
+    'errors.currency.providerUnavailable': 'Exchange rate provider is unavailable',
+    'errors.currency.rateUnavailable': 'Exchange rate is unavailable',
     'common.appName': 'BuildHub',
     'lang.hy': 'Armenian',
     'lang.ru': 'Russian',
@@ -74,4 +76,5 @@ export const en: Dictionary = {
     'calc.reserve': 'Reserve %',
     'calc.empty': 'Fill in the fields and press “Calculate”',
     'calc.invalidInput': 'Enter valid numeric values in all fields',
+    'currency.label': 'Currency',
 };
