@@ -130,4 +130,43 @@ describe('UsersService', () => {
         await service.updatePassword('u1', 'new-hash');
         expect(repo.updateById).toHaveBeenCalledWith('u1', { passwordHash: 'new-hash' });
     });
+
+    it('getLoyaltyMetric: читает users.loyalty (с currentTierId)', async () => {
+        repo.findById.mockResolvedValue(
+            makeDoc({ loyalty: { totalSpend: 12000, totalOrders: 3, currentTierId: '2' } }),
+        );
+        const metric = await service.getLoyaltyMetric('u1');
+        expect(metric).toEqual({ totalSpend: 12000, totalOrders: 3, currentTierId: '2' });
+    });
+
+    it('getLoyaltyMetric: нули и без currentTierId, если loyalty отсутствует', async () => {
+        repo.findById.mockResolvedValue(makeDoc({ loyalty: undefined }));
+        const metric = await service.getLoyaltyMetric('u1');
+        expect(metric).toEqual({ totalSpend: 0, totalOrders: 0 });
+        expect(metric).not.toHaveProperty('currentTierId');
+    });
+
+    it('getLoyaltyMetric: нули, если пользователя нет', async () => {
+        repo.findById.mockResolvedValue(null);
+        expect(await service.getLoyaltyMetric('missing')).toEqual({
+            totalSpend: 0,
+            totalOrders: 0,
+        });
+    });
+
+    it('updateLoyalty: пишет метрику с currentTierId', async () => {
+        repo.updateById.mockResolvedValue(makeDoc());
+        await service.updateLoyalty('u1', { totalSpend: 5000, totalOrders: 2, currentTierId: '2' });
+        expect(repo.updateById).toHaveBeenCalledWith('u1', {
+            loyalty: { totalSpend: 5000, totalOrders: 2, currentTierId: '2' },
+        });
+    });
+
+    it('updateLoyalty: опускает currentTierId, когда его нет', async () => {
+        repo.updateById.mockResolvedValue(makeDoc());
+        await service.updateLoyalty('u1', { totalSpend: 100, totalOrders: 1 });
+        expect(repo.updateById).toHaveBeenCalledWith('u1', {
+            loyalty: { totalSpend: 100, totalOrders: 1 },
+        });
+    });
 });
