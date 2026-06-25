@@ -3,7 +3,25 @@
     "$schema": "../../node_modules/nx/schemas/project-schema.json",
     "sourceRoot": "packages/ai-kit/src",
     "projectType": "library",
-    "tags": ["type:kit", "scope:server"],
-    "// targets": "to see all targets run: nx show project ai-kit --web",
-    "targets": {}
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/ai-kit",
+                "main": "packages/ai-kit/src/index.ts",
+                "tsConfig": "packages/ai-kit/tsconfig.lib.json",
+                "assets": ["packages/ai-kit/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/ai-kit",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:kit", "scope:server"]
 }
