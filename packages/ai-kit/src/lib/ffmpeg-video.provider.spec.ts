@@ -44,10 +44,27 @@ describe('buildFfmpegArgs (без запуска ffmpeg)', () => {
     });
 });
 
-describe('FfmpegVideoProvider (spawn замокан)', () => {
+describe('FfmpegVideoProvider (spawn/скачивание замоканы)', () => {
     afterEach(() => {
         spawnMock.mockReset();
+        vi.restoreAllMocks();
     });
+
+    type Internals = {
+        makeWorkDir(): Promise<string>;
+        fetchToFile(url: string, dest: string): Promise<void>;
+    };
+
+    // Провайдер без реальных сети/ФС: подменяем makeWorkDir/fetchToFile, реальным
+    // остаётся только runFfmpeg (через замоканный spawn).
+    const makeProvider = (fetchImpl?: (url: string, dest: string) => Promise<void>) => {
+        const provider = new FfmpegVideoProvider();
+        vi.spyOn(provider as unknown as Internals, 'makeWorkDir').mockResolvedValue('/work');
+        vi.spyOn(provider as unknown as Internals, 'fetchToFile').mockImplementation(
+            fetchImpl ?? (async () => {}),
+        );
+        return provider;
+    };
 
     it('имеет имя ffmpeg', () => {
         expect(new FfmpegVideoProvider().name).toBe('ffmpeg');
@@ -60,16 +77,29 @@ describe('FfmpegVideoProvider (spawn замокан)', () => {
         expect(spawnMock).not.toHaveBeenCalled();
     });
 
-    it('успешный код 0 → url + thumbnailUrl (первое фото)', async () => {
+    it('скачивает каждое фото и при коде 0 → url(.mp4) + thumbnailUrl (первое)', async () => {
         spawnMock.mockImplementation(() => {
             const child = new EventEmitter();
             queueMicrotask(() => child.emit('close', 0));
             return child;
         });
-        const result = await new FfmpegVideoProvider().slideshow(['a.png', 'b.png'], 'p');
+        const provider = makeProvider();
+        const fetchSpy = (provider as unknown as Internals).fetchToFile as ReturnType<typeof vi.fn>;
+
+        const result = await provider.slideshow(['a.png', 'b.png'], 'p');
+
+        expect(fetchSpy).toHaveBeenCalledTimes(2); // скачаны оба фото
         expect(result.url).toMatch(/\.mp4$/);
         expect(result.thumbnailUrl).toBe('a.png');
         expect(spawnMock).toHaveBeenCalledWith('ffmpeg', expect.any(Array), expect.any(Object));
+    });
+
+    it('ошибка скачивания фото → проброс, ffmpeg не запускается', async () => {
+        const provider = makeProvider(async () => {
+            throw new Error('HTTP 404');
+        });
+        await expect(provider.slideshow(['a.png'], 'p')).rejects.toThrow(/HTTP 404/);
+        expect(spawnMock).not.toHaveBeenCalled();
     });
 
     it('ненулевой код выхода → ошибка', async () => {
@@ -78,9 +108,7 @@ describe('FfmpegVideoProvider (spawn замокан)', () => {
             queueMicrotask(() => child.emit('close', 1));
             return child;
         });
-        await expect(new FfmpegVideoProvider().slideshow(['a.png'], 'p')).rejects.toThrow(
-            /кодом 1/,
-        );
+        await expect(makeProvider().slideshow(['a.png'], 'p')).rejects.toThrow(/кодом 1/);
     });
 
     it('ошибка spawn (нет ffmpeg) → проброс ошибки', async () => {
@@ -89,6 +117,6 @@ describe('FfmpegVideoProvider (spawn замокан)', () => {
             queueMicrotask(() => child.emit('error', new Error('ENOENT')));
             return child;
         });
-        await expect(new FfmpegVideoProvider().slideshow(['a.png'], 'p')).rejects.toThrow(/ENOENT/);
+        await expect(makeProvider().slideshow(['a.png'], 'p')).rejects.toThrow(/ENOENT/);
     });
 });

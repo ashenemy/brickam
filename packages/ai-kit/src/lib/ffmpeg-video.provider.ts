@@ -1,4 +1,7 @@
 import { spawn } from 'node:child_process';
+import { mkdtemp, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { VideoProvider } from '@brickam/domain-kit';
 
 /** Длительность показа одного кадра в слайдшоу (сек). */
@@ -9,8 +12,8 @@ const OUTPUT_FPS = 25;
 /**
  * Строит массив аргументов ffmpeg для слайдшоу из набора фото (чистая функция,
  * без побочных эффектов — её и тестируем). Каждый кадр показывается
- * FRAME_DURATION_SEC секунд; вход — список локальных путей/URL картинок, выход —
- * путь до mp4. Реальная подготовка файлов (скачивание фото) — забота вызова.
+ * FRAME_DURATION_SEC секунд; вход — список локальных путей картинок, выход —
+ * путь до mp4.
  */
 export function buildFfmpegArgs(imagePaths: string[], outputPath: string): string[] {
     const args: string[] = [];
@@ -26,12 +29,12 @@ export function buildFfmpegArgs(imagePaths: string[], outputPath: string): strin
 }
 
 /**
- * Скелет провайдера видео на ffmpeg (Foundations §13). Собирает слайдшоу из фото
- * через вызов системного `ffmpeg` (child_process). В окружении без ffmpeg/файлов
- * запуск падает — фабрика модуля по конфигу должна выбирать mock там, где ffmpeg
- * недоступен. Импорт безопасен: spawn вызывается только внутри slideshow() под
- * try/catch, поэтому модуль грузится без ffmpeg. РЕАЛЬНЫЙ запуск в тестах не
- * выполняется.
+ * Провайдер видео на ffmpeg (Foundations §13): собирает слайдшоу из фото.
+ * Скачивает `imageUrls` во временную папку, прогоняет системный `ffmpeg`
+ * (child_process) с аргументами из {@link buildFfmpegArgs}, возвращает путь к
+ * сгенерированному mp4. Выбирается фабрикой ai-kit при `providers.video='ffmpeg'`
+ * (нужен бинарь ffmpeg в образе); иначе берётся mock. Выгрузку результата в
+ * хранилище и уборку временной папки делает вызывающий код (граница kit→feature).
  */
 export class FfmpegVideoProvider extends VideoProvider {
     readonly name = 'ffmpeg';
@@ -43,13 +46,18 @@ export class FfmpegVideoProvider extends VideoProvider {
         if (imageUrls.length === 0) {
             throw new Error('ffmpeg slideshow: нет входных изображений');
         }
-        // ПРИМЕЧАНИЕ: реальная реализация должна скачать imageUrls во временные
-        // файлы и передать их пути в buildFfmpegArgs. Здесь оставлен скелет:
-        // путей до локальных файлов нет, поэтому генерация заведомо недоступна и
-        // мы пробрасываем ошибку, чтобы потребитель/фабрика откатились на mock.
-        const outputPath = `slideshow-${Date.now()}.mp4`;
-        const args = buildFfmpegArgs(imageUrls, outputPath);
-        await this.runFfmpeg(args);
+
+        const workDir = await this.makeWorkDir();
+        const localPaths: string[] = [];
+        for (let index = 0; index < imageUrls.length; index += 1) {
+            const dest = join(workDir, `frame-${index}`);
+            await this.fetchToFile(imageUrls[index] as string, dest);
+            localPaths.push(dest);
+        }
+
+        const outputPath = join(workDir, 'slideshow.mp4');
+        await this.runFfmpeg(buildFfmpegArgs(localPaths, outputPath));
+
         const result: { url: string; thumbnailUrl?: string } = { url: outputPath };
         const first = imageUrls[0];
         if (first !== undefined) {
@@ -58,12 +66,28 @@ export class FfmpegVideoProvider extends VideoProvider {
         return result;
     }
 
+    /** Создаёт изолированную временную папку под кадры и результат. */
+    protected makeWorkDir(): Promise<string> {
+        return mkdtemp(join(tmpdir(), 'bh-slideshow-'));
+    }
+
+    /** Скачивает URL и сохраняет в локальный файл (для входа ffmpeg). */
+    protected async fetchToFile(url: string, dest: string): Promise<void> {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(
+                `ffmpeg slideshow: не удалось скачать ${url} (HTTP ${response.status})`,
+            );
+        }
+        const buffer = Buffer.from(await response.arrayBuffer());
+        await writeFile(dest, buffer);
+    }
+
     /**
-     * Тонкая обёртка запуска ffmpeg как дочернего процесса. Любая недоступность
-     * бинарника/ошибка кода выхода превращается в брошенное исключение —
-     * обёрнуто в try/catch, чтобы не уронить процесс на ошибке spawn.
+     * Тонкая обёртка запуска ffmpeg как дочернего процесса. Недоступность
+     * бинарника/ненулевой код выхода превращается в брошенное исключение.
      */
-    private runFfmpeg(args: string[]): Promise<void> {
+    protected runFfmpeg(args: string[]): Promise<void> {
         return new Promise<void>((resolve, reject) => {
             try {
                 const child = spawn('ffmpeg', args, { stdio: 'ignore' });
