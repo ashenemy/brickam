@@ -20,6 +20,27 @@ export abstract class EmbeddingProvider {
 }
 
 /**
+ * Провайдер генерации изображений (Foundations §13). Реализуют в `ai-kit`
+ * (fal/mock). `ai-assistant` строит картинку товара по промпту.
+ */
+export abstract class ImageProvider {
+    abstract readonly name: string;
+    abstract generate(prompt: string): Promise<{ url: string }>;
+}
+
+/**
+ * Провайдер генерации видео-превью (Foundations §13). Реализуют в `ai-kit`
+ * (ffmpeg-слайдшоу из фото / video-API / mock).
+ */
+export abstract class VideoProvider {
+    abstract readonly name: string;
+    abstract slideshow(
+        imageUrls: string[],
+        prompt: string,
+    ): Promise<{ url: string; thumbnailUrl?: string }>;
+}
+
+/**
  * Контракт поиска по каталогу для гибридного подбора (Foundations §13).
  * Реализует feature `catalog`; `ai-search` зависит только от контракта.
  */

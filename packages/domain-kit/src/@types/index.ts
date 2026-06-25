@@ -239,6 +239,34 @@ export type MemberAccess = {
     role: string;
 };
 
+/** Базовые промпт-шаблоны платформы (platform_settings.aiPrompts, §13). */
+export type AiPrompts = {
+    description: string;
+    image: string;
+    video: string;
+};
+
+/** Тип AI-задачи ассистента продавца. */
+export type AiJobType = 'description' | 'image' | 'video';
+
+/** Статус AI-задачи (ai_jobs). */
+export type AiJobStatus = 'queued' | 'processing' | 'done' | 'failed';
+
+/** Медиа-дескриптор (обложка/галерея) для прикрепления к товару. */
+export type MediaInput = {
+    mediaType: 'image' | 'video';
+    url: string;
+    thumbnailUrl?: string;
+};
+
+/** Контекст товара для сборки промпта (title/description/категория). */
+export type ProductAiContext = {
+    title: LocalizedText;
+    description: LocalizedText;
+    categoryId: string;
+    gallery: string[];
+};
+
 /** Тема из строгого JSON-ответа LLM (Foundations §13). */
 export type AiThemeSpec = {
     name: string;
