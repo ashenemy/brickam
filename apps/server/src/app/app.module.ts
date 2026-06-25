@@ -2,12 +2,14 @@ import { AiAssistantModule } from '@brickam/ai-assistant';
 import { AiKitModule } from '@brickam/ai-kit';
 import { AiSearchModule } from '@brickam/ai-search';
 import { AnalyticsModule } from '@brickam/analytics';
+import { AuditModule } from '@brickam/audit';
 import { AuthModule } from '@brickam/auth';
 import { CatalogModule } from '@brickam/catalog';
 import { ChatModule } from '@brickam/chat';
 import { AppConfigService, ConfigKitModule } from '@brickam/config-kit';
 import { CurrencyModule } from '@brickam/currency';
 import { DbKitModule } from '@brickam/db-kit';
+import { DisputesModule } from '@brickam/disputes';
 import { I18nKitModule } from '@brickam/i18n-kit';
 import { InvoicesModule } from '@brickam/invoices';
 import { LoyaltyModule } from '@brickam/loyalty';
@@ -76,6 +78,8 @@ import { HealthModule } from './health/health.module';
         VendorBulkModule,
         AnalyticsModule,
         AiAssistantModule,
+        AuditModule,
+        DisputesModule,
         HealthModule,
     ],
 })
