@@ -8,6 +8,7 @@
         "lint": "nx run-many -t lint",
         "test": "nx run-many -t test",
         "build": "nx run-many -t build",
+        "seed": "nx run seed:seed",
         "prepare": "lefthook install",
         "api-kit:generate": "node tools/openapi/export-openapi.mjs && orval --config orval.config.mjs"
     },
