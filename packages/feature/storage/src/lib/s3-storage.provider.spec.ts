@@ -76,4 +76,28 @@ describe('S3StorageProvider', () => {
 
         expect(result.publicUrl).toBe('https://media.s3.us-east-1.amazonaws.com/x.png');
     });
+
+    it('putObject шлёт PutObjectCommand с Bucket/Key/Body/ContentType и возвращает publicUrl', async () => {
+        const provider = new S3StorageProvider({
+            bucket: 'my-bucket',
+            publicUrl: 'https://cdn.example.com',
+        });
+        const send = vi.fn().mockResolvedValue({});
+        // Подменяем приватный S3Client инжектированным моком.
+        (provider as unknown as { client: { send: Mock } }).client = { send };
+
+        const body = new Uint8Array([1, 2, 3]);
+        const result = await provider.putObject('videos/abc.mp4', body, 'video/mp4');
+
+        expect(send).toHaveBeenCalledTimes(1);
+        const command = send.mock.calls[0][0] as PutObjectCommand;
+        expect(command).toBeInstanceOf(PutObjectCommand);
+        expect(command.input).toMatchObject({
+            Bucket: 'my-bucket',
+            Key: 'videos/abc.mp4',
+            Body: body,
+            ContentType: 'video/mp4',
+        });
+        expect(result).toEqual({ url: 'https://cdn.example.com/videos/abc.mp4' });
+    });
 });

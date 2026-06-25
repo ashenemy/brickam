@@ -13,4 +13,8 @@ export class NoopStorageProvider extends StorageProvider {
             key,
         });
     }
+
+    override putObject(key: string): Promise<{ url: string }> {
+        return Promise.resolve({ url: `/uploads/${key}` });
+    }
 }

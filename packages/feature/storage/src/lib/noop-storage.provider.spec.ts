@@ -16,4 +16,16 @@ describe('NoopStorageProvider', () => {
             key: 'products/v1/cover.jpg',
         });
     });
+
+    it('putObject возвращает /uploads-заглушку с ключом', async () => {
+        const provider = new NoopStorageProvider();
+
+        const result = await provider.putObject(
+            'videos/clip.mp4',
+            new Uint8Array([0]),
+            'video/mp4',
+        );
+
+        expect(result).toEqual({ url: '/uploads/videos/clip.mp4' });
+    });
 });

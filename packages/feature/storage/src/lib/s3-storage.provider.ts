@@ -64,4 +64,20 @@ export class S3StorageProvider extends StorageProvider {
             key,
         };
     }
+
+    override async putObject(
+        key: string,
+        body: Uint8Array,
+        contentType: string,
+    ): Promise<{ url: string }> {
+        await this.client.send(
+            new PutObjectCommand({
+                Bucket: this.bucket,
+                Key: key,
+                Body: body,
+                ContentType: contentType,
+            }),
+        );
+        return { url: `${this.publicUrlBase}/${key}` };
+    }
 }
