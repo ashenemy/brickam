@@ -37,6 +37,7 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './health/health.module';
 import { MetricsController } from './observability/metrics.controller';
+import { SeoModule } from './seo/seo.module';
 
 @Module({
     imports: [
@@ -121,6 +122,7 @@ import { MetricsController } from './observability/metrics.controller';
         PagesModule,
         StorageModule,
         HealthModule,
+        SeoModule,
     ],
     providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
