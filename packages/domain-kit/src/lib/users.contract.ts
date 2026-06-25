@@ -1,4 +1,10 @@
-import type { CreateUserContract, LoyaltyMetric, LoyaltyUpdate, UserContract } from '../@types';
+import type {
+    CreateUserContract,
+    LoyaltyMetric,
+    LoyaltyUpdate,
+    MemberAccess,
+    UserContract,
+} from '../@types';
 
 /**
  * Контракт сервиса пользователей. Абстрактный класс служит DI-токеном:
@@ -23,4 +29,10 @@ export abstract class UsersServiceContract {
 
     /** Обновляет метрику лояльности (users.loyalty). Дефолт — no-op. */
     async updateLoyalty(_userId: string, _update: LoyaltyUpdate): Promise<void> {}
+
+    /**
+     * Назначает суб-аккаунту доступ к вендору (vendorId/role/permissions попадают
+     * в JWT и проверяются PermissionsGuard). Дефолт — no-op; реализует `users`.
+     */
+    async setMemberAccess(_userId: string, _access: MemberAccess): Promise<void> {}
 }

@@ -162,6 +162,83 @@ export type LoyaltyDiscountPreview = {
     tierId?: string;
 };
 
+/** Проекция товара для массовых операций (vendor-bulk, Foundations §14). */
+export type ProductBulkView = {
+    id: string;
+    price: number;
+    discount?: DiscountInput;
+    stock: number;
+    status: string;
+    categoryId: string;
+    title: LocalizedText;
+};
+
+/** Массовая операция над товарами вендора. */
+export type BulkOp =
+    | { kind: 'price'; mode: 'percent' | 'amount' | 'set'; value: number }
+    | { kind: 'discountSet'; discount: DiscountInput }
+    | { kind: 'discountRemove' }
+    | { kind: 'stock'; mode: 'set' | 'inc'; value: number }
+    | { kind: 'status'; status: 'active' | 'hidden' }
+    | { kind: 'category'; categoryId: string };
+
+/** Изменяемые поля товара при массовой операции. */
+export type BulkProductFields = {
+    price?: number;
+    discount?: DiscountInput | null;
+    stock?: number;
+    status?: string;
+    categoryId?: string;
+};
+
+/** Точечное обновление товара (результат расчёта bulk). */
+export type BulkUpdate = {
+    productId: string;
+    fields: BulkProductFields;
+};
+
+/** Элемент превью массовой операции (до/после). */
+export type BulkPreviewItem = {
+    productId: string;
+    title: LocalizedText;
+    before: BulkProductFields;
+    after: BulkProductFields;
+};
+
+/** Сводка аналитики вендора. */
+export type AnalyticsSummary = {
+    gmv: number;
+    orders: number;
+    avgCheck: number;
+};
+
+/** Точка временного ряда выручки. */
+export type AnalyticsBucket = {
+    date: string;
+    gmv: number;
+    orders: number;
+};
+
+/** Воронка статусов саб-заказов. */
+export type StatusFunnelItem = {
+    status: string;
+    count: number;
+};
+
+/** Топ-товар по продажам. */
+export type TopProductItem = {
+    productId: string;
+    qty: number;
+    revenue: number;
+};
+
+/** Назначение прав суб-аккаунту вендора (permissions/role — строковые коды). */
+export type MemberAccess = {
+    vendorId: string;
+    permissions: string[];
+    role: string;
+};
+
 /** Тема из строгого JSON-ответа LLM (Foundations §13). */
 export type AiThemeSpec = {
     name: string;
