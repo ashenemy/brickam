@@ -5,6 +5,7 @@ import {
     Auth,
     CurrentUser,
     CurrentVendor,
+    Idempotent,
     type VendorContext,
 } from '@brickam/server-kit';
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
@@ -23,8 +24,9 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
     constructor(private readonly ordersService: OrdersService) {}
 
-    /** Оформляет заказ из корзины. */
+    /** Оформляет заказ из корзины. Идемпотентно по заголовку Idempotency-Key. */
     @Post('checkout')
+    @Idempotent()
     @ApiOkResponse({ type: OrderDto, description: 'Оформленный заказ' })
     checkout(
         @CurrentUser('id') buyerId: string,
@@ -33,8 +35,9 @@ export class OrdersController {
         return this.ordersService.checkout(buyerId, dto);
     }
 
-    /** Подтверждает оплату заказа. */
+    /** Подтверждает оплату заказа. Идемпотентно по заголовку Idempotency-Key. */
     @Post(':id/pay')
+    @Idempotent()
     @ApiOkResponse({ type: OrderDto, description: 'Оплаченный заказ' })
     pay(@CurrentUser('id') buyerId: string, @Param('id') id: string): Promise<OrderContract> {
         return this.ordersService.pay(id, buyerId);
