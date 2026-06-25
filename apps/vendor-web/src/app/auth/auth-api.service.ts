@@ -17,6 +17,18 @@ export type AuthTokens = {
 export type RegisterResult = { otpSent: boolean };
 
 /**
+ * Профиль текущего пользователя (GET /auth/me). Роль — источник истины для
+ * гейта маршрутов: токен в httpOnly-cookie, JS его не читает, поэтому роль
+ * берётся с бэкенда, а не из JWT-декода.
+ */
+export type UserProfile = {
+    id: string;
+    role: string;
+    permissions: string[];
+    vendorId?: string;
+};
+
+/**
  * Доступ к API авторизации продавца (база = RUNTIME_CONFIG.apiBaseUrl).
  * register создаёт владельца + вендора в статусе pending (онбординг на бэке),
  * затем требуется подтверждение телефона кодом из SMS (verifyOtp).
@@ -60,6 +72,16 @@ export class AuthApiService {
                 phone,
                 password,
             })
+            .pipe(map((res) => res.data));
+    }
+
+    /**
+     * Профиль текущего пользователя (роль/права). Доступ по cookie/Bearer —
+     * withCredentials шлёт httpOnly-cookie с токеном.
+     */
+    me(): Observable<UserProfile> {
+        return this.http
+            .get<ApiResponse<UserProfile>>(`${this.base}/auth/me`, { withCredentials: true })
             .pipe(map((res) => res.data));
     }
 

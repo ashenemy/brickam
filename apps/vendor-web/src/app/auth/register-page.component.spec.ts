@@ -71,6 +71,12 @@ describe('RegisterPageComponent', () => {
             data: { tokens: { accessToken: 'a.b.c', refreshToken: 'r' } },
         });
 
+        // applyTokens() сразу тянет профиль с GET /auth/me — отвечаем заглушкой.
+        httpMock.expectOne('http://api.test/api/auth/me').flush({
+            success: true,
+            data: { id: 'u1', role: 'vendor_owner', permissions: [], vendorId: 'v1' },
+        });
+
         expect(store.get()).toBe('a.b.c');
         expect(navigate).toHaveBeenCalledWith(['/']);
         store.clear();

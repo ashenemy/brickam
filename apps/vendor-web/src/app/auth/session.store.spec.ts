@@ -1,0 +1,89 @@
+import { provideHttpClient, withFetch } from '@angular/common/http';
+import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
+import { TestBed } from '@angular/core/testing';
+import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { SessionStore } from './session.store';
+import { TokenStore } from './token.store';
+
+const CONFIG: RuntimeConfig = {
+    apiBaseUrl: 'http://api.test/api',
+    defaultLang: 'ru',
+    supportedLangs: ['hy', 'ru', 'en'],
+};
+
+const AUTHED_KEY = 'buildhub.authed';
+const ME_URL = 'http://api.test/api/auth/me';
+
+describe('SessionStore', () => {
+    let session: SessionStore;
+    let tokenStore: TokenStore;
+    let httpMock: HttpTestingController;
+
+    beforeEach(() => {
+        localStorage.clear();
+        TestBed.configureTestingModule({
+            providers: [
+                provideHttpClient(withFetch()),
+                provideHttpClientTesting(),
+                { provide: RUNTIME_CONFIG, useValue: CONFIG },
+            ],
+        });
+        session = TestBed.inject(SessionStore);
+        tokenStore = TestBed.inject(TokenStore);
+        httpMock = TestBed.inject(HttpTestingController);
+    });
+
+    afterEach(() => {
+        httpMock.verify();
+        localStorage.clear();
+    });
+
+    /** applyTokens сразу дёргает /auth/me — отвечаем профилем продавца. */
+    function flushMe(role = 'vendor_owner'): void {
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: true, data: { id: 'u1', role, permissions: [], vendorId: 'v1' } });
+    }
+
+    it('applyTokens кладёт accessToken, поднимает флаг и грузит роль из /auth/me', () => {
+        expect(session.isAuthenticated()).toBe(false);
+        session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe('vendor_owner');
+        expect(tokenStore.get()).toBe('acc');
+        expect(session.isAuthenticated()).toBe(true);
+        expect(session.role()).toBe('vendor_owner');
+        expect(localStorage.getItem(AUTHED_KEY)).toBe('1');
+    });
+
+    it('loadProfile при 401 сбрасывает профиль и сессию, НЕ кидает', () => {
+        session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        const req = httpMock.expectOne(ME_URL);
+        req.flush({ success: false, data: null }, { status: 401, statusText: 'Unauthorized' });
+        expect(session.role()).toBeNull();
+        expect(session.profile()).toBeNull();
+        expect(session.isAuthenticated()).toBe(false);
+    });
+
+    it('loadProfile без аутентификации не шлёт запрос', () => {
+        session.loadProfile();
+        httpMock.expectNone(ME_URL);
+        expect(session.profile()).toBeNull();
+    });
+
+    it('logout шлёт POST /auth/logout и чистит токен/флаг/профиль', () => {
+        session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
+        flushMe();
+
+        session.logout();
+
+        const req = httpMock.expectOne('http://api.test/api/auth/logout');
+        expect(req.request.method).toBe('POST');
+        expect(req.request.withCredentials).toBe(true);
+        req.flush({ success: true, data: null });
+
+        expect(tokenStore.get()).toBeNull();
+        expect(session.isAuthenticated()).toBe(false);
+        expect(session.profile()).toBeNull();
+        expect(localStorage.getItem(AUTHED_KEY)).toBeNull();
+    });
+});
