@@ -1,0 +1,6 @@
+{
+    "apiBaseUrl": "https://<DOMAIN>/api/v1",
+    "defaultLang": "hy",
+    "supportedLangs": ["hy", "ru", "en"],
+    "features": {}
+}

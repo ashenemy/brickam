@@ -1,0 +1,205 @@
+# =============================================================================
+# BuildHub — деплой в AWS ECS (Fargate).
+# Отдельный workflow, НЕ заменяет ci.yml / cd.yml (cd.yml продолжает паблишить
+# образы в GHCR и катить staging по SSH). Этот файл — прод-деплой в ECS:
+#   build+push в ECR (server + 3 web, matrix) → миграции one-off task →
+#   update-service для каждого сервиса.
+#
+# Триггеры: ручной (workflow_dispatch) и опционально по тегу v*.
+#
+# ВСЕ идентификаторы — через secrets/env с плейсхолдерами. Заведите в репозитории
+# (Settings → Secrets and variables → Actions) секреты, помеченные ниже «# секрет».
+# Аутентификация в AWS — через OIDC-роль (AWS_ROLE_ARN), без долгоживущих ключей.
+# =============================================================================
+name: Deploy ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Тег образа (по умолчанию — git sha)"
+        required: false
+        default: ""
+  # Опционально: авто-деплой по релизному тегу. Раскомментируйте при необходимости.
+  # push:
+  #   tags: ["v*"]
+
+concurrency:
+  group: deploy-ecs-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  id-token: write   # нужно для OIDC configure-aws-credentials
+
+env:
+  # --- ВПИШИТЕ значения или заведите как секреты/variables ---
+  AWS_REGION: ${{ secrets.AWS_REGION }}            # секрет/var, напр. eu-central-1
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}          # секрет/var, напр. buildhub-cluster
+  # ECR registry: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com — соберём из output логина ECR.
+
+jobs:
+  # ---------------------------------------------------------------------------
+  # 1) Сборка и пуш образов в ECR (server + 3 web).
+  # ---------------------------------------------------------------------------
+  build-push:
+    name: build & push (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        app: [server, main-web, vendor-web, admin-web]
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Вычислить тег образа
+        id: tag
+        run: |
+          TAG="${{ github.event.inputs.image_tag }}"
+          [ -z "$TAG" ] && TAG="${GITHUB_SHA}"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}   # секрет: ARN OIDC-роли для GHA
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push ${{ matrix.app }}
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: infra/Dockerfile.${{ matrix.app }}
+          push: true
+          tags: |
+            ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:${{ steps.tag.outputs.tag }}
+            ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ---------------------------------------------------------------------------
+  # 2) Миграции — one-off ECS task на образе server, командой `npm run migrate`.
+  #    Выполняется ПОСЛЕ пуша образов и ДО update-service.
+  # ---------------------------------------------------------------------------
+  migrate:
+    name: run migrations
+    needs: build-push
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Запустить миграции (one-off task) и дождаться завершения
+        env:
+          TASK_DEF: ${{ secrets.ECS_TASKDEF_SERVER }}   # секрет: имя/ARN task-def сервера (напр. buildhub-server)
+          SUBNETS: ${{ secrets.ECS_SUBNETS }}           # секрет: subnet-AAA,subnet-BBB
+          SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }} # секрет: sg-XXX
+        run: |
+          set -euo pipefail
+          NET="awsvpcConfiguration={subnets=[${SUBNETS}],securityGroups=[${SECURITY_GROUPS}],assignPublicIp=DISABLED}"
+          OVERRIDES='{"containerOverrides":[{"name":"server","command":["npm","run","migrate"]}]}'
+
+          TASK_ARN=$(aws ecs run-task \
+            --cluster "$ECS_CLUSTER" \
+            --task-definition "$TASK_DEF" \
+            --launch-type FARGATE \
+            --network-configuration "$NET" \
+            --overrides "$OVERRIDES" \
+            --started-by "gha-migrate-${GITHUB_SHA::7}" \
+            --query 'tasks[0].taskArn' --output text)
+          echo "migrate task: $TASK_ARN"
+
+          aws ecs wait tasks-stopped --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN"
+
+          EXIT=$(aws ecs describe-tasks --cluster "$ECS_CLUSTER" --tasks "$TASK_ARN" \
+            --query 'tasks[0].containers[0].exitCode' --output text)
+          echo "migrate exitCode: $EXIT"
+          [ "$EXIT" = "0" ] || { echo "Миграции упали"; exit 1; }
+
+  # ---------------------------------------------------------------------------
+  # 3) Деплой сервисов: рендерим task-def с новым образом и катим update.
+  #    Matrix по сервисам. Для server используется шаблон из infra/ecs;
+  #    для фронтов — свои task-def (создайте по аналогии, см. infra/ecs/README.md).
+  # ---------------------------------------------------------------------------
+  deploy:
+    name: deploy (${{ matrix.app }})
+    needs: [build-push, migrate]
+    runs-on: ubuntu-latest
+    environment: production
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # ВПИШИТЕ соответствие app → ECS service → task-def family → файл шаблона.
+          - app: server
+            service: ${{ secrets.ECS_SERVICE_SERVER }}        # секрет: имя ECS-сервиса
+            taskdef: infra/ecs/task-definition.server.json
+            container: server
+          # Для фронтов добавьте свои шаблоны task-def и секреты сервисов:
+          # - app: main-web
+          #   service: ${{ secrets.ECS_SERVICE_MAIN_WEB }}
+          #   taskdef: infra/ecs/task-definition.main-web.json
+          #   container: main-web
+          # - app: vendor-web
+          #   service: ${{ secrets.ECS_SERVICE_VENDOR_WEB }}
+          #   taskdef: infra/ecs/task-definition.vendor-web.json
+          #   container: vendor-web
+          # - app: admin-web
+          #   service: ${{ secrets.ECS_SERVICE_ADMIN_WEB }}
+          #   taskdef: infra/ecs/task-definition.admin-web.json
+          #   container: admin-web
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # Шаблон содержит пояснительные ключи `_comment*`, которые ECS не принимает —
+      # вычищаем их перед рендером образа.
+      - name: Очистить _comment-ключи из шаблона task-def
+        id: clean
+        run: |
+          OUT="${RUNNER_TEMP}/td.${{ matrix.app }}.json"
+          jq 'walk(if type=="object" then with_entries(select(.key|startswith("_comment")|not)) else . end)' \
+            "${{ matrix.taskdef }}" > "$OUT"
+          echo "path=$OUT" >> "$GITHUB_OUTPUT"
+
+      - name: Подставить новый образ в task-def
+        id: render
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: ${{ steps.clean.outputs.path }}
+          container-name: ${{ matrix.container }}
+          image: ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:${{ needs.build-push.outputs.tag }}
+
+      - name: Регистрация task-def + update-service (ждём стабилизации)
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+        with:
+          task-definition: ${{ steps.render.outputs.task-definition }}
+          service: ${{ matrix.service }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # Альтернатива, если не хотите менять task-def, а только перекатить сервис
+      # на существующей ревизии с :latest-образом:
+      # - name: Force new deployment
+      #   run: aws ecs update-service --cluster "$ECS_CLUSTER" --service "${{ matrix.service }}" --force-new-deployment
