@@ -4,9 +4,24 @@ import { AppConfigService } from '@brickam/config-kit';
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import * as Sentry from '@sentry/node';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
+
+/** Инициализирует Sentry, если задан SENTRY_DSN (иначе capture — no-op). */
+function initSentry(): void {
+    const dsn = process.env.SENTRY_DSN;
+    if (!dsn) {
+        return;
+    }
+    Sentry.init({
+        dsn,
+        environment: process.env.NODE_ENV ?? 'development',
+        tracesSampleRate: Number(process.env.SENTRY_TRACES_SAMPLE_RATE ?? '0.1'),
+    });
+}
 
 const buildSwaggerConfig = () =>
     new DocumentBuilder()
@@ -18,6 +33,9 @@ const buildSwaggerConfig = () =>
         .build();
 
 async function bootstrap(): Promise<void> {
+    // Sentry — как можно раньше, до создания приложения (ловит и ошибки старта).
+    initSentry();
+
     // Режим экспорта OpenAPI для генерации api-kit: preview-граф без подключения к Mongo.
     const exporting = process.env.OPENAPI_EXPORT === '1';
     if (exporting) {
@@ -33,6 +51,9 @@ async function bootstrap(): Promise<void> {
     }
 
     const app = await NestFactory.create(AppModule, { bufferLogs: true });
+    // Структурное JSON-логирование (pino): traceId/уровень/контекст в каждой строке;
+    // секреты редактируются (см. LoggerModule в app.module).
+    app.useLogger(app.get(PinoLogger));
     const config = app.get(AppConfigService);
     const { globalPrefix, port, corsOrigins } = config.server;
 

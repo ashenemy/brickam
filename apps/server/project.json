@@ -21,6 +21,14 @@
                 }
             }
         },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "apps/server",
+                "command": "npx vitest run --coverage"
+            }
+        },
         "prune-lockfile": {
             "dependsOn": ["build"],
             "cache": true,

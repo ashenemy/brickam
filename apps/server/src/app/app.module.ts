@@ -32,12 +32,36 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
+import { PrometheusModule } from '@willsoto/nestjs-prometheus';
+import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './health/health.module';
+import { MetricsController } from './observability/metrics.controller';
 
 @Module({
     imports: [
         // Конфиг грузится и валидируется первым (fail-fast).
         ConfigKitModule.forRoot(),
+        // Структурное JSON-логирование (pino). autoLogging выключен — request-логи
+        // даёт существующий LoggingInterceptor (с traceId); секреты редактируются.
+        LoggerModule.forRoot({
+            pinoHttp: {
+                level: process.env['LOG_LEVEL'] ?? 'info',
+                autoLogging: false,
+                redact: [
+                    'req.headers.authorization',
+                    'req.headers.cookie',
+                    'res.headers["set-cookie"]',
+                ],
+                ...(process.env['NODE_ENV'] !== 'production'
+                    ? { transport: { target: 'pino-pretty', options: { singleLine: true } } }
+                    : {}),
+            },
+        }),
+        // Метрики Prometheus → GET /api/metrics (+ дефолтные process/nodejs-метрики).
+        PrometheusModule.register({
+            controller: MetricsController,
+            defaultMetrics: { enabled: true },
+        }),
         I18nKitModule,
         DbKitModule.forRoot(),
         // Распределённое key-value (@Global): Redis в проде, in-memory в dev.
