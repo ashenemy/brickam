@@ -12,5 +12,6 @@ export * from './lib/order-calc';
 export * from './lib/order-status';
 export * from './lib/platform.contract';
 export * from './lib/roles';
+export * from './lib/storage.contract';
 export * from './lib/users.contract';
 export * from './lib/vendors.contract';

@@ -52,6 +52,11 @@ export abstract class ChatServiceContract {
 export type PaymentResult = {
     paymentId: string;
     status: PaymentStatus;
+    /**
+     * URL платёжной страницы PSP для redirect-флоу (карты ArCa/Idram). Если задан —
+     * фронт перенаправляет покупателя сюда; подтверждение приходит callback'ом.
+     */
+    redirectUrl?: string;
 };
 
 /**
