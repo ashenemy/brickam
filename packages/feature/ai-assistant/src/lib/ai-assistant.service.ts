@@ -1,3 +1,5 @@
+import { randomUUID } from 'node:crypto';
+import { readFile, unlink } from 'node:fs/promises';
 import { ForbiddenException, NotFoundException, ValidationException } from '@brickam/core-kit';
 import {
     type AiJobType,
@@ -7,10 +9,11 @@ import {
     type MediaInput,
     PlatformSettingsContract,
     ProductMediaContract,
+    StorageServiceContract,
     VideoProvider,
 } from '@brickam/domain-kit';
 import { InjectQueue } from '@nestjs/bullmq';
-import { Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, Optional } from '@nestjs/common';
 import type { Queue } from 'bullmq';
 import type { AiJobContract, AiJobQueueData, AiJobResult, AiMediaResult } from '../@types';
 import { AI_GENERATE_JOB, AI_JOBS_QUEUE } from './ai-assistant.constants';
@@ -39,6 +42,9 @@ export class AiAssistantService {
         private readonly image: ImageProvider,
         private readonly video: VideoProvider,
         @InjectQueue(AI_JOBS_QUEUE) private readonly queue: Queue,
+        @Optional()
+        @Inject(StorageServiceContract)
+        private readonly storage?: StorageServiceContract,
     ) {}
 
     /** Маппит документ AI-задачи в плоский контракт. */
@@ -180,9 +186,31 @@ export class AiAssistantService {
             }
             case 'video': {
                 const { url, thumbnailUrl } = await this.video.slideshow(gallery, finalPrompt);
-                return { url, ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}) };
+                const publicUrl = await this.publishVideo(url);
+                return { url: publicUrl, ...(thumbnailUrl !== undefined ? { thumbnailUrl } : {}) };
             }
         }
+    }
+
+    /**
+     * Выгружает отрендеренный ffmpeg-mp4 в хранилище через контракт и возвращает
+     * публичный URL (граница kit→feature: ai-kit отдаёт локальный путь, заливку
+     * делает потребитель). Если хранилище не подключено (юнит/e2e без storage),
+     * возвращает исходный `localPath` без изменений (@Optional-паттерн).
+     */
+    private async publishVideo(localPath: string): Promise<string> {
+        if (!this.storage) {
+            return localPath;
+        }
+        const bytes = await readFile(localPath);
+        const key = `videos/${randomUUID()}.mp4`;
+        const { url } = await this.storage.putObject(key, bytes, 'video/mp4');
+        try {
+            await unlink(localPath);
+        } catch {
+            // временный файл мог уже исчезнуть — не критично
+        }
+        return url;
     }
 
     /**

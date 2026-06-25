@@ -6,10 +6,22 @@ import type {
     PlatformSettingsContract,
     ProductAiContext,
     ProductMediaContract,
+    StorageServiceContract,
     VideoProvider,
 } from '@brickam/domain-kit';
 import type { Queue } from 'bullmq';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { readFileMock, unlinkMock } = vi.hoisted(() => ({
+    readFileMock: vi.fn(),
+    unlinkMock: vi.fn(),
+}));
+
+vi.mock('node:fs/promises', () => ({
+    readFile: readFileMock,
+    unlink: unlinkMock,
+}));
+
 import { AiAssistantService } from './ai-assistant.service';
 import type { AiJobDocument } from './ai-job.schema';
 import type { AiJobsRepository } from './ai-jobs.repository';
@@ -92,6 +104,8 @@ describe('AiAssistantService', () => {
             }),
         };
         queue = { add: vi.fn().mockResolvedValue({ id: 'q-1' }) };
+        readFileMock.mockReset();
+        unlinkMock.mockReset().mockResolvedValue(undefined);
 
         service = new AiAssistantService(
             jobs as unknown as AiJobsRepository,
@@ -177,6 +191,46 @@ describe('AiAssistantService', () => {
             expect(video.slideshow).toHaveBeenCalledWith(ctx.gallery, doc.finalPrompt);
             expect(doc.result).toEqual({
                 url: 'https://vid/out.mp4',
+                thumbnailUrl: 'https://vid/t.jpg',
+            });
+        });
+
+        it('video: при наличии storage локальный mp4 заливается, url → publicUrl', async () => {
+            // slideshow отдаёт локальный путь файла, который нужно выгрузить.
+            video.slideshow.mockResolvedValue({
+                url: '/tmp/bh-slideshow-x/slideshow.mp4',
+                thumbnailUrl: 'https://vid/t.jpg',
+            });
+            const bytes = new Uint8Array([10, 20, 30]);
+            readFileMock.mockResolvedValue(bytes);
+            const putObject = vi
+                .fn()
+                .mockResolvedValue({ url: 'https://cdn.example.com/videos/uid.mp4' });
+            const storage = { putObject } as unknown as StorageServiceContract;
+
+            const withStorage = new AiAssistantService(
+                jobs as unknown as AiJobsRepository,
+                platformSettings as unknown as PlatformSettingsContract,
+                productMedia as unknown as ProductMediaContract,
+                llm as unknown as LlmProvider,
+                image as unknown as ImageProvider,
+                video as unknown as VideoProvider,
+                queue as unknown as Queue,
+                storage,
+            );
+
+            const doc = trackJob(makeDoc({ type: 'video', productId: 'p1' }));
+            await withStorage.process('job-1');
+
+            expect(readFileMock).toHaveBeenCalledWith('/tmp/bh-slideshow-x/slideshow.mp4');
+            expect(putObject).toHaveBeenCalledTimes(1);
+            const [key, body, contentType] = putObject.mock.calls[0];
+            expect(key).toMatch(/^videos\/.+\.mp4$/);
+            expect(body).toBe(bytes);
+            expect(contentType).toBe('video/mp4');
+            expect(unlinkMock).toHaveBeenCalledWith('/tmp/bh-slideshow-x/slideshow.mp4');
+            expect(doc.result).toEqual({
+                url: 'https://cdn.example.com/videos/uid.mp4',
                 thumbnailUrl: 'https://vid/t.jpg',
             });
         });
