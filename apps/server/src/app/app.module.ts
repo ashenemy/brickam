@@ -1,3 +1,4 @@
+import { AiAssistantModule } from '@brickam/ai-assistant';
 import { AiKitModule } from '@brickam/ai-kit';
 import { AiSearchModule } from '@brickam/ai-search';
 import { AnalyticsModule } from '@brickam/analytics';
@@ -74,6 +75,7 @@ import { HealthModule } from './health/health.module';
         SubscriptionsModule,
         VendorBulkModule,
         AnalyticsModule,
+        AiAssistantModule,
         HealthModule,
     ],
 })
