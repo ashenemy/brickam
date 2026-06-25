@@ -1,0 +1,27 @@
+{
+    "name": "storage",
+    "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "packages/feature/storage/src",
+    "projectType": "library",
+    "targets": {
+        "build": {
+            "executor": "@nx/js:tsc",
+            "outputs": ["{options.outputPath}"],
+            "options": {
+                "outputPath": "dist/packages/feature/storage",
+                "main": "packages/feature/storage/src/index.ts",
+                "tsConfig": "packages/feature/storage/tsconfig.lib.json",
+                "assets": ["packages/feature/storage/*.md"]
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "packages/feature/storage",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:feature", "scope:server"]
+}

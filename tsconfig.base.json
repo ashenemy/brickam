@@ -56,6 +56,7 @@
             "@brickam/subscriptions": ["./packages/feature/subscriptions/src/index.ts"],
             "@brickam/templates": ["./packages/feature/templates/src/index.ts"],
             "@brickam/pages": ["./packages/feature/pages/src/index.ts"],
+            "@brickam/storage": ["./packages/feature/storage/src/index.ts"],
             "@brickam/vendor-bulk": ["./packages/feature/vendor-bulk/src/index.ts"],
             "@brickam/ai-search": ["./packages/feature/ai-search/src/index.ts"],
             "@brickam/ai-assistant": ["./packages/feature/ai-assistant/src/index.ts"],
