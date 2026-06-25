@@ -6,6 +6,8 @@ export const serverRoutes: ServerRoute[] = [
     { path: 'forbidden', renderMode: RenderMode.Prerender },
     // Калькуляторы — статическая страница, данные из calc-kit; пререндер на билде.
     { path: 'calculators', renderMode: RenderMode.Prerender },
+    // AI-поиск — оболочка пуста до запроса пользователя; пререндер на билде.
+    { path: 'ai', renderMode: RenderMode.Prerender },
     // Каталог и товары — SSR on-demand (список товаров неизвестен на билде).
     { path: 'catalog', renderMode: RenderMode.Server },
     { path: 'product/:slug', renderMode: RenderMode.Server },
