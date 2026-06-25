@@ -62,4 +62,11 @@ export class AuthApiService {
             })
             .pipe(map((res) => res.data));
     }
+
+    /** Выход — сервер очищает httpOnly-cookie. withCredentials шлёт cookie. */
+    logout(): Observable<void> {
+        return this.http
+            .post<ApiResponse<unknown>>(`${this.base}/auth/logout`, {}, { withCredentials: true })
+            .pipe(map(() => undefined));
+    }
 }

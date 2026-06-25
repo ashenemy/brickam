@@ -23,19 +23,21 @@ describe('authInterceptor', () => {
 
     afterEach(() => httpMock.verify());
 
-    it('добавляет Bearer когда токен есть', () => {
+    it('всегда ставит withCredentials и добавляет Bearer когда токен есть', () => {
         store.set('abc123');
         http.get('/x').subscribe();
         const req = httpMock.expectOne('/x');
+        expect(req.request.withCredentials).toBe(true);
         expect(req.request.headers.get('Authorization')).toBe('Bearer abc123');
         req.flush({});
         store.clear();
     });
 
-    it('не добавляет Authorization когда токена нет', () => {
+    it('ставит withCredentials, но не добавляет Authorization когда токена нет', () => {
         store.clear();
         http.get('/x').subscribe();
         const req = httpMock.expectOne('/x');
+        expect(req.request.withCredentials).toBe(true);
         expect(req.request.headers.has('Authorization')).toBe(false);
         req.flush({});
     });
