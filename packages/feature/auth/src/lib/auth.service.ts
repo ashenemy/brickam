@@ -8,10 +8,12 @@ import {
     type CreateUserContract,
     DEFAULT_ROLE_PERMISSIONS,
     type JwtPayload,
+    Role,
     UserStatus,
     UsersServiceContract,
+    VendorsServiceContract,
 } from '@brickam/domain-kit';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, Optional } from '@nestjs/common';
 import bcrypt from 'bcryptjs';
 import type {
     ForgotResult,
@@ -46,6 +48,11 @@ export class AuthService {
         private readonly users: UsersServiceContract,
         private readonly otp: OtpService,
         private readonly tokens: TokenService,
+        // Онбординг владельца вендора. Опционально: без vendors-модуля (напр. в
+        // изолированных тестах) регистрация работает в прежнем режиме.
+        @Optional()
+        @Inject(VendorsServiceContract)
+        private readonly vendors?: VendorsServiceContract,
     ) {}
 
     /** Регистрация: создаёт пользователя и отправляет OTP подтверждения телефона. */
@@ -64,8 +71,13 @@ export class AuthService {
             lang: DEFAULT_LANG,
             ...(dto.accountType !== undefined ? { accountType: dto.accountType } : {}),
         };
-        // TODO(Stage 3): для VendorOwner создать vendor-сущность в статусе pending.
-        await this.users.createUser(data);
+        const created = await this.users.createUser(data);
+        // Онбординг владельца вендора: создаём сущность вендора в статусе pending
+        // и привязываем vendorId к пользователю (попадёт в JWT при verifyOtp).
+        if (this.vendors && created.role === Role.VendorOwner && created.vendorId === undefined) {
+            const { vendorId } = await this.vendors.createForOwner(created.id);
+            await this.users.setVendorId(created.id, vendorId);
+        }
 
         await this.otp.request(dto.phone, 'verify');
         return { otpSent: true };

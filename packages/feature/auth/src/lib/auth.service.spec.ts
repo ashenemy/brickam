@@ -25,9 +25,18 @@ class FakeUsersService implements UsersServiceContract {
     public createCalls: CreateUserContract[] = [];
     public verifiedIds: string[] = [];
     public passwordUpdates: Array<{ id: string; hash: string }> = [];
+    public vendorIdSets: Array<{ id: string; vendorId: string }> = [];
 
     seed(user: UserContract): void {
         this.byPhone.set(user.phone, user);
+    }
+
+    setVendorId(id: string, vendorId: string): Promise<void> {
+        this.vendorIdSets.push({ id, vendorId });
+        for (const u of this.byPhone.values()) {
+            if (u.id === id) u.vendorId = vendorId;
+        }
+        return Promise.resolve();
     }
 
     findByPhone(phone: string): Promise<UserContract | null> {
@@ -141,6 +150,43 @@ describe('AuthService', () => {
             expect(created?.passwordHash).not.toBe('secret123');
             expect(await bcrypt.compare('secret123', created?.passwordHash ?? '')).toBe(true);
             expect(otpSpy).toHaveBeenCalledWith('+37412345678', 'verify');
+        });
+
+        it('vendor_owner: онбординг создаёт вендора и привязывает vendorId', async () => {
+            vi.spyOn(ctx.otp, 'request').mockResolvedValue({
+                expiresAt: Date.now() + 1000,
+                phoneMasked: 'x',
+            });
+            const vendors = {
+                createForOwner: vi.fn().mockResolvedValue({ vendorId: 'v-new' }),
+                setRating: vi.fn(),
+            };
+            const svc = new AuthService(ctx.users, ctx.otp, ctx.tokens, vendors as never);
+            await svc.register({
+                phone: '+37499999999',
+                password: 'secret123',
+                name: 'V',
+                role: Role.VendorOwner,
+            });
+            expect(vendors.createForOwner).toHaveBeenCalledTimes(1);
+            expect(ctx.users.vendorIdSets).toHaveLength(1);
+            expect(ctx.users.vendorIdSets[0]?.vendorId).toBe('v-new');
+        });
+
+        it('buyer: онбординг вендора НЕ запускается', async () => {
+            vi.spyOn(ctx.otp, 'request').mockResolvedValue({
+                expiresAt: Date.now() + 1000,
+                phoneMasked: 'x',
+            });
+            const vendors = { createForOwner: vi.fn(), setRating: vi.fn() };
+            const svc = new AuthService(ctx.users, ctx.otp, ctx.tokens, vendors as never);
+            await svc.register({
+                phone: '+37488888888',
+                password: 'secret123',
+                name: 'B',
+                role: Role.Buyer,
+            });
+            expect(vendors.createForOwner).not.toHaveBeenCalled();
         });
     });
 
