@@ -1,0 +1,128 @@
+import { ForbiddenException, NotFoundException } from '@brickam/core-kit';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import type { VendorsRepository } from './vendors.repository';
+import { VendorsService } from './vendors.service';
+
+const makeDoc = (over: Record<string, unknown> = {}) => ({
+    id: 'v1',
+    _id: { toString: () => 'v1' },
+    slug: 'acme',
+    name: 'Acme',
+    display: 'Acme Store',
+    ownerUserId: 'u1',
+    region: 'Yerevan',
+    city: 'Yerevan',
+    status: 'active',
+    ratingAvg: 0,
+    ratingCount: 0,
+    logo: undefined,
+    createdAt: new Date('2026-06-01'),
+    updatedAt: new Date('2026-06-01'),
+    ...over,
+});
+
+describe('VendorsService', () => {
+    let repo: {
+        findById: ReturnType<typeof vi.fn>;
+        findBySlug: ReturnType<typeof vi.fn>;
+        findByOwner: ReturnType<typeof vi.fn>;
+        create: ReturnType<typeof vi.fn>;
+        updateById: ReturnType<typeof vi.fn>;
+    };
+    let service: VendorsService;
+
+    beforeEach(() => {
+        repo = {
+            findById: vi.fn(),
+            findBySlug: vi.fn(),
+            findByOwner: vi.fn(),
+            create: vi.fn(),
+            updateById: vi.fn(),
+        };
+        service = new VendorsService(repo as unknown as VendorsRepository);
+    });
+
+    describe('getById / getBySlug', () => {
+        it('getById возвращает контракт и опускает undefined-поля', async () => {
+            repo.findById.mockResolvedValue(makeDoc({ logo: undefined }));
+            const vendor = await service.getById('v1');
+            expect(vendor.id).toBe('v1');
+            expect(vendor.slug).toBe('acme');
+            expect(vendor).not.toHaveProperty('logo');
+        });
+
+        it('getById бросает NotFound, если вендора нет', async () => {
+            repo.findById.mockResolvedValue(null);
+            await expect(service.getById('vX')).rejects.toBeInstanceOf(NotFoundException);
+        });
+
+        it('getBySlug делегирует findBySlug', async () => {
+            repo.findBySlug.mockResolvedValue(makeDoc());
+            const vendor = await service.getBySlug('acme');
+            expect(repo.findBySlug).toHaveBeenCalledWith('acme');
+            expect(vendor.id).toBe('v1');
+        });
+
+        it('getBySlug бросает NotFound, если slug не найден', async () => {
+            repo.findBySlug.mockResolvedValue(null);
+            await expect(service.getBySlug('missing')).rejects.toBeInstanceOf(NotFoundException);
+        });
+    });
+
+    describe('getMine', () => {
+        it('возвращает профиль своего вендора по vendorId', async () => {
+            repo.findById.mockResolvedValue(makeDoc());
+            const vendor = await service.getMine('v1');
+            expect(repo.findById).toHaveBeenCalledWith('v1');
+            expect(vendor.id).toBe('v1');
+        });
+    });
+
+    describe('updateProfile', () => {
+        it('обновляет разрешённые поля своего вендора', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ name: 'New', city: 'Gyumri' }));
+            const vendor = await service.updateProfile('v1', { name: 'New', city: 'Gyumri' });
+            expect(repo.updateById).toHaveBeenCalledWith('v1', { name: 'New', city: 'Gyumri' });
+            expect(vendor.name).toBe('New');
+            expect(vendor.city).toBe('Gyumri');
+        });
+
+        it('бросает NotFound, если вендора для обновления нет (чужой/несуществующий)', async () => {
+            repo.updateById.mockResolvedValue(null);
+            await expect(service.updateProfile('vX', { name: 'X' })).rejects.toBeInstanceOf(
+                NotFoundException,
+            );
+        });
+    });
+
+    describe('create', () => {
+        it('создаёт вендора с ownerUserId, если slug свободен', async () => {
+            repo.findBySlug.mockResolvedValue(null);
+            repo.create.mockResolvedValue(makeDoc());
+            const vendor = await service.create('u1', {
+                slug: 'acme',
+                name: 'Acme',
+                region: 'Yerevan',
+            });
+            expect(repo.create).toHaveBeenCalledWith(
+                expect.objectContaining({ slug: 'acme', ownerUserId: 'u1' }),
+            );
+            expect(vendor.ownerUserId).toBe('u1');
+        });
+
+        it('бросает Forbidden, если slug занят', async () => {
+            repo.findBySlug.mockResolvedValue(makeDoc());
+            await expect(
+                service.create('u1', { slug: 'acme', name: 'Acme', region: 'Yerevan' }),
+            ).rejects.toBeInstanceOf(ForbiddenException);
+        });
+    });
+
+    describe('recomputeRating', () => {
+        it('пишет агрегат рейтинга в документ вендора', async () => {
+            repo.updateById.mockResolvedValue(makeDoc({ ratingAvg: 4.5, ratingCount: 2 }));
+            await service.recomputeRating('v1', 4.5, 2);
+            expect(repo.updateById).toHaveBeenCalledWith('v1', { ratingAvg: 4.5, ratingCount: 2 });
+        });
+    });
+});
