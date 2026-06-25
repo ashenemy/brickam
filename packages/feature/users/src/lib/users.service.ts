@@ -75,6 +75,11 @@ export class UsersService
         await this.usersRepository.updateById(id, { passwordHash });
     }
 
+    /** Привязывает пользователя к вендору (онбординг владельца). */
+    async setVendorId(userId: string, vendorId: string): Promise<void> {
+        await this.usersRepository.updateById(userId, { vendorId } as Partial<User>);
+    }
+
     /** Метрика лояльности покупателя (users.loyalty). */
     async getLoyaltyMetric(userId: string): Promise<LoyaltyMetric> {
         const doc = await this.usersRepository.findById(userId);
