@@ -5,6 +5,7 @@ import {
     CatalogServiceContract,
     type CreatePaymentInput,
     type CreateUserContract,
+    LoyaltyServiceContract,
     NotificationsServiceContract,
     PaymentStatus,
     PaymentsServiceContract,
@@ -139,6 +140,14 @@ class FakePayments extends PaymentsServiceContract {
     }
 }
 
+@Injectable()
+class FakeLoyalty extends LoyaltyServiceContract {
+    async previewDiscount() {
+        return { loyaltyDiscount: 0 };
+    }
+    async recordCompletedOrder() {}
+}
+
 const fakeCart = {
     findByBuyer: vi.fn(async () => (cartItems.length ? { id: 'cart1', items: cartItems } : null)),
     updateById: vi.fn(async () => ({})),
@@ -182,6 +191,7 @@ const fakeVendorOrders = {
         { provide: DeliveryAddressesRepository, useValue: {} },
         { provide: CatalogServiceContract, useClass: FakeCatalog },
         { provide: PaymentsServiceContract, useClass: FakePayments },
+        { provide: LoyaltyServiceContract, useClass: FakeLoyalty },
     ],
 })
 class OrdersTestModule {}
