@@ -2,7 +2,7 @@ import { AppConfigService } from '@brickam/config-kit';
 import { NotificationsServiceContract } from '@brickam/domain-kit';
 import { Global, Logger, Module, type Provider } from '@nestjs/common';
 import { EmailChannel } from './channels/email.channel';
-import { MockEmailChannel } from './channels/mock-email.channel';
+import { createEmailChannel } from './channels/email-channel.factory';
 import { MockSmsChannel } from './channels/mock-sms.channel';
 import { SmsChannel } from './channels/sms.channel';
 import { TwilioSmsChannel } from './channels/twilio-sms.channel';
@@ -10,7 +10,8 @@ import { NotificationsService } from './notifications.service';
 
 // SMS-канал выбирается по `config.providers.sms`. Для 'twilio' нужны ключи
 // (TWILIO_ACCOUNT_SID/AUTH_TOKEN/FROM в secrets); если их нет — фолбэк на mock,
-// чтобы dev/тесты не падали без реального провайдера. Email пока всегда mock.
+// чтобы dev/тесты не падали без реального провайдера. Email — аналогично по
+// `config.providers.email` ('ses' + emailFrom → SES, иначе mock).
 const smsChannelProvider: Provider = {
     provide: SmsChannel,
     inject: [AppConfigService],
@@ -35,9 +36,7 @@ const smsChannelProvider: Provider = {
 const emailChannelProvider: Provider = {
     provide: EmailChannel,
     inject: [AppConfigService],
-    useFactory: (_config: AppConfigService): EmailChannel => {
-        return new MockEmailChannel();
-    },
+    useFactory: createEmailChannel,
 };
 
 /**
