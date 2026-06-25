@@ -405,4 +405,20 @@ export const hy: Dictionary = {
     'order.delivery.picked': 'Հավաքված',
     'order.delivery.in_transit': 'Ճանապարհին',
     'order.delivery.delivered': 'Առաքված',
+
+    // Footer (main-web)
+    'footer.about': 'Մեր մասին',
+    'footer.terms': 'Օգտագործման պայմաններ',
+    'footer.privacy': 'Գաղտնիության քաղաքականություն',
+    'footer.rights': 'Բոլոր իրավունքները պաշտպանված են։',
+
+    // SEO (main-web)
+    'seo.siteTitle': 'BuildHub — շինանյութերի շուկա',
+    'seo.siteDescription':
+        'BuildHub — Հայաստանի շինանյութերի շուկա։ Տասնյակ վստահելի վաճառողներ, առաքում 48 ժամում։',
+    'seo.catalogTitle': 'Կատալոգ — BuildHub',
+
+    // CMS pages (main-web)
+    'pages.loading': 'Բեռնում…',
+    'pages.notFound': 'Էջը չի գտնվել',
 };

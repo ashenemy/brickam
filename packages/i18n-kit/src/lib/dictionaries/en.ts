@@ -405,4 +405,20 @@ export const en: Dictionary = {
     'order.delivery.picked': 'Picked',
     'order.delivery.in_transit': 'In transit',
     'order.delivery.delivered': 'Delivered',
+
+    // Footer (main-web)
+    'footer.about': 'About',
+    'footer.terms': 'Terms of use',
+    'footer.privacy': 'Privacy policy',
+    'footer.rights': 'All rights reserved.',
+
+    // SEO (main-web)
+    'seo.siteTitle': 'BuildHub — Construction materials marketplace',
+    'seo.siteDescription':
+        'BuildHub — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
+    'seo.catalogTitle': 'Catalog — BuildHub',
+
+    // CMS pages (main-web)
+    'pages.loading': 'Loading…',
+    'pages.notFound': 'Page not found',
 };

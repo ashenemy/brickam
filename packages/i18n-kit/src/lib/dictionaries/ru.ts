@@ -405,4 +405,20 @@ export const ru: Dictionary = {
     'order.delivery.picked': 'Собран',
     'order.delivery.in_transit': 'В пути',
     'order.delivery.delivered': 'Доставлен',
+
+    // Footer (main-web)
+    'footer.about': 'О нас',
+    'footer.terms': 'Условия использования',
+    'footer.privacy': 'Политика конфиденциальности',
+    'footer.rights': 'Все права защищены.',
+
+    // SEO (main-web)
+    'seo.siteTitle': 'BuildHub — маркетплейс стройматериалов',
+    'seo.siteDescription':
+        'BuildHub — маркетплейс стройматериалов Армении. Десятки проверенных продавцов, доставка за 48 часов.',
+    'seo.catalogTitle': 'Каталог — BuildHub',
+
+    // CMS pages (main-web)
+    'pages.loading': 'Загрузка…',
+    'pages.notFound': 'Страница не найдена',
 };
