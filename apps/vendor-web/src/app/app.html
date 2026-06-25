@@ -1,8 +1,68 @@
-<header class="sticky top-0 z-20">
-    <bh-navbar [navItems]="vendorNav" (nav)="onNav($event)" />
-    <div class="flex justify-end items-center gap-3 px-6 py-2 bg-bg-app">
-        <bh-lang-switcher />
-    </div>
+<header class="sticky top-0 z-20 bg-bg-app">
+    <nav
+        class="mx-auto flex w-full max-w-content flex-wrap items-center gap-2 px-6 py-3"
+        aria-label="Vendor sections"
+    >
+        <a
+            href="/products"
+            routerLink="/products"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Products</a
+        >
+        <a
+            href="/bulk"
+            routerLink="/bulk"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Bulk</a
+        >
+        <a
+            href="/orders"
+            routerLink="/orders"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Orders</a
+        >
+        <a
+            href="/members"
+            routerLink="/members"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Members</a
+        >
+        <a
+            href="/analytics"
+            routerLink="/analytics"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Analytics</a
+        >
+        <a
+            href="/invoices/new"
+            routerLink="/invoices/new"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Invoices</a
+        >
+        <a
+            href="/subscription"
+            routerLink="/subscription"
+            routerLinkActive="text-accent"
+            class="whitespace-nowrap rounded-sm px-3 py-1.5 text-text-primary transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+            style="font: var(--type-label)"
+            >Subscription</a
+        >
+        <span class="ml-auto">
+            <bh-lang-switcher />
+        </span>
+    </nav>
 </header>
 
 <main class="mx-auto w-full max-w-content px-6 py-10">

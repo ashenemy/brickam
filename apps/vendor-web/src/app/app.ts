@@ -1,18 +1,20 @@
-import { Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
-import { FooterComponent, NavbarComponent } from '@brickam/ui-kit';
+import { FooterComponent } from '@brickam/ui-kit';
 
+/**
+ * Шелл vendor-web: верхняя навигация по разделам кабинета продавца
+ * (RouterLink, активная подсветка), переключатель языка, контентный outlet.
+ * Подписи навигации — статические строки (biome HTML-парсер без интерполяции);
+ * локализация разделов — через ключи vendor.nav.* внутри самих страниц.
+ */
 @Component({
-    imports: [RouterModule, NavbarComponent, FooterComponent, LangSwitcherComponent],
     selector: 'app-root',
+    standalone: true,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [RouterModule, FooterComponent, LangSwitcherComponent],
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })
-export class App {
-    protected readonly vendorNav = ['Products', 'Orders', 'Invoices', 'Analytics'];
-
-    protected onNav(_item: string): void {
-        // разделы кабинета продавца подключатся с реальными маршрутами в следующих стейджах
-    }
-}
+export class App {}

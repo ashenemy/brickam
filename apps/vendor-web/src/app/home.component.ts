@@ -24,9 +24,9 @@ import {
         <section class="flex flex-col gap-6">
             <h1 class="text-text-primary" style="font: var(--type-display)">Vendor workspace</h1>
             <div class="flex flex-wrap items-center gap-3">
-                <bh-button variant="primary">New product</bh-button>
-                <bh-button variant="secondary">Orders</bh-button>
-                <bh-button variant="ghost">Analytics</bh-button>
+                <a routerLink="/products"><bh-button variant="primary">Products</bh-button></a>
+                <a routerLink="/orders"><bh-button variant="secondary">Orders</bh-button></a>
+                <a routerLink="/analytics"><bh-button variant="ghost">Analytics</bh-button></a>
                 <a routerLink="/invoices/new"><bh-button variant="primary">Новый инвойс</bh-button></a>
             </div>
             <div class="flex flex-wrap items-center gap-3">

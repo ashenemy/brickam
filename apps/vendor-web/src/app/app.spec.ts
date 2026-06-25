@@ -10,11 +10,12 @@ describe('App', () => {
         }).compileComponents();
     });
 
-    it('создаётся и рендерит шелл (navbar + footer)', async () => {
+    it('создаётся и рендерит шелл (навигация + footer)', async () => {
         const fixture = TestBed.createComponent(App);
         await fixture.whenStable();
         const el = fixture.nativeElement as HTMLElement;
-        expect(el.querySelector('bh-navbar')).toBeTruthy();
+        expect(el.querySelector('nav')).toBeTruthy();
+        expect(el.querySelectorAll('nav a').length).toBeGreaterThan(0);
         expect(el.querySelector('bh-footer')).toBeTruthy();
     });
 });
