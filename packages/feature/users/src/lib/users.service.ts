@@ -2,6 +2,7 @@ import {
     type CreateUserContract,
     type LoyaltyMetric,
     type LoyaltyUpdate,
+    type MemberAccess,
     type UserContract,
     UsersServiceContract,
 } from '@brickam/domain-kit';
@@ -97,6 +98,19 @@ export class UsersService
                     ? { currentTierId: update.currentTierId }
                     : {}),
             },
+        } as Partial<User>);
+    }
+
+    /**
+     * Назначает суб-аккаунту доступ к вендору. role/vendorId/permissions
+     * попадут в JWT при следующем логине и проверяются PermissionsGuard
+     * (Foundations §14). Вызывается из feature `vendor-members`.
+     */
+    async setMemberAccess(userId: string, access: MemberAccess): Promise<void> {
+        await this.usersRepository.updateById(userId, {
+            role: access.role,
+            vendorId: access.vendorId,
+            permissions: access.permissions,
         } as Partial<User>);
     }
 }

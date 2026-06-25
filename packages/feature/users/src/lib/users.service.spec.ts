@@ -169,4 +169,18 @@ describe('UsersService', () => {
             loyalty: { totalSpend: 100, totalOrders: 1 },
         });
     });
+
+    it('setMemberAccess: пишет role/vendorId/permissions через репозиторий', async () => {
+        repo.updateById.mockResolvedValue(makeDoc());
+        await service.setMemberAccess('u1', {
+            vendorId: 'v1',
+            role: Role.VendorMember,
+            permissions: [Permission.OrdersView, Permission.ProductsManage],
+        });
+        expect(repo.updateById).toHaveBeenCalledWith('u1', {
+            role: Role.VendorMember,
+            vendorId: 'v1',
+            permissions: [Permission.OrdersView, Permission.ProductsManage],
+        });
+    });
 });
