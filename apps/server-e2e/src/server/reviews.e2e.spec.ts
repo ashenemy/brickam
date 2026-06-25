@@ -91,6 +91,9 @@ class FakeOrders extends OrdersServiceContract {
         }
         return null;
     }
+    async createFromInvoice() {
+        return { orderId: 'o', orderNumber: 'BH-1', paymentId: 'p', total: 0 };
+    }
 }
 
 const setProductRating = vi.fn(async () => {});
