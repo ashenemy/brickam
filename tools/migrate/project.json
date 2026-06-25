@@ -1,0 +1,33 @@
+{
+    "name": "migrate",
+    "$schema": "../../node_modules/nx/schemas/project-schema.json",
+    "sourceRoot": "tools/migrate/src",
+    "projectType": "application",
+    "targets": {
+        "build": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/dist"],
+            "options": {
+                "cwd": "tools/migrate",
+                "command": "npx tsc -p tsconfig.lib.json"
+            }
+        },
+        "migrate": {
+            "executor": "nx:run-commands",
+            "dependsOn": ["build"],
+            "options": {
+                "cwd": "tools/migrate",
+                "command": "node dist/main.js"
+            }
+        },
+        "test": {
+            "executor": "nx:run-commands",
+            "outputs": ["{projectRoot}/coverage"],
+            "options": {
+                "cwd": "tools/migrate",
+                "command": "npx vitest run --coverage"
+            }
+        }
+    },
+    "tags": ["type:tool", "scope:server"]
+}
