@@ -18,7 +18,7 @@ type ReviewSeed = {
 const REVIEWS: ReviewSeed[] = [
     {
         n: 1,
-        productSlug: 'cement-m500-standard',
+        productSlug: 'cement-s1-standard',
         vendorSlug: 'shin-market',
         buyerIndex: 0,
         rating: 5,
@@ -26,7 +26,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 2,
-        productSlug: 'cement-m500-standard',
+        productSlug: 'cement-s1-standard',
         vendorSlug: 'shin-market',
         buyerIndex: 1,
         rating: 4,
@@ -34,7 +34,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 3,
-        productSlug: 'ceramic-tile-standard',
+        productSlug: 'tiles-s1-standard',
         vendorSlug: 'ararat-shinanyut',
         buyerIndex: 2,
         rating: 5,
@@ -42,7 +42,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 4,
-        productSlug: 'faucet-kitchen-pro',
+        productSlug: 'faucets-s1-pro',
         vendorSlug: 'erevan-stroy',
         buyerIndex: 3,
         rating: 4,
@@ -50,7 +50,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 5,
-        productSlug: 'laminate-32-premium',
+        productSlug: 'laminate-s1-premium',
         vendorSlug: 'kashen-build',
         buyerIndex: 0,
         rating: 5,
@@ -58,7 +58,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 6,
-        productSlug: 'laminate-32-premium',
+        productSlug: 'laminate-s1-premium',
         vendorSlug: 'kashen-build',
         buyerIndex: 4,
         rating: 3,
@@ -66,7 +66,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 7,
-        productSlug: 'paint-water-eco',
+        productSlug: 'paint-interior-s1-eco',
         vendorSlug: 'gyumri-shin',
         buyerIndex: 1,
         rating: 5,
@@ -74,7 +74,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 8,
-        productSlug: 'cable-vvg-master',
+        productSlug: 'cables-s1-master',
         vendorSlug: 'masis-materials',
         buyerIndex: 2,
         rating: 4,
@@ -82,7 +82,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 9,
-        productSlug: 'drywall-sheet-classic',
+        productSlug: 'drywall-s1-standard',
         vendorSlug: 'vanadzor-prof',
         buyerIndex: 3,
         rating: 5,
@@ -90,7 +90,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 10,
-        productSlug: 'tool-drill-pro',
+        productSlug: 'power-tools-s1-pro',
         vendorSlug: 'remont-plus',
         buyerIndex: 0,
         rating: 4,
@@ -98,7 +98,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 11,
-        productSlug: 'cement-m500-pro',
+        productSlug: 'cement-s2-pro',
         vendorSlug: 'erevan-stroy',
         buyerIndex: 4,
         rating: 5,
@@ -106,7 +106,7 @@ const REVIEWS: ReviewSeed[] = [
     },
     {
         n: 12,
-        productSlug: 'putty-finish-lux',
+        productSlug: 'putty-s1-premium',
         vendorSlug: 'kashen-build',
         buyerIndex: 1,
         rating: 4,

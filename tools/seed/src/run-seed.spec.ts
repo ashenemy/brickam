@@ -32,21 +32,22 @@ describe('runSeed — идемпотентность', () => {
 });
 
 describe('runSeed — объём и качество', () => {
-    it('товаров 80–150, есть скидки и видео-обложки', async () => {
+    it('товаров ~500, есть скидки, у всех уникальная data-URI SVG-обложка', async () => {
         const store = new InMemorySeedStore();
         await runSeed(store);
 
         const products = store.documents(COLLECTIONS.products);
-        expect(products.length).toBeGreaterThanOrEqual(80);
-        expect(products.length).toBeLessThanOrEqual(150);
+        expect(products.length).toBeGreaterThanOrEqual(400);
+        expect(products.length).toBeLessThanOrEqual(600);
 
         const discounted = products.filter((p) => p['discount'] !== undefined);
         expect(discounted.length).toBeGreaterThan(0);
 
-        const video = products.filter(
-            (p) => (p['cover'] as { mediaType: string }).mediaType === 'video',
-        );
-        expect(video.length).toBeGreaterThan(0);
+        // Обложки — самодостаточные data-URI SVG (в БД), уникальные на каждый товар.
+        const covers = products.map((p) => p['cover'] as { mediaType: string; url: string });
+        expect(covers.every((c) => c.mediaType === 'image')).toBe(true);
+        expect(covers.every((c) => c.url.startsWith('data:image/svg+xml,'))).toBe(true);
+        expect(new Set(covers.map((c) => c.url)).size).toBe(products.length);
     });
 
     it('у товаров и категорий локали hy/ru/en непусты', async () => {
@@ -177,18 +178,32 @@ describe('целостность перекрёстных ссылок', () => {
         }
     });
 
-    it('ratingAvg/ratingCount товаров/вендоров согласованы с отзывами', async () => {
+    it('ratingAvg/ratingCount отрецензированных товаров согласованы с отзывами', async () => {
         const store = new InMemorySeedStore();
         await runSeed(store);
 
-        const reviews = store.documents(COLLECTIONS.reviews);
-        // Сумма ratingCount по товарам == числу отзывов (каждый отзыв с productId).
-        const products = store.documents(COLLECTIONS.products);
-        const totalProductRatingCount = products.reduce(
-            (acc, p) => acc + (p['ratingCount'] as number),
-            0,
+        const byId = new Map(
+            store.documents(COLLECTIONS.products).map((p) => [p['_id'] as string, p]),
         );
-        expect(totalProductRatingCount).toBe(reviews.length);
+
+        // Ожидаемые агрегаты по отзывам (productId → avg/count).
+        const sums = new Map<string, { sum: number; count: number }>();
+        for (const r of store.documents(COLLECTIONS.reviews)) {
+            const id = r['productId'] as string;
+            const cur = sums.get(id) ?? { sum: 0, count: 0 };
+            cur.sum += r['rating'] as number;
+            cur.count += 1;
+            sums.set(id, cur);
+        }
+
+        expect(sums.size).toBeGreaterThan(0);
+        // У товаров с отзывами ratingAvg/ratingCount = агрегату (dataset вмерживает).
+        for (const [id, agg] of sums) {
+            const product = byId.get(id);
+            expect(product).toBeDefined();
+            expect(product?.['ratingCount']).toBe(agg.count);
+            expect(product?.['ratingAvg']).toBe(Math.round((agg.sum / agg.count) * 10) / 10);
+        }
     });
 });
 

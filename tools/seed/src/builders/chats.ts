@@ -27,13 +27,13 @@ const CHATS: ChatSeed[] = [
         vendorSlug: 'shin-market',
         lineItems: [
             {
-                productSlug: 'cement-m500-standard',
+                productSlug: 'cement-s1-standard',
                 title: 'Цемент М500 «Standard»',
                 qty: 20,
                 price: 4200,
             },
             {
-                productSlug: 'putty-finish-standard',
+                productSlug: 'putty-s1-standard',
                 title: 'Шпаклёвка финишная «Standard»',
                 qty: 10,
                 price: 5600,
@@ -47,7 +47,7 @@ const CHATS: ChatSeed[] = [
         vendorSlug: 'ararat-shinanyut',
         lineItems: [
             {
-                productSlug: 'ceramic-tile-standard',
+                productSlug: 'tiles-s1-standard',
                 title: 'Плитка керамическая «Standard»',
                 qty: 35,
                 price: 7800,

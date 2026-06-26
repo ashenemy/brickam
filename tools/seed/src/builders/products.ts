@@ -1,326 +1,204 @@
 import { COLLECTIONS, type LocalizedText, type SeedRecord } from '../types';
-import { categoryId } from './categories';
+import { categoryId, LEAF_NAMES } from './categories';
 import { VENDORS, vendorId } from './vendors';
 
 /** Стабильный id товара из slug. */
 export const productId = (slug: string): string => `prod_${slug}`;
 
-type ProductTemplate = {
-    /** Базовый slug-стем (к нему добавляется индекс варианта). */
-    stem: string;
-    categorySlug: string;
-    title: LocalizedText;
-    description: LocalizedText;
-    unit: string;
-    /** Базовая цена в AMD (целая, реалистичная). */
-    basePrice: number;
-    attributes: { key: string; value: string }[];
+/** Метаданные листовой категории для генерации товаров (язык-нейтральные спеки). */
+type LeafMeta = { unit: string; basePrice: number; specs: [string, string] };
+
+/**
+ * unit/базовая цена/2 спецификации на каждую листовую категорию. Названия товаров
+ * берутся из LEAF_NAMES (трёхъязычно) + спека + бренд. Спеки — латиница/числа
+ * (размеры/типы), одинаковы во всех языках.
+ */
+const LEAF_META: Record<string, LeafMeta> = {
+    // Building materials
+    cement: { unit: 'bag', basePrice: 4200, specs: ['M400', 'M500'] },
+    'bricks-blocks': { unit: 'pcs', basePrice: 180, specs: ['Red M150', 'Aerated D500'] },
+    aggregates: { unit: 'm3', basePrice: 9500, specs: ['Gravel 5-20', 'Washed sand'] },
+    rebar: { unit: 'm', basePrice: 850, specs: ['Ø10', 'Ø12'] },
+    insulation: { unit: 'm2', basePrice: 1300, specs: ['Mineral 50mm', 'EPS 50mm'] },
+    waterproofing: { unit: 'kg', basePrice: 2100, specs: ['Bitumen', 'Polymer'] },
+    // Finishing
+    tiles: { unit: 'm2', basePrice: 7800, specs: ['30x60', '60x60'] },
+    wallpaper: { unit: 'roll', basePrice: 6500, specs: ['Vinyl 1.06x10', 'Non-woven'] },
+    'decorative-plaster': { unit: 'kg', basePrice: 5200, specs: ['Travertine', 'Marseille wax'] },
+    panels: { unit: 'm2', basePrice: 3400, specs: ['PVC', 'MDF'] },
+    drywall: { unit: 'pcs', basePrice: 3300, specs: ['12.5mm', 'Moisture 12.5mm'] },
+    putty: { unit: 'bag', basePrice: 5600, specs: ['Finish 25kg', 'Start 25kg'] },
+    plaster: { unit: 'bag', basePrice: 4900, specs: ['Gypsum 30kg', 'Cement 25kg'] },
+    // Paints
+    'paint-interior': { unit: 'L', basePrice: 12800, specs: ['10L white', '5L white'] },
+    'paint-facade': { unit: 'L', basePrice: 14500, specs: ['10L', '5L'] },
+    primers: { unit: 'L', basePrice: 4200, specs: ['Deep 10L', 'Contact 5L'] },
+    varnishes: { unit: 'L', basePrice: 6800, specs: ['Wood 2.5L', 'Yacht 1L'] },
+    'painting-tools': { unit: 'pcs', basePrice: 1800, specs: ['Roller set', 'Brush set'] },
+    // Flooring
+    laminate: { unit: 'm2', basePrice: 5400, specs: ['Class 32 8mm', 'Class 33 10mm'] },
+    linoleum: { unit: 'm2', basePrice: 3900, specs: ['Commercial 3m', 'Household 3m'] },
+    parquet: { unit: 'm2', basePrice: 14800, specs: ['Oak', 'Ash'] },
+    'vinyl-spc': { unit: 'm2', basePrice: 6900, specs: ['SPC 4mm', 'LVT 3mm'] },
+    skirting: { unit: 'pcs', basePrice: 1200, specs: ['PVC 2.5m', 'MDF 2.4m'] },
+    // Plumbing
+    faucets: { unit: 'pcs', basePrice: 18500, specs: ['Kitchen', 'Basin'] },
+    pipes: { unit: 'pcs', basePrice: 1350, specs: ['PPR D20', 'PPR D25'] },
+    sinks: { unit: 'pcs', basePrice: 22000, specs: ['Ceramic 60', 'Ceramic 80'] },
+    toilets: { unit: 'pcs', basePrice: 48000, specs: ['Floor', 'Wall-hung'] },
+    showers: { unit: 'pcs', basePrice: 95000, specs: ['Bathtub 170', 'Cabin 90'] },
+    'water-heaters': { unit: 'pcs', basePrice: 62000, specs: ['50L', '80L'] },
+    // Electrics
+    cables: { unit: 'm', basePrice: 920, specs: ['VVG 3x2.5', 'VVG 3x1.5'] },
+    sockets: { unit: 'pcs', basePrice: 2400, specs: ['Double', 'Single'] },
+    breakers: { unit: 'pcs', basePrice: 3200, specs: ['C16', 'C25'] },
+    fixtures: { unit: 'pcs', basePrice: 8500, specs: ['LED panel 36W', 'Spot 7W'] },
+    lamps: { unit: 'pcs', basePrice: 1100, specs: ['LED 9W', 'LED 12W'] },
+    // Tools
+    'power-tools': { unit: 'pcs', basePrice: 21500, specs: ['Impact drill 750W', 'Grinder 950W'] },
+    'hand-tools': { unit: 'pcs', basePrice: 4200, specs: ['Hammer 500g', 'Screwdriver set'] },
+    measuring: { unit: 'pcs', basePrice: 6800, specs: ['Laser 50m', 'Tape 5m'] },
+    abrasives: { unit: 'pcs', basePrice: 480, specs: ['Cutting 125', 'Flap 125'] },
+    // Doors & windows
+    'interior-doors': { unit: 'pcs', basePrice: 38000, specs: ['Eco-veneer', 'PVC'] },
+    'entrance-doors': { unit: 'pcs', basePrice: 145000, specs: ['Steel', 'Insulated'] },
+    windows: { unit: 'pcs', basePrice: 78000, specs: ['PVC 1200x1400', 'PVC 1500x1500'] },
+    locks: { unit: 'pcs', basePrice: 6400, specs: ['Mortise', 'Cylinder'] },
+    // Heating
+    radiators: { unit: 'section', basePrice: 3800, specs: ['Bimetal', 'Aluminium'] },
+    boilers: { unit: 'pcs', basePrice: 185000, specs: ['Gas 24kW', 'Electric 9kW'] },
+    ventilation: { unit: 'pcs', basePrice: 5200, specs: ['Fan 100', 'Fan 125'] },
+    'air-conditioning': { unit: 'pcs', basePrice: 165000, specs: ['9000 BTU', '12000 BTU'] },
+    // Garden
+    paving: { unit: 'm2', basePrice: 5600, specs: ['Vibro-pressed', 'Granite'] },
+    fencing: { unit: 'm2', basePrice: 7200, specs: ['Profiled sheet', 'Mesh 3D'] },
+    'garden-tools': { unit: 'pcs', basePrice: 8900, specs: ['Trimmer', 'Lawn mower'] },
+    // Fasteners
+    screws: { unit: 'pack', basePrice: 1400, specs: ['3.5x35', '4.2x75'] },
+    anchors: { unit: 'pack', basePrice: 1800, specs: ['Dowel 6x40', 'Anchor 10x100'] },
+    sealants: { unit: 'pcs', basePrice: 2100, specs: ['Silicone', 'Polyurethane'] },
 };
 
+/** Бренды-варианты (детерминированно множат каждую спеку). */
+const BRANDS = ['Standard', 'Pro', 'Premium', 'Eco', 'Master'];
+
+/** Детерминированный хэш (FNV-1a) — без Math.random/Date.now. */
+function hash(s: string): number {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i += 1) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+}
+
+function xmlEscape(s: string): string {
+    return s
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+}
+
 /**
- * Шаблоны товаров по листовым категориям. Каждый шаблон разворачивается в
- * несколько вариантов (бренды) — так набираем 80–150 товаров детерминированно.
+ * Уникальная SVG-обложка товара как data-URI (хранится прямо в БД, переносится с
+ * mongodump, без зависимости от MinIO). Цвет — по хэшу slug; текст — название/спека.
  */
-const TEMPLATES: ProductTemplate[] = [
-    {
-        stem: 'cement-m500',
-        categorySlug: 'cement',
-        title: { hy: 'Ցemենտ M500', ru: 'Цемент М500', en: 'Cement M500' },
-        description: {
-            hy: 'Պորտլանդ ցemենտ M500, 50 կգ պարկ, շինարարական աշխատանքների համար:',
-            ru: 'Портландцемент М500, мешок 50 кг, для строительных работ.',
-            en: 'Portland cement M500, 50 kg bag, for construction works.',
-        },
-        unit: 'bag',
-        basePrice: 4200,
-        attributes: [
-            { key: 'weight', value: '50kg' },
-            { key: 'grade', value: 'M500' },
-        ],
-    },
-    {
-        stem: 'putty-finish',
-        categorySlug: 'putty',
-        title: { hy: 'Ֆինիշային մածիկ', ru: 'Шпаклёвка финишная', en: 'Finish putty' },
-        description: {
-            hy: 'Ֆինիշային գիպսային մածիկ ներքին աշխատանքների համար, 25 կգ:',
-            ru: 'Финишная гипсовая шпаклёвка для внутренних работ, 25 кг.',
-            en: 'Gypsum finish putty for interior works, 25 kg.',
-        },
-        unit: 'bag',
-        basePrice: 5600,
-        attributes: [
-            { key: 'weight', value: '25kg' },
-            { key: 'type', value: 'gypsum' },
-        ],
-    },
-    {
-        stem: 'plaster-gypsum',
-        categorySlug: 'plaster',
-        title: { hy: 'Գիպսային սվաղ', ru: 'Штукатурка гипсовая', en: 'Gypsum plaster' },
-        description: {
-            hy: 'Գիպսային սվաղ ձեռքով կիրառման համար, 30 կգ պարկ:',
-            ru: 'Гипсовая штукатурка для ручного нанесения, мешок 30 кг.',
-            en: 'Gypsum plaster for manual application, 30 kg bag.',
-        },
-        unit: 'bag',
-        basePrice: 4900,
-        attributes: [{ key: 'weight', value: '30kg' }],
-    },
-    {
-        stem: 'ceramic-tile',
-        categorySlug: 'tiles',
-        title: { hy: 'Կերամիկական սալիկ', ru: 'Плитка керамическая', en: 'Ceramic tile' },
-        description: {
-            hy: 'Պատի կերամիկական սալիկ 30x60 սմ, փայլուն մակերես:',
-            ru: 'Настенная керамическая плитка 30x60 см, глянцевая поверхность.',
-            en: 'Wall ceramic tile 30x60 cm, glossy surface.',
-        },
-        unit: 'm2',
-        basePrice: 7800,
-        attributes: [
-            { key: 'size', value: '30x60' },
-            { key: 'surface', value: 'glossy' },
-        ],
-    },
-    {
-        stem: 'wallpaper-vinyl',
-        categorySlug: 'wallpaper',
-        title: { hy: 'Վինիլային պաստառ', ru: 'Обои виниловые', en: 'Vinyl wallpaper' },
-        description: {
-            hy: 'Վինիլային պաստառ ֆլիզելինային հիմքով, 1.06x10 մ ռուլոն:',
-            ru: 'Виниловые обои на флизелиновой основе, рулон 1.06x10 м.',
-            en: 'Vinyl wallpaper on non-woven base, 1.06x10 m roll.',
-        },
-        unit: 'pcs',
-        basePrice: 6500,
-        attributes: [{ key: 'roll', value: '1.06x10m' }],
-    },
-    {
-        stem: 'faucet-kitchen',
-        categorySlug: 'faucets',
-        title: { hy: 'Խոհանոցի ծորակ', ru: 'Смеситель кухонный', en: 'Kitchen faucet' },
-        description: {
-            hy: 'Խոհանոցի ծորակ բարձր ծորակով, քրոմապատ:',
-            ru: 'Кухонный смеситель с высоким изливом, хромированный.',
-            en: 'Kitchen faucet with high spout, chrome-plated.',
-        },
-        unit: 'pcs',
-        basePrice: 18500,
-        attributes: [
-            { key: 'material', value: 'brass' },
-            { key: 'finish', value: 'chrome' },
-        ],
-    },
-    {
-        stem: 'pipe-ppr',
-        categorySlug: 'pipes',
-        title: { hy: 'PPR խողովակ', ru: 'Труба PPR', en: 'PPR pipe' },
-        description: {
-            hy: 'Պոլիպրոպիլենային խողովակ ջրամատակարարման համար, D20, 4 մ:',
-            ru: 'Полипропиленовая труба для водоснабжения, D20, 4 м.',
-            en: 'Polypropylene pipe for water supply, D20, 4 m.',
-        },
-        unit: 'pcs',
-        basePrice: 1350,
-        attributes: [{ key: 'diameter', value: '20mm' }],
-    },
-    {
-        stem: 'cable-vvg',
-        categorySlug: 'cables',
-        title: { hy: 'ВВГ մալուխ', ru: 'Кабель ВВГ', en: 'VVG cable' },
-        description: {
-            hy: 'Պղնձե ВВГ մալուխ 3x2.5, ներքին էլեկտրագծերի համար:',
-            ru: 'Медный кабель ВВГ 3x2.5 для внутренней проводки.',
-            en: 'Copper VVG cable 3x2.5 for indoor wiring.',
-        },
-        unit: 'm',
-        basePrice: 920,
-        attributes: [
-            { key: 'section', value: '3x2.5' },
-            { key: 'material', value: 'copper' },
-        ],
-    },
-    {
-        stem: 'socket-double',
-        categorySlug: 'sockets',
-        title: { hy: 'Կրկնակի վարդակ', ru: 'Розетка двойная', en: 'Double socket' },
-        description: {
-            hy: 'Կրկնակի վարդակ հողանցումով, ներկառուցվող:',
-            ru: 'Розетка двойная с заземлением, встраиваемая.',
-            en: 'Double socket with grounding, flush-mounted.',
-        },
-        unit: 'pcs',
-        basePrice: 2400,
-        attributes: [{ key: 'grounding', value: 'yes' }],
-    },
-    {
-        stem: 'laminate-32',
-        categorySlug: 'laminate',
-        title: { hy: 'Լամինատ 32 դաս', ru: 'Ламинат 32 класс', en: 'Laminate class 32' },
-        description: {
-            hy: 'Լամինատ 32 դասի, 8 մմ, կաղնու դեկոր:',
-            ru: 'Ламинат 32 класс, 8 мм, декор дуб.',
-            en: 'Laminate class 32, 8 mm, oak decor.',
-        },
-        unit: 'm2',
-        basePrice: 5400,
-        attributes: [
-            { key: 'class', value: '32' },
-            { key: 'thickness', value: '8mm' },
-        ],
-    },
-    {
-        stem: 'linoleum-comm',
-        categorySlug: 'linoleum',
-        title: {
-            hy: 'Կոմերցիոն լինոլեում',
-            ru: 'Линолеум коммерческий',
-            en: 'Commercial linoleum',
-        },
-        description: {
-            hy: 'Կոմերցիոն լինոլեում բարձր անցունակության համար, 3 մ լայնք:',
-            ru: 'Коммерческий линолеум для высокой проходимости, ширина 3 м.',
-            en: 'Commercial linoleum for high traffic, 3 m width.',
-        },
-        unit: 'm2',
-        basePrice: 3900,
-        attributes: [{ key: 'width', value: '3m' }],
-    },
-    {
-        stem: 'paint-water',
-        categorySlug: 'paints',
-        title: { hy: 'Ջրադիսպերս ներկ', ru: 'Краска водно-дисперсионная', en: 'Water-based paint' },
-        description: {
-            hy: 'Ջրադիսպերս ներկ ներքին պատերի համար, 10 լ, սպիտակ:',
-            ru: 'Водно-дисперсионная краска для внутренних стен, 10 л, белая.',
-            en: 'Water-based paint for interior walls, 10 L, white.',
-        },
-        unit: 'L',
-        basePrice: 12800,
-        attributes: [
-            { key: 'volume', value: '10L' },
-            { key: 'base', value: 'water' },
-        ],
-    },
-    {
-        stem: 'drywall-sheet',
-        categorySlug: 'drywall',
-        title: { hy: 'Գիպսաստվարաթուղթ', ru: 'Гипсокартон', en: 'Drywall sheet' },
-        description: {
-            hy: 'Գիպսաստվարաթղթի թերթ 1200x2500x12.5 մմ, ստանդարտ:',
-            ru: 'Лист гипсокартона 1200x2500x12.5 мм, стандартный.',
-            en: 'Drywall sheet 1200x2500x12.5 mm, standard.',
-        },
-        unit: 'pcs',
-        basePrice: 3300,
-        attributes: [
-            { key: 'thickness', value: '12.5mm' },
-            { key: 'type', value: 'standard' },
-        ],
-    },
-    {
-        stem: 'tool-drill',
-        categorySlug: 'tools',
-        title: { hy: 'Հարվածային գայլիկոն', ru: 'Дрель ударная', en: 'Impact drill' },
-        description: {
-            hy: 'Հարվածային գայլիկոն 750 Վտ, պատրոն 13 մմ:',
-            ru: 'Ударная дрель 750 Вт, патрон 13 мм.',
-            en: 'Impact drill 750 W, 13 mm chuck.',
-        },
-        unit: 'pcs',
-        basePrice: 21500,
-        attributes: [
-            { key: 'power', value: '750W' },
-            { key: 'chuck', value: '13mm' },
-        ],
-    },
-];
-
-/** Бренды-варианты: каждый шаблон множится на этот список. */
-const BRANDS = ['Standard', 'Pro', 'Premium', 'Lux', 'Eco', 'Master', 'Optima', 'Classic'];
-
-const COVER_VIDEO_EVERY = 8; // ~12.5% обложек — видео
-const DISCOUNT_EVERY_PERCENT = 4; // каждый 4-й — percent (~25%)
-const DISCOUNT_EVERY_AMOUNT = 7; // каждый 7-й — amount (доп. часть со скидкой)
+function svgCover(slug: string, label: string, subtitle: string): string {
+    const hue = hash(slug) % 360;
+    const initials = label.slice(0, 2).toUpperCase();
+    const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'>` +
+        `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+        `<stop offset='0' stop-color='hsl(${hue},58%,46%)'/>` +
+        `<stop offset='1' stop-color='hsl(${(hue + 28) % 360},64%,26%)'/>` +
+        `</linearGradient></defs>` +
+        `<rect width='600' height='600' fill='url(#g)'/>` +
+        `<text x='300' y='340' text-anchor='middle' font-family='Poppins,Arial,sans-serif' font-size='220' font-weight='700' fill='rgba(255,255,255,0.16)'>${xmlEscape(initials)}</text>` +
+        `<text x='40' y='524' font-family='Poppins,Arial,sans-serif' font-size='36' font-weight='700' fill='#ffffff'>${xmlEscape(label)}</text>` +
+        `<text x='40' y='562' font-family='Arial,sans-serif' font-size='22' fill='rgba(255,255,255,0.82)'>${xmlEscape(subtitle)}</text>` +
+        `</svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
 
 /**
- * Детерминированно генерирует товары (без Math.random/Date.now). Скидки и
- * видео-обложки распределены по индексу, бренды/вендоры — по модулю, чтобы
- * каждый товар привязывался к существующим vendorId+categoryId.
+ * Детерминированно генерирует ~520 товаров по всем листовым категориям
+ * (52 листа × 2 спеки × 5 брендов). Каждый товар — своя SVG-обложка, рейтинг,
+ * остаток и вьюшки выводятся из хэша slug. Привязки к существующим vendorId/categoryId.
  */
 export function buildProducts(): SeedRecord[] {
     const records: SeedRecord[] = [];
     let index = 0;
 
-    for (const tpl of TEMPLATES) {
-        for (let b = 0; b < BRANDS.length; b += 1) {
-            const brand = BRANDS[b] as string;
-            const slug = `${tpl.stem}-${brand.toLowerCase()}`;
-            const vendor = VENDORS[index % VENDORS.length] as { slug: string };
+    for (const [leaf, meta] of Object.entries(LEAF_META)) {
+        const noun = LEAF_NAMES[leaf];
+        if (noun === undefined) continue;
+        const enLabel = noun.en.split(' & ')[0] as string;
 
-            // Цена варьируется по бренду (детерминированно), но остаётся целой.
-            const price = tpl.basePrice + b * Math.round(tpl.basePrice * 0.06);
+        for (let si = 0; si < meta.specs.length; si += 1) {
+            const spec = meta.specs[si] as string;
+            for (let b = 0; b < BRANDS.length; b += 1) {
+                const brand = BRANDS[b] as string;
+                const slug = `${leaf}-s${si + 1}-${brand.toLowerCase()}`;
+                const vendor = VENDORS[index % VENDORS.length] as { slug: string };
+                const h = hash(slug);
 
-            const isVideo = index % COVER_VIDEO_EVERY === 0;
-            const cover = isVideo
-                ? {
-                      mediaType: 'video',
-                      url: `https://cdn.brickam.am/products/${slug}/cover.mp4`,
-                      thumbnailUrl: `https://cdn.brickam.am/products/${slug}/cover.jpg`,
-                  }
-                : {
-                      mediaType: 'image',
-                      url: `https://cdn.brickam.am/products/${slug}/cover.jpg`,
-                  };
+                const price =
+                    meta.basePrice +
+                    b * Math.round(meta.basePrice * 0.06) +
+                    si * Math.round(meta.basePrice * 0.03);
 
-            let discount: Record<string, unknown> | undefined;
-            if (index % DISCOUNT_EVERY_PERCENT === 0 && index > 0) {
-                discount = { type: 'percent', value: 10 + (index % 3) * 5 };
-            } else if (index % DISCOUNT_EVERY_AMOUNT === 0 && index > 0) {
-                discount = { type: 'amount', value: Math.round(price * 0.05) };
-            }
+                const title: LocalizedText = {
+                    hy: `${noun.hy} ${spec} «${brand}»`,
+                    ru: `${noun.ru} ${spec} «${brand}»`,
+                    en: `${enLabel} ${spec} "${brand}"`,
+                };
+                const description: LocalizedText = {
+                    hy: `${noun.hy} ${spec}, ${brand}. Որակյալ ապրանք շինարարության համար:`,
+                    ru: `${noun.ru} ${spec}, ${brand}. Качественный товар для строительства и ремонта.`,
+                    en: `${enLabel} ${spec}, ${brand}. Quality product for construction and renovation.`,
+                };
 
-            const title: LocalizedText = {
-                hy: `${tpl.title.hy} «${brand}»`,
-                ru: `${tpl.title.ru} «${brand}»`,
-                en: `${tpl.title.en} "${brand}"`,
-            };
+                let discount: Record<string, unknown> | undefined;
+                if (index % 4 === 0 && index > 0) {
+                    discount = { type: 'percent', value: 10 + (index % 4) * 5 };
+                } else if (index % 7 === 0 && index > 0) {
+                    discount = { type: 'amount', value: Math.round(price * 0.05) };
+                }
 
-            const doc: Record<string, unknown> = {
-                _id: productId(slug),
-                vendorId: vendorId(vendor.slug),
-                categoryId: categoryId(tpl.categorySlug),
-                slug,
-                title,
-                description: tpl.description,
-                cover,
-                gallery: [
-                    {
+                const doc: Record<string, unknown> = {
+                    _id: productId(slug),
+                    vendorId: vendorId(vendor.slug),
+                    categoryId: categoryId(leaf),
+                    slug,
+                    title,
+                    description,
+                    cover: {
                         mediaType: 'image',
-                        url: `https://cdn.brickam.am/products/${slug}/g1.jpg`,
+                        url: svgCover(slug, enLabel, `${brand} • ${spec}`),
                     },
-                ],
-                price,
-                unit: tpl.unit,
-                stock: 25 + ((index * 7) % 200),
-                region: 'Yerevan',
-                status: 'active',
-                attributes: [...tpl.attributes, { key: 'brand', value: brand }],
-                ratingAvg: 0,
-                ratingCount: 0,
-                viewsCount: (index * 13) % 500,
-            };
-            if (discount !== undefined) {
-                doc['discount'] = discount;
-            }
+                    gallery: [],
+                    price,
+                    unit: meta.unit,
+                    stock: 10 + (h % 300),
+                    region: 'Yerevan',
+                    status: 'active',
+                    attributes: [
+                        { key: 'spec', value: spec },
+                        { key: 'brand', value: brand },
+                    ],
+                    ratingAvg: Math.round((3.6 + (h % 15) / 10) * 10) / 10,
+                    ratingCount: 5 + (h % 240),
+                    viewsCount: h % 800,
+                };
+                if (discount !== undefined) {
+                    doc['discount'] = discount;
+                }
 
-            records.push({
-                collection: COLLECTIONS.products,
-                key: { slug },
-                doc,
-            });
-            index += 1;
+                records.push({ collection: COLLECTIONS.products, key: { slug }, doc });
+                index += 1;
+            }
         }
     }
 
