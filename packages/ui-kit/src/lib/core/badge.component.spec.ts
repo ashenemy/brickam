@@ -16,17 +16,19 @@ describe('BadgeComponent', () => {
         await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
     });
 
-    it('рендерит контент', async () => {
+    it('рендерит контент в mat-chip', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
-        expect(fixture.nativeElement.querySelector('span').textContent).toContain('-20%');
+        expect(fixture.nativeElement.querySelector('mat-chip').textContent).toContain('-20%');
     });
 
-    it('применяет класс тона danger через токены', async () => {
+    it('применяет класс тона danger (перекраска через --mat-chip-*)', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         fixture.componentInstance.tone = 'danger';
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(fixture.nativeElement.querySelector('span').className).toContain('text-danger');
+        expect(fixture.nativeElement.querySelector('mat-chip').className).toContain(
+            'bh-badge-danger',
+        );
     });
 });

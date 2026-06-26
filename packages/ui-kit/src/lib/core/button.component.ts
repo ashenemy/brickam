@@ -1,7 +1,16 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger';
 export type ButtonSize = 'sm' | 'md' | 'lg';
+
+// variant → appearance официальной директивы matButton.
+const APPEARANCE: Record<ButtonVariant, 'filled' | 'outlined' | 'text'> = {
+    primary: 'filled',
+    secondary: 'outlined',
+    ghost: 'text',
+    danger: 'outlined',
+};
 
 const SIZE: Record<ButtonSize, string> = {
     sm: 'h-9 px-4 text-12',
@@ -9,24 +18,20 @@ const SIZE: Record<ButtonSize, string> = {
     lg: 'h-14 px-8 text-16',
 };
 
-const VARIANT: Record<ButtonVariant, string> = {
-    primary: 'bg-accent text-text-on-accent shadow-accent',
-    secondary:
-        'bg-[var(--glass-fill)] text-text-primary shadow-[inset_0_0_0_1px_var(--border-default)] backdrop-blur-glass-sm',
-    ghost: 'bg-transparent text-accent shadow-[inset_0_0_0_1px_rgb(var(--color-accent))]',
-    danger: 'bg-transparent text-danger shadow-[inset_0_0_0_1px_rgb(var(--color-danger))]',
-};
-
 /**
- * BRICK Button — Poppins-лейбл, скругление 16px, glass/accent-бевели.
- * Перенесён с React (core/Button.jsx); цвета только через токены.
+ * BRICK Button — на официальной директиве Angular Material `matButton`.
+ * Бренд-вид (Poppins, радиус 16, оранжевый акцент) накладывается поверх Material
+ * через токены --mat-sys-* (material-bridge.css) и локальные классы.
  */
 @Component({
     selector: 'bh-button',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatButton],
+    host: { '[class.bh-block]': 'block()' },
     template: `
         <button
+            [matButton]="appearance()"
             [attr.type]="type()"
             [disabled]="disabled()"
             [class]="classes()"
@@ -37,6 +42,23 @@ const VARIANT: Record<ButtonVariant, string> = {
             <ng-content select="[slot=end]" />
         </button>
     `,
+    styles: `
+        :host {
+            display: inline-flex;
+        }
+        :host(.bh-block) {
+            display: flex;
+        }
+        .bh-btn {
+            border-radius: var(--radius-md);
+            font-family: var(--font-display);
+            font-weight: 500;
+        }
+        /* danger: локально перекрашиваем outlined-кнопку в danger-токен. */
+        .bh-btn-danger {
+            --mat-sys-primary: rgb(var(--color-danger));
+        }
+    `,
 })
 export class ButtonComponent {
     readonly variant = input<ButtonVariant>('primary');
@@ -46,16 +68,16 @@ export class ButtonComponent {
     readonly type = input<'button' | 'submit' | 'reset'>('button');
     readonly clicked = output<MouseEvent>();
 
+    protected readonly appearance = computed(() => APPEARANCE[this.variant()]);
+
     protected readonly classes = computed(() =>
         [
-            'inline-flex items-center justify-center gap-2 rounded-md font-display font-medium',
-            'whitespace-nowrap cursor-pointer border-0 select-none',
-            'transition-transform duration-fast ease-out active:scale-[0.97]',
-            'disabled:opacity-40 disabled:cursor-not-allowed',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]',
+            'bh-btn',
             SIZE[this.size()],
-            VARIANT[this.variant()],
-            this.block() ? 'w-full' : 'w-auto',
-        ].join(' '),
+            this.variant() === 'danger' ? 'bh-btn-danger' : '',
+            this.block() ? 'w-full' : '',
+        ]
+            .filter(Boolean)
+            .join(' '),
     );
 }

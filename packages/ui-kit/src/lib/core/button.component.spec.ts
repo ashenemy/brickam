@@ -28,11 +28,20 @@ describe('ButtonComponent', () => {
         expect(btn.textContent?.trim()).toContain('Buy');
     });
 
-    it('применяет классы варианта primary (через токены)', async () => {
+    it('базовый бренд-класс bh-btn на matButton', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
         const btn = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        expect(btn.className).toContain('bg-accent');
+        expect(btn.className).toContain('bh-btn');
+    });
+
+    it('вариант danger добавляет bh-btn-danger', async () => {
+        const fixture = TestBed.createComponent(HostComponent);
+        fixture.componentInstance.variant = 'danger';
+        fixture.detectChanges();
+        await fixture.whenStable();
+        const btn = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
+        expect(btn.className).toContain('bh-btn-danger');
     });
 
     it('эмитит clicked по клику', async () => {

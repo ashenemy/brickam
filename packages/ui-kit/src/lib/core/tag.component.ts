@@ -1,39 +1,58 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { MatChip, MatChipRemove } from '@angular/material/chips';
+import { MatIcon } from '@angular/material/icon';
 
 /**
- * Tag / Chip — выбираемый фильтр или категория. Glass по умолчанию,
- * оранжевый при выборе. Опц. счётчик и удаление (×).
- * Перенесён с React (core/Tag.jsx) с фиксом a11y: настоящий <button> + клавиатура,
- * удаление вынесено в отдельную кнопку с aria-label.
+ * Tag / Chip — выбираемый фильтр или категория на официальном `mat-chip`
+ * (Angular Material). Glass по умолчанию, оранжевый при выборе. Опц. счётчик и
+ * удаление через официальный `matChipRemove` (a11y «из коробки»).
  */
 @Component({
     selector: 'bh-tag',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatChip, MatChipRemove, MatIcon],
     template: `
-        <button
-            type="button"
+        <mat-chip
             [class]="classes()"
             [attr.aria-pressed]="selected()"
             (click)="toggled.emit()"
+            (removed)="removed.emit()"
         >
             <ng-content />
             @if (count() !== null && count() !== undefined) {
                 <span class="opacity-70 font-normal">{{ count() }}</span>
             }
             @if (removable()) {
-                <span
-                    role="button"
-                    tabindex="0"
-                    class="ml-0.5 text-16 leading-none opacity-80 hover:opacity-100 cursor-pointer"
-                    [attr.aria-label]="removeLabel()"
-                    (click)="onRemove($event)"
-                    (keydown.enter)="onRemove($event)"
-                    (keydown.space)="onRemove($event)"
-                    >×</span
-                >
+                <button matChipRemove [attr.aria-label]="removeLabel()" (click)="$event.stopPropagation()">
+                    <mat-icon>close</mat-icon>
+                </button>
             }
-        </button>
+        </mat-chip>
+    `,
+    styles: `
+        :host {
+            display: inline-flex;
+        }
+        .bh-tag {
+            cursor: pointer;
+            user-select: none;
+            font-family: var(--font-display);
+            font-weight: 500;
+            border-radius: var(--radius-md);
+            transition: all var(--dur-base) var(--ease-soft);
+        }
+        /* Невыбранный — glass; выбранный — оранжевый акцент с бевелем. */
+        .bh-tag.bh-tag-rest {
+            background: var(--glass-fill);
+            color: rgb(var(--color-text-primary));
+            box-shadow: inset 0 0 0 1px var(--border-default);
+        }
+        .bh-tag.bh-tag-selected {
+            background: rgb(var(--color-accent));
+            color: rgb(var(--color-text-on-accent));
+            box-shadow: var(--shadow-accent);
+        }
     `,
 })
 export class TagComponent {
@@ -44,21 +63,7 @@ export class TagComponent {
     readonly toggled = output<void>();
     readonly removed = output<void>();
 
-    protected readonly classes = computed(() =>
-        [
-            'inline-flex items-center gap-2 h-9 px-4 rounded-md border-0',
-            'font-display font-medium text-14 cursor-pointer select-none',
-            'transition-all duration-base ease-soft backdrop-blur-glass-sm',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]',
-            this.selected()
-                ? 'bg-accent text-text-on-accent shadow-accent'
-                : 'bg-[var(--glass-fill)] text-text-primary shadow-[inset_0_0_0_1px_var(--border-default)]',
-        ].join(' '),
+    protected readonly classes = computed(
+        () => `bh-tag ${this.selected() ? 'bh-tag-selected' : 'bh-tag-rest'}`,
     );
-
-    protected onRemove(event: Event): void {
-        event.stopPropagation();
-        event.preventDefault();
-        this.removed.emit();
-    }
 }

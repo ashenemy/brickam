@@ -24,20 +24,20 @@ describe('TagComponent', () => {
         await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
     });
 
-    it('рендерит как button с aria-pressed', async () => {
+    it('рендерит mat-chip с aria-pressed', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         fixture.componentInstance.selected = true;
         fixture.detectChanges();
         await fixture.whenStable();
-        const btn = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        expect(btn.getAttribute('aria-pressed')).toBe('true');
-        expect(btn.textContent).toContain('Cement');
+        const chip = fixture.nativeElement.querySelector('mat-chip') as HTMLElement;
+        expect(chip.getAttribute('aria-pressed')).toBe('true');
+        expect(chip.textContent).toContain('Cement');
     });
 
-    it('эмитит toggled по клику', async () => {
+    it('эмитит toggled по клику на чип', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
-        fixture.nativeElement.querySelector('button').click();
+        (fixture.nativeElement.querySelector('mat-chip') as HTMLElement).click();
         expect(fixture.componentInstance.toggles).toBe(1);
     });
 

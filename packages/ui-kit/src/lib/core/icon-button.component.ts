@@ -1,4 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
 
 export type IconButtonVariant = 'accent' | 'glass' | 'plain';
 export type IconButtonRounded = 'lg' | 'md' | 'pill';
@@ -10,16 +11,18 @@ const ROUNDED: Record<IconButtonRounded, string> = {
 };
 
 /**
- * IconButton — круглый/скруглённый держатель действия (корзина, поиск, закрыть).
- * Перенесён с React (core/IconButton.jsx). accent — оранжевая go-кнопка.
+ * IconButton — на официальной директиве Angular Material `matIconButton`
+ * (ripple + a11y). Размер/радиус/вариант (accent-go, glass, plain) — бренд-слой
+ * поверх Material. Используется для корзины, поиска, навигации, «закрыть».
  */
 @Component({
     selector: 'bh-icon-button',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatIconButton],
     template: `
         <button
-            type="button"
+            matIconButton
             [attr.aria-label]="ariaLabel()"
             [attr.aria-pressed]="active() ? true : null"
             [disabled]="disabled()"
@@ -30,6 +33,32 @@ const ROUNDED: Record<IconButtonRounded, string> = {
         >
             <ng-content />
         </button>
+    `,
+    styles: `
+        :host {
+            display: inline-flex;
+        }
+        /* matIconButton по умолчанию круглый 40px — перекрываем под бренд. */
+        .bh-iconbtn {
+            border-radius: var(--radius-lg);
+        }
+        .bh-iconbtn.rounded-md {
+            border-radius: var(--radius-md);
+        }
+        .bh-iconbtn.rounded-pill {
+            border-radius: var(--radius-pill);
+        }
+        .bh-iconbtn-accent {
+            background: rgb(var(--color-accent));
+            color: rgb(var(--color-text-on-accent));
+            box-shadow: var(--shadow-accent);
+        }
+        .bh-iconbtn-glass {
+            background: var(--glass-fill);
+            -webkit-backdrop-filter: blur(var(--blur-glass-sm));
+            backdrop-filter: blur(var(--blur-glass-sm));
+            box-shadow: inset 0 0 0 0.5px var(--border-default);
+        }
     `,
 })
 export class IconButtonComponent {
@@ -46,17 +75,10 @@ export class IconButtonComponent {
         const accentText = this.active() ? 'text-accent' : 'text-text-primary';
         const byVariant =
             v === 'accent'
-                ? 'bg-accent text-text-on-accent shadow-accent'
+                ? 'bh-iconbtn-accent'
                 : v === 'glass'
-                  ? `bg-[var(--glass-fill)] ${accentText} shadow-[inset_0_0_0_0.5px_var(--border-default)] backdrop-blur-glass-sm`
+                  ? `bh-iconbtn-glass ${accentText}`
                   : `bg-transparent ${accentText}`;
-        return [
-            'inline-flex items-center justify-center shrink-0 border-0 cursor-pointer',
-            'transition-transform duration-fast ease-out active:scale-[0.92]',
-            'disabled:opacity-40 disabled:cursor-not-allowed',
-            'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]',
-            ROUNDED[this.rounded()],
-            byVariant,
-        ].join(' ');
+        return ['bh-iconbtn', ROUNDED[this.rounded()], byVariant].join(' ');
     });
 }
