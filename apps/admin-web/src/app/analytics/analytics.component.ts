@@ -3,12 +3,12 @@ import { LanguageService } from '@brickam/i18n-kit/browser';
 import { ButtonComponent, InputComponent } from '@brickam/ui-kit';
 import { AnalyticsApiService, type PlatformAnalytics } from './analytics-api.service';
 
-/** Мок-сводка для случая, когда бэкенд-контроллера ещё нет. */
-const MOCK: PlatformAnalytics = { gmv: 12_500_000, platformRevenue: 625_000, orders: 842 };
+/** Пустая сводка до первой успешной загрузки. */
+const EMPTY: PlatformAnalytics = { gmv: 0, platformRevenue: 0, orders: 0 };
 
 /**
  * Платформенная аналитика: карточки GMV / выручка платформы / заказы за период.
- * TODO: при отсутствии контроллера GET /admin/analytics показываем моки.
+ * Данные грузятся из GET /admin/analytics; при ошибке показываем сообщение.
  */
 @Component({
     selector: 'app-analytics',
@@ -39,9 +39,9 @@ const MOCK: PlatformAnalytics = { gmv: 12_500_000, platformRevenue: 625_000, ord
                 </bh-button>
             </div>
 
-            @if (mocked()) {
-                <p class="text-text-tertiary" style="font: var(--type-caption)">
-                    {{ t('admin.analytics.mockNote') }}
+            @if (error()) {
+                <p class="text-danger" role="alert" style="font: var(--type-caption)">
+                    {{ error() }}
                 </p>
             }
 
@@ -80,9 +80,9 @@ export class AnalyticsComponent {
 
     protected readonly from = signal('');
     protected readonly to = signal('');
-    protected readonly summary = signal<PlatformAnalytics>(MOCK);
+    protected readonly summary = signal<PlatformAnalytics>(EMPTY);
     protected readonly loading = signal(false);
-    protected readonly mocked = signal(false);
+    protected readonly error = signal<string | null>(null);
 
     constructor() {
         this.reload();
@@ -94,18 +94,27 @@ export class AnalyticsComponent {
 
     protected reload(): void {
         this.loading.set(true);
+        this.error.set(null);
         this.api.summary(this.from(), this.to()).subscribe({
             next: (data) => {
                 this.summary.set(data);
-                this.mocked.set(false);
                 this.loading.set(false);
             },
-            error: () => {
-                // TODO: бэкенд может не иметь контроллера — fallback на моки.
-                this.summary.set(MOCK);
-                this.mocked.set(true);
+            error: (err) => {
+                this.error.set(this.errMsg(err));
                 this.loading.set(false);
             },
         });
+    }
+
+    /** Сообщение об ошибке из тела ответа или общий текст. */
+    private errMsg(err: unknown): string {
+        if (err && typeof err === 'object' && 'error' in err) {
+            const body = (err as { error?: { message?: string } }).error;
+            if (body?.message) {
+                return body.message;
+            }
+        }
+        return this.t('admin.common.error');
     }
 }

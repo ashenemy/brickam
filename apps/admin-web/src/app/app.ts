@@ -3,6 +3,7 @@ import {
     ChangeDetectionStrategy,
     Component,
     computed,
+    effect,
     inject,
     type OnInit,
     PLATFORM_ID,
@@ -67,6 +68,16 @@ export class App implements OnInit {
 
     /** Признак аутентификации — управляет навигацией/кнопками шелла. */
     protected readonly isAuthenticated = this.session.isAuthenticated;
+
+    constructor() {
+        // Синхронизируем <html lang> с текущим языком i18n (hy/ru/en).
+        effect(() => {
+            const lang = this.i18n.lang();
+            if (this.isBrowser && typeof document !== 'undefined') {
+                document.documentElement.lang = lang;
+            }
+        });
+    }
 
     ngOnInit(): void {
         // Подтянуть роль из GET /auth/me, если сессия жива (после перезагрузки).

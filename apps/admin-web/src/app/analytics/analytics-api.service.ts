@@ -17,11 +17,7 @@ export type PlatformAnalytics = {
     orders: number;
 };
 
-/**
- * API платформенной аналитики (роль admin).
- * TODO: если контроллера GET /admin/analytics ещё нет на бэке —
- * страница работает на моках; путь/конверт выбраны по образцу ТЗ.
- */
+/** API платформенной аналитики (роль admin): GET /admin/analytics. */
 @Injectable({ providedIn: 'root' })
 export class AnalyticsApiService {
     private readonly http = inject(HttpClient);
