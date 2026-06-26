@@ -36,42 +36,42 @@ export type SearchMode = 'normal' | 'ai';
         SearchBarComponent,
     ],
     template: `
-        <mat-toolbar class="bh-navbar block rounded-2xl bg-[var(--glass-fill)] p-4 backdrop-blur-glass shadow-glass sm:p-7">
-            <!-- Row 1: logo · nav · actions -->
-            <div class="flex items-center gap-4 sm:gap-8">
+        <mat-toolbar class="bh-navbar block rounded-2xl bg-[var(--glass-fill)] p-5 backdrop-blur-glass shadow-glass lg:px-20 lg:py-10">
+            <!-- Row 1: logo · nav · actions — высота 40px, всё центрировано по вертикали -->
+            <div class="flex h-10 items-center gap-4 sm:gap-8">
                 <a
-                    class="shrink-0 cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                    class="flex h-10 shrink-0 cursor-pointer items-center rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                     href="#"
                     aria-label="Home"
                     (click)="onLogo($event)"
                 >
                     @if (logoSrc()) {
-                        <img [src]="logoSrc()" alt="BRICK" class="h-8 w-auto" />
+                        <img [src]="logoSrc()" alt="BRICK" class="h-10 w-auto" />
                     } @else {
-                        <bh-logo [height]="32" />
+                        <bh-logo [height]="40" />
                     }
                 </a>
 
-                <nav class="hidden flex-1 gap-8 lg:flex lg:gap-12" aria-label="Primary">
+                <nav class="hidden h-10 flex-1 items-center gap-8 lg:flex lg:gap-12" aria-label="Primary">
                     @for (item of navItems(); track item) {
                         <a
-                            class="cursor-pointer whitespace-nowrap transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                            class="cursor-pointer whitespace-nowrap font-display text-14 font-normal transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                             [class.text-accent]="item === active()"
                             [class.text-text-primary]="item !== active()"
                             href="#"
-                            style="font: var(--type-label)"
                             (click)="onNav($event, item)"
                             >{{ item }}</a
                         >
                     }
                 </nav>
 
-                <div class="ml-auto flex items-center gap-3 sm:gap-4">
+                <div class="ml-auto flex h-10 items-center gap-3 sm:gap-4">
                     <ng-content select="[slot=actions]" />
+                    <!-- Бургер — только на мобиле -->
                     <bh-icon-button
                         class="lg:hidden"
                         variant="plain"
-                        [size]="44"
+                        [size]="40"
                         [active]="drawerOpen()"
                         ariaLabel="Toggle menu"
                         (clicked)="toggleDrawer()"
