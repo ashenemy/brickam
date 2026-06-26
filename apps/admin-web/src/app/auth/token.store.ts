@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
 
-const AUTHED_KEY = 'buildhub.authed';
+const AUTHED_KEY = 'brickam.authed';
 
 /**
  * Хранилище сессии. Сам JWT-токен живёт ТОЛЬКО в памяти (сигнал `token`)
@@ -10,7 +10,7 @@ const AUTHED_KEY = 'buildhub.authed';
  * токен сервер кладёт в httpOnly-cookie (JS его не читает).
  *
  * Для UI («Войти/Выйти», переживает перезагрузку) персистится лишь булев
- * флаг `authed` в localStorage (`buildhub.authed`), а не сам токен.
+ * флаг `authed` в localStorage (`brickam.authed`), а не сам токен.
  * Всё обращение к localStorage — только в браузере (SSR-безопасно).
  */
 @Injectable({ providedIn: 'root' })
