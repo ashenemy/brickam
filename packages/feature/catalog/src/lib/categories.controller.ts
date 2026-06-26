@@ -2,16 +2,23 @@ import { Auth } from '@brickam/server-kit';
 import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
 import type { CategoryContract } from '../@types';
+import { CatalogAiService } from './catalog-ai.service';
 import { CategoriesService } from './categories.service';
 import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
 import { CategoryDto } from './dto/response.dto';
 import { Public } from './public.decorator';
 
+/** Соцссылка для футера витрины. */
+export type SocialLink = { platform: string; url: string };
+
 /** Маршруты категорий каталога (Foundations §13). */
 @ApiTags('catalog')
 @Controller('catalog/categories')
 export class CategoriesController {
-    constructor(private readonly categoriesService: CategoriesService) {}
+    constructor(
+        private readonly categoriesService: CategoriesService,
+        private readonly settings: CatalogAiService,
+    ) {}
 
     /** Публичный список категорий (сортировка по order). */
     @Get()
@@ -19,6 +26,24 @@ export class CategoriesController {
     @ApiOkResponse({ type: [CategoryDto], description: 'Список категорий' })
     list(): Promise<CategoryContract[]> {
         return this.categoriesService.list();
+    }
+
+    /**
+     * Публичные соцссылки для футера витрины. Хранятся в platform_settings под
+     * ключом 'social' (map платформа→url, редактируется в админке). Возвращаются
+     * только непустые ссылки.
+     */
+    @Get('social-links')
+    @Public()
+    @ApiOkResponse({ description: 'Соцссылки витрины (только заданные)' })
+    async socialLinks(): Promise<SocialLink[]> {
+        const value = await this.settings.getSetting('social');
+        if (!value) {
+            return [];
+        }
+        return Object.entries(value)
+            .filter(([, url]) => typeof url === 'string' && (url as string).trim().length > 0)
+            .map(([platform, url]) => ({ platform, url: (url as string).trim() }));
     }
 
     /** Создаёт категорию (требует аутентификации). */
