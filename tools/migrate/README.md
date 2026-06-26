@@ -1,4 +1,4 @@
-# tools/migrate — версионированные миграции БД BuildHub
+# tools/migrate — версионированные миграции БД Brickam
 
 Единая команда применяет версионированные, идемпотентные миграции к MongoDB:
 создание индексов сейчас и трансформы данных в будущем. Применённые миграции
@@ -11,9 +11,9 @@
 
 ```bash
 # из корня монорепо
-MONGO_URI=mongodb://localhost:27017/buildhub npm run migrate
+MONGO_URI=mongodb://localhost:27017/brickam npm run migrate
 # или напрямую через Nx
-MONGO_URI=mongodb://localhost:27017/buildhub npx nx run migrate:migrate
+MONGO_URI=mongodb://localhost:27017/brickam npx nx run migrate:migrate
 ```
 
 Команда `migrate` сначала собирает TypeScript (`build` → `tsc -p tsconfig.lib.json`),
