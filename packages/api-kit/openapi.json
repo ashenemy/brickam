@@ -805,8 +805,8 @@
     }
   },
   "info": {
-    "title": "BuildHub API",
-    "description": "API маркетплейса стройматериалов BuildHub",
+    "title": "Brickam API",
+    "description": "API маркетплейса стройматериалов Brickam",
     "version": "1.0",
     "contact": {}
   },

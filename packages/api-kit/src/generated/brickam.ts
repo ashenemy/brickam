@@ -144,7 +144,7 @@ function filterParams(
 
 
 @Injectable({ providedIn: 'root' })
-export class BuildHubAPIService {
+export class BrickamAPIService {
   private readonly http = inject(HttpClient);
  templatesControllerFindAll<TData = void>(params?: TemplatesControllerFindAllParams, options?: HttpClientBodyOptions): Observable<TData>;
  templatesControllerFindAll<TData = void>(params?: TemplatesControllerFindAllParams, options?: HttpClientEventOptions): Observable<HttpEvent<TData>>;
