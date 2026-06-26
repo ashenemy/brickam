@@ -1,17 +1,19 @@
 import { ChangeDetectionStrategy, Component, input, model, output } from '@angular/core';
+import { MatButton } from '@angular/material/button';
 
 let searchUid = 0;
 
 /**
  * BRICK SearchBar — фирменный поиск: полупрозрачная пилюля + оранжевая go-кнопка.
- * Перенесён с React (forms/SearchBar.jsx). Фиксы a11y: настоящий <form> с submit,
- * связанный label (visually-hidden) для инпута, aria-label на go-кнопке,
- * видимый focus-ring на пилюле и кнопке.
+ * Композит: у Material нет «search»-примитива, поэтому go-кнопка — официальный
+ * `matButton` (filled), а поле — нативный input в брендовом pill. a11y: <form> с
+ * submit, связанный sr-only label, aria-label на кнопке.
  */
 @Component({
     selector: 'bh-search-bar',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [MatButton],
     template: `
         <form class="flex items-center gap-3 min-w-0" (submit)="onSubmit($event)">
             <label [attr.for]="id" class="sr-only">{{ placeholder() }}</label>
@@ -31,14 +33,20 @@ let searchUid = 0;
                     (input)="onInput($event)"
                 />
             </span>
-            <button
-                type="submit"
-                aria-label="Search"
-                class="inline-flex items-center justify-center w-16 h-16 shrink-0 rounded-xl border-0 cursor-pointer bg-accent text-text-on-accent shadow-accent text-20 transition-transform duration-fast ease-out active:scale-[0.97] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-            >
+            <button matButton="filled" type="submit" aria-label="Search" class="bh-search-go">
                 <ng-content select="[slot=go]">→</ng-content>
             </button>
         </form>
+    `,
+    styles: `
+        .bh-search-go {
+            width: 64px;
+            min-width: 64px;
+            height: 64px;
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-accent);
+            font-size: var(--fs-20);
+        }
     `,
 })
 export class SearchBarComponent {

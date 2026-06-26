@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { SelectComponent, type SelectOption } from './select.component';
 
 @Component({
@@ -29,15 +30,18 @@ class HostComponent {
 
 describe('SelectComponent', () => {
     beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
+        await TestBed.configureTestingModule({
+            imports: [HostComponent],
+            providers: [provideNoopAnimations()],
+        }).compileComponents();
     });
 
     it('показывает placeholder, когда ничего не выбрано', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
-        const trigger = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        expect(trigger.textContent).toContain('Pick one');
-        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+        expect(select.textContent).toContain('Pick one');
+        expect(select.getAttribute('aria-expanded')).toBe('false');
     });
 
     it('показывает лейбл выбранного значения', async () => {
@@ -45,35 +49,35 @@ describe('SelectComponent', () => {
         fixture.componentInstance.value = 'audi';
         fixture.detectChanges();
         await fixture.whenStable();
-        const trigger = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        expect(trigger.textContent).toContain('Audi');
-    });
-
-    it('открывает список по клику и рендерит опции', async () => {
-        const fixture = TestBed.createComponent(HostComponent);
-        await fixture.whenStable();
-        const trigger = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        trigger.click();
         fixture.detectChanges();
         await fixture.whenStable();
-        expect(trigger.getAttribute('aria-expanded')).toBe('true');
-        const options = document.querySelectorAll('[role="listbox"] [role="option"]');
-        expect(options.length).toBe(2);
+        const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+        expect(select.textContent).toContain('Audi');
     });
 
-    it('выбор опции обновляет value и закрывает список', async () => {
+    it('открывает панель по клику и рендерит опции', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
-        const trigger = fixture.nativeElement.querySelector('button') as HTMLButtonElement;
-        trigger.click();
+        (fixture.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
-        const options = document.querySelectorAll('[role="option"]');
-        (options[0] as HTMLElement).click();
+        const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+        expect(select.getAttribute('aria-expanded')).toBe('true');
+        expect(document.querySelectorAll('mat-option').length).toBe(2);
+    });
+
+    it('выбор опции обновляет value и закрывает панель', async () => {
+        const fixture = TestBed.createComponent(HostComponent);
+        await fixture.whenStable();
+        (fixture.nativeElement.querySelector('.mat-mdc-select-trigger') as HTMLElement).click();
+        fixture.detectChanges();
+        await fixture.whenStable();
+        (document.querySelectorAll('mat-option')[0] as HTMLElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(fixture.componentInstance.value).toBe('bmw');
         expect(fixture.componentInstance.changedValue).toBe('bmw');
-        expect(trigger.getAttribute('aria-expanded')).toBe('false');
+        const select = fixture.nativeElement.querySelector('mat-select') as HTMLElement;
+        expect(select.getAttribute('aria-expanded')).toBe('false');
     });
 });

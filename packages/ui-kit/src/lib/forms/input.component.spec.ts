@@ -55,6 +55,9 @@ describe('InputComponent', () => {
         fixture.componentInstance.error = 'Required';
         fixture.detectChanges();
         await fixture.whenStable();
+        // Внешняя ошибка ставится эффектом → errorState matInput подхватывает на след. тике.
+        fixture.detectChanges();
+        await fixture.whenStable();
         const input = fixture.nativeElement.querySelector('input') as HTMLInputElement;
         expect(input.getAttribute('aria-invalid')).toBe('true');
         expect(fixture.nativeElement.textContent).toContain('Required');

@@ -1,53 +1,42 @@
-import { ChangeDetectionStrategy, Component, computed, input, model, output } from '@angular/core';
-
-let inputUid = 0;
+import { ChangeDetectionStrategy, Component, effect, input, model, output } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormControl, ReactiveFormsModule } from '@angular/forms';
+import { MatError, MatFormField, MatHint, MatLabel, MatPrefix } from '@angular/material/form-field';
+import { MatInput } from '@angular/material/input';
 
 /**
- * BRICK Input — текстовое поле на тёмном glass-шелле. Опц. иконка, лейбл,
- * подсказка/ошибка. Inset-pressed вид как у поисковой строки.
- * Перенесён с React (forms/Input.jsx). Фиксы a11y: связь label↔input через for/id,
- * aria-invalid/aria-describedby, видимый focus-ring на контейнере.
+ * BRICK Input — на официальном `mat-form-field` + `matInput`. Внутренний FormControl
+ * даёт штатную Material-машинерию ошибок: внешняя строка error() ставит invalid +
+ * touched, поэтому mat-error и aria-invalid работают «из коробки». Иконка — `[slot=icon]`.
  */
 @Component({
     selector: 'bh-input',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
+    imports: [ReactiveFormsModule, MatFormField, MatLabel, MatHint, MatError, MatPrefix, MatInput],
     template: `
-        <div class="flex flex-col gap-2 min-w-0">
+        <mat-form-field appearance="outline" class="w-full">
             @if (label()) {
-                <label [attr.for]="id" class="text-text-secondary" style="font: var(--type-product)">
-                    {{ label() }}
-                </label>
+                <mat-label>{{ label() }}</mat-label>
             }
-            <span [class]="shellClasses()">
-                @if (hasIcon()) {
-                    <span class="inline-flex text-text-secondary shrink-0">
-                        <ng-content select="[slot=icon]" />
-                    </span>
-                }
-                <input
-                    [id]="id"
-                    [type]="type()"
-                    [placeholder]="placeholder()"
-                    [disabled]="disabled()"
-                    [value]="value()"
-                    [attr.aria-invalid]="!!error() || null"
-                    [attr.aria-describedby]="error() || hint() ? id + '-msg' : null"
-                    class="flex-1 min-w-0 border-0 outline-none bg-transparent text-text-primary font-input text-18 disabled:cursor-not-allowed"
-                    (input)="onInput($event)"
-                    (change)="changed.emit(value())"
-                />
-            </span>
-            @if (error() || hint()) {
-                <span
-                    [id]="id + '-msg'"
-                    [class]="error() ? 'text-danger' : 'text-text-tertiary'"
-                    style="font: var(--type-caption)"
-                >
-                    {{ error() || hint() }}
+            @if (hasIcon()) {
+                <span matPrefix class="inline-flex pl-3 text-text-secondary">
+                    <ng-content select="[slot=icon]" />
                 </span>
             }
-        </div>
+            <input
+                matInput
+                [formControl]="control"
+                [type]="type()"
+                [placeholder]="placeholder()"
+                (change)="changed.emit(control.value)"
+            />
+            @if (error()) {
+                <mat-error>{{ error() }}</mat-error>
+            } @else if (hint()) {
+                <mat-hint>{{ hint() }}</mat-hint>
+            }
+        </mat-form-field>
     `,
 })
 export class InputComponent {
@@ -63,21 +52,32 @@ export class InputComponent {
     readonly value = model<string>('');
     readonly changed = output<string>();
 
-    protected readonly id = `bh-input-${inputUid++}`;
+    // Ошибка как валидатор: переживает updateValueAndValidity (в отличие от ручного
+    // setErrors, который затирается при enable()/setValue).
+    protected readonly control = new FormControl('', {
+        nonNullable: true,
+        validators: () => (this.error() ? { external: this.error() } : null),
+    });
 
-    protected readonly shellClasses = computed(() =>
-        [
-            'flex items-center gap-3 h-14 px-5 rounded-md min-w-0',
-            'bg-[rgb(var(--color-neutral-900)/0.9)] backdrop-blur-glass-sm',
-            'transition-shadow duration-fast ease-out',
-            'focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[rgb(var(--color-accent))]',
-            this.error()
-                ? 'shadow-[inset_0_0_0_1px_rgb(var(--color-danger)),var(--shadow-inset)]'
-                : 'shadow-[inset_0_0_0_1px_var(--border-subtle),var(--shadow-inset)]',
-        ].join(' '),
-    );
-
-    protected onInput(event: Event): void {
-        this.value.set((event.target as HTMLInputElement).value);
+    constructor() {
+        // Ввод → модель.
+        this.control.valueChanges.pipe(takeUntilDestroyed()).subscribe((v) => this.value.set(v));
+        // Внешнее обновление value → контрол (без зацикливания).
+        effect(() => {
+            const v = this.value();
+            if (this.control.value !== v) this.control.setValue(v, { emitEvent: false });
+        });
+        // disabled через контрол (корректно для реактивных форм).
+        effect(() => {
+            if (this.disabled()) this.control.disable({ emitEvent: false });
+            else this.control.enable({ emitEvent: false });
+        });
+        // Смена error() → пересчёт валидности; touched, чтобы дефолтный
+        // ErrorStateMatcher показал mat-error и поднял aria-invalid.
+        effect(() => {
+            this.error();
+            this.control.updateValueAndValidity({ emitEvent: false });
+            if (this.error()) this.control.markAsTouched();
+        });
     }
 }
