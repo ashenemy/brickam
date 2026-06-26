@@ -1,4 +1,4 @@
-# BuildHub — деплой-тайм конфиг (без секретов; секреты — в .env)
+# Brickam — деплой-тайм конфиг (без секретов; секреты — в .env)
 # Рантайм-настройки, редактируемые из админки (шаблоны, лояльность, медиа-лимиты,
 # AI-промпты, бот-UA), здесь НЕ хранятся — они в БД (platform_settings и доменных коллекциях).
 
@@ -6,9 +6,9 @@
 port = 3000
 globalPrefix = "api"
 corsOrigins = [
-    "https://app.buildhub.am",
-    "https://vendor.buildhub.am",
-    "https://admin.buildhub.am",
+    "https://app.brickam.am",
+    "https://vendor.brickam.am",
+    "https://admin.brickam.am",
     "http://localhost:4200"
 ]
 requestTimeoutMs = 30000

@@ -1,25 +1,25 @@
-# Правила алертов BuildHub. Группа `buildhub` использует метрики, доступные по
+# Правила алертов Brickam. Группа `brickam` использует метрики, доступные по
 # умолчанию (prom-client default metrics + признак up от Prometheus). Группы ниже
 # (http / infra) опираются на ДОПОЛНИТЕЛЬНЫЕ метрики, которые поставляет
 # инструментация приложения и экспортеры (см. комментарии у каждого правила) —
 # код/таргеты заводятся отдельно; правила готовы и активируются, как только
 # соответствующие серии появятся в Prometheus.
 groups:
-  - name: buildhub
+  - name: brickam
     rules:
       # Сервис не отвечает на scrape — самый важный алерт.
       - alert: ServerDown
-        expr: up{job="buildhub-server"} == 0
+        expr: up{job="brickam-server"} == 0
         for: 1m
         labels:
           severity: critical
         annotations:
-          summary: 'BuildHub API недоступен'
+          summary: 'Brickam API недоступен'
           description: 'Цель {{ $labels.instance }} не отвечает дольше 1 минуты.'
 
       # Утечка/перегрузка по памяти (RSS > 1.5 ГБ).
       - alert: HighProcessMemory
-        expr: process_resident_memory_bytes{job="buildhub-server"} > 1.5e9
+        expr: process_resident_memory_bytes{job="brickam-server"} > 1.5e9
         for: 5m
         labels:
           severity: warning
@@ -29,7 +29,7 @@ groups:
 
       # Лаг event loop — Node не успевает обрабатывать задачи.
       - alert: HighEventLoopLag
-        expr: nodejs_eventloop_lag_seconds{job="buildhub-server"} > 0.5
+        expr: nodejs_eventloop_lag_seconds{job="brickam-server"} > 0.5
         for: 5m
         labels:
           severity: warning
@@ -39,14 +39,14 @@ groups:
 
   # HTTP-метрики: требуется гистограмма http_request_duration_seconds с меткой
   # status_code (её экспонирует HTTP-интерсептор сервера — код заводится отдельно).
-  - name: buildhub-http
+  - name: brickam-http
     rules:
       # Доля 5xx-ответов > 1% за 5 минут.
       - alert: HighErrorRate
         expr: |
-          sum(rate(http_request_duration_seconds_count{job="buildhub-server",status_code=~"5.."}[5m]))
+          sum(rate(http_request_duration_seconds_count{job="brickam-server",status_code=~"5.."}[5m]))
             /
-          sum(rate(http_request_duration_seconds_count{job="buildhub-server"}[5m]))
+          sum(rate(http_request_duration_seconds_count{job="brickam-server"}[5m]))
             > 0.01
         for: 5m
         labels:
@@ -59,7 +59,7 @@ groups:
       - alert: HighLatency
         expr: |
           histogram_quantile(0.95,
-            sum(rate(http_request_duration_seconds_bucket{job="buildhub-server"}[5m])) by (le)
+            sum(rate(http_request_duration_seconds_bucket{job="brickam-server"}[5m])) by (le)
           ) > 1
         for: 5m
         labels:
@@ -71,12 +71,12 @@ groups:
   # Инфраструктурные зависимости: метрики поставляют экспортеры/инструментация
   # (bullmq-gauge приложения, redis_exporter, mongodb_exporter) — таргеты в
   # prometheus.yml и сами экспортеры заводятся отдельно.
-  - name: buildhub-infra
+  - name: brickam-infra
     rules:
       # Затор очереди BullMQ: ожидающих задач > 1000 более 10 минут (gauge
       # bullmq_queue_waiting{queue=...} экспонирует приложение).
       - alert: BullMQQueueBacklog
-        expr: sum(bullmq_queue_waiting{job="buildhub-server"}) > 1000
+        expr: sum(bullmq_queue_waiting{job="brickam-server"}) > 1000
         for: 10m
         labels:
           severity: warning

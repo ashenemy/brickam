@@ -1,4 +1,4 @@
-# BuildHub CD — сборка/публикация образов в GHCR и деплой стейджинга (§17).
+# Brickam CD — сборка/публикация образов в GHCR и деплой стейджинга (§17).
 # Триггер: пуш в main (после прохождения CI). Раздельные образы и матрица для
 # server + 3 web. Секреты — из CI/секрет-менеджера (GITHUB_TOKEN для GHCR;
 # STAGING_* для деплоя). Sentry DSN прокидывается как env в рантайм.
@@ -48,8 +48,8 @@ jobs:
           file: infra/Dockerfile.${{ matrix.app }}
           push: true
           tags: |
-            ghcr.io/${{ steps.owner.outputs.owner }}/buildhub-${{ matrix.app }}:${{ github.sha }}
-            ghcr.io/${{ steps.owner.outputs.owner }}/buildhub-${{ matrix.app }}:latest
+            ghcr.io/${{ steps.owner.outputs.owner }}/brickam-${{ matrix.app }}:${{ github.sha }}
+            ghcr.io/${{ steps.owner.outputs.owner }}/brickam-${{ matrix.app }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -73,7 +73,7 @@ jobs:
           key: ${{ secrets.STAGING_SSH_KEY }}
           envs: GITHUB_SHA
           script: |
-            cd /opt/buildhub
+            cd /opt/brickam
             export TAG="${GITHUB_SHA}"
             export SENTRY_DSN="${{ secrets.SENTRY_DSN }}"
             docker compose -f docker-compose.staging.yml pull

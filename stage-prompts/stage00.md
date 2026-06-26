@@ -1,5 +1,5 @@
 # ▶ STAGE 0 — Каркас и DevOps-фундамент
-Продолжаем сборку BuildHub. Foundations = `buildhub_foundations_v8.md` (закон). Выполни ТОЛЬКО Stage 0.
+Продолжаем сборку Brickam. Foundations = `brickam_foundations_v8.md` (закон). Выполни ТОЛЬКО Stage 0.
 
 **Цель:** рабочий монорепо, на котором всё последующее само соблюдает стандарты.
 

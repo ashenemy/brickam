@@ -1,6 +1,6 @@
-# Деплой BuildHub в AWS (ECS Fargate)
+# Деплой Brickam в AWS (ECS Fargate)
 
-Полный гайд по сборке Docker-образов и деплою BuildHub в AWS: продакшен —
+Полный гайд по сборке Docker-образов и деплою Brickam в AWS: продакшен —
 в ECS Fargate за ALB (`.github/workflows/deploy-ecs.yml`), стейджинг —
 по SSH через docker compose (`.github/workflows/cd.yml`).
 
@@ -20,28 +20,28 @@
 ## Предпосылки (создаётся один раз, владельцем)
 
 - **AWS-аккаунт** и регион (например, `eu-central-1`).
-- **ECR-репозитории**: `buildhub-server`, `buildhub-main-web`,
-  `buildhub-vendor-web`, `buildhub-admin-web`.
-- **ECS cluster** (например, `buildhub-cluster`) на Fargate.
+- **ECR-репозитории**: `brickam-server`, `brickam-main-web`,
+  `brickam-vendor-web`, `brickam-admin-web`.
+- **ECS cluster** (например, `brickam-cluster`) на Fargate.
 - **ALB + target group(s)** для сервиса(ов); терминация TLS (ACM-сертификат),
   HTTPS-листенеры.
-- **OIDC-роль для GitHub Actions** (`buildhub-gha-deploy-role`): trust на
+- **OIDC-роль для GitHub Actions** (`brickam-gha-deploy-role`): trust на
   `token.actions.githubusercontent.com`; политики `ecr:*` (push),
   `ecs:RegisterTaskDefinition` / `ecs:UpdateService` / `ecs:RunTask`,
   `iam:PassRole` на роли задач. ARN → секрет `AWS_ROLE_ARN`. Долгоживущие
   AWS-ключи не используются.
 - **IAM-роли задач**:
-  - `buildhub-ecs-execution-role` — `AmazonECSTaskExecutionRolePolicy` +
+  - `brickam-ecs-execution-role` — `AmazonECSTaskExecutionRolePolicy` +
     inline `secretsmanager:GetSecretValue` на ARN секретов.
-  - `buildhub-server-task-role` — доступ приложения к S3, SES; для X-Ray
+  - `brickam-server-task-role` — доступ приложения к S3, SES; для X-Ray
     sidecar — `AWSXRayDaemonWriteAccess`.
-- **Secrets Manager**: секреты `buildhub/prod/*` (jwt, twilio, arca, idram,
+- **Secrets Manager**: секреты `brickam/prod/*` (jwt, twilio, arca, idram,
   sentry-dsn, s3, mongo-uri, redis-url) — см. `secrets[]` в
   `infra/ecs/task-definition.server.json`.
 - **MongoDB Atlas** (replica set — обязательно для транзакций checkout).
 - **ElastiCache Redis** (refresh/OTP-сторы, Socket.IO adapter, BullMQ).
 - **S3** — бакет под медиа; **SES** — отправка писем (`providers.email=ses`).
-- **CloudWatch log group** `/ecs/buildhub-server` (или `awslogs-create-group:true`).
+- **CloudWatch log group** `/ecs/brickam-server` (или `awslogs-create-group:true`).
 
 ## GitHub Secrets / Variables
 
@@ -53,8 +53,8 @@
 |-----|-----------|
 | `AWS_REGION` | регион AWS (напр. `eu-central-1`) |
 | `AWS_ROLE_ARN` | ARN OIDC-роли GitHub Actions |
-| `ECS_CLUSTER` | имя ECS-кластера (напр. `buildhub-cluster`) |
-| `ECS_TASKDEF_SERVER` | имя/ARN task-def сервера для one-off миграций (напр. `buildhub-server`) |
+| `ECS_CLUSTER` | имя ECS-кластера (напр. `brickam-cluster`) |
+| `ECS_TASKDEF_SERVER` | имя/ARN task-def сервера для one-off миграций (напр. `brickam-server`) |
 | `ECS_SUBNETS` | подсети для миграционной задачи: `subnet-AAA,subnet-BBB` |
 | `ECS_SECURITY_GROUPS` | security groups: `sg-XXX` |
 | `ECS_SERVICE_SERVER` | имя ECS-сервиса `server` |
@@ -115,7 +115,7 @@ Buildx с кэшем GHA и пушит в GHCR двумя тегами: `:${{ gi
 1. **Создайте инфраструктуру** из раздела «Предпосылки»: ECR, кластер, ALB +
    target group, IAM-роли (включая OIDC), Secrets Manager, Atlas, ElastiCache,
    S3, SES, CloudWatch log group.
-2. **Заполните секреты** `buildhub/prod/*` в Secrets Manager и пропишите их ARN
+2. **Заполните секреты** `brickam/prod/*` в Secrets Manager и пропишите их ARN
    в `infra/ecs/task-definition.server.json` (плейсхолдеры `<ACCOUNT_ID>`,
    `<REGION>`, `<ECR_REGISTRY>`, `...-XXXXXX`). JWT-секреты — длинные случайные
    (см. `SECURITY.md`). `MONGO_URI` — Atlas replica set.
@@ -179,8 +179,8 @@ Buildx с кэшем GHA и пушит в GHCR двумя тегами: `:${{ gi
 
 - **Через ECS** — обновите сервис на предыдущую ревизию task definition:
   ```bash
-  aws ecs update-service --cluster buildhub-cluster --service <service> \
-    --task-definition buildhub-server:<PREV_REVISION> --force-new-deployment
+  aws ecs update-service --cluster brickam-cluster --service <service> \
+    --task-definition brickam-server:<PREV_REVISION> --force-new-deployment
   ```
 - **Через workflow** — перезапустите `Deploy ECS` с `image_tag` = sha
   предыдущего хорошего релиза (образы остаются в ECR; `render-task-definition`

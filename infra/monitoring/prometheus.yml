@@ -1,4 +1,4 @@
-# Prometheus — сбор метрик BuildHub + правила алертов → Alertmanager.
+# Prometheus — сбор метрик Brickam + правила алертов → Alertmanager.
 global:
   scrape_interval: 15s
   evaluation_interval: 15s
@@ -13,7 +13,7 @@ rule_files:
 
 scrape_configs:
   # Метрики приложения (@willsoto/nestjs-prometheus → GET /api/metrics).
-  - job_name: 'buildhub-server'
+  - job_name: 'brickam-server'
     metrics_path: /api/metrics
     static_configs:
       - targets: ['server:3000']

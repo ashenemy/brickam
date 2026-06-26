@@ -1,7 +1,7 @@
 {
-    "_comment": "BuildHub main-web (Angular SSR, Node) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY>, <DOMAIN> на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml).",
+    "_comment": "Brickam main-web (Angular SSR, Node) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY>, <DOMAIN> на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml).",
 
-    "family": "buildhub-main-web",
+    "family": "brickam-main-web",
     "requiresCompatibilities": ["FARGATE"],
     "networkMode": "awsvpc",
     "_comment_size": "SSR-рендер лёгкий, но это Node-процесс — берём минимальный валидный для Fargate размер 256/512.",
@@ -9,8 +9,8 @@
     "memory": "512",
 
     "_comment_roles": "executionRoleArn — роль, которой ECS тянет образ из ECR и пишет логи в CloudWatch (+ читает SSM/Secrets, если URL вынесены в secrets). taskRole для статики/SSR не обязателен — приложение не ходит в AWS API; оставлен для единообразия, при ненадобности уберите.",
-    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-ecs-execution-role",
-    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-web-task-role",
+    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-ecs-execution-role",
+    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-web-task-role",
 
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
@@ -20,8 +20,8 @@
     "containerDefinitions": [
         {
             "name": "main-web",
-            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/buildhub-main-web:<sha>",
-            "image": "<ECR_REGISTRY>/buildhub-main-web:<IMAGE_TAG>",
+            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/brickam-main-web:<sha>",
+            "image": "<ECR_REGISTRY>/brickam-main-web:<IMAGE_TAG>",
             "essential": true,
 
             "portMappings": [
@@ -45,7 +45,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/buildhub-main-web",
+                    "awslogs-group": "/ecs/brickam-main-web",
                     "awslogs-region": "<REGION>",
                     "awslogs-stream-prefix": "main-web",
                     "awslogs-create-group": "true"

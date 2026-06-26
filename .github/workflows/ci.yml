@@ -1,4 +1,4 @@
-# BuildHub CI — проверки на PR и пуш в не-main ветки (Foundations §17).
+# Brickam CI — проверки на PR и пуш в не-main ветки (Foundations §17).
 # Порядок: install → biome → eslint → typecheck/build → test (порог покрытия ≥80%).
 # Красные тесты ИЛИ непокрытие (пороги в vitest-конфигах: lines 80 / branches 70)
 # заваливают job → обязательная проверка не проходит → мерж заблокирован
@@ -18,7 +18,7 @@ concurrency:
 env:
   NODE_OPTIONS: --max-old-space-size=4096
   # Тестовые секреты/инфра-URL — реальные значения не нужны (e2e без Mongo/Redis).
-  MONGO_URI: mongodb://localhost:27017/buildhub
+  MONGO_URI: mongodb://localhost:27017/brickam
   REDIS_URL: redis://localhost:6379
   JWT_ACCESS_SECRET: ci-access-secret
   JWT_REFRESH_SECRET: ci-refresh-secret

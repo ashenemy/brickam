@@ -1,4 +1,4 @@
-// BuildHub — k6 нагрузочный тест каталога: GET /api/v1/catalog/products.
+// Brickam — k6 нагрузочный тест каталога: GET /api/v1/catalog/products.
 // Самый горячий публичный роут (листинг товаров). Ramp-up VU по этапам.
 // Запуск:  k6 run -e BASE_URL=https://example.com tools/k6/catalog.js
 //

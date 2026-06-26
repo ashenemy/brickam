@@ -11,26 +11,10 @@ pre-commit:
             run: node tools/hooks/single-scope-guard.mjs
         # Блокирует коммит staged .env-файлов с плейсхолдерами change-me или
         # строками, похожими на реальные секреты (AWS-ключи, приватные ключи,
-        # токены sk-/xox...). Простой grep, без внешних зависимостей.
+        # токены sk-/xox...). Node-скрипт — устойчив к шеллу/кавычкам на Windows.
         env-secret-guard:
             glob: '.env*'
-            run: |
-                # Шаблоны (.env.example/.sample/...) ведёт отдельно — плейсхолдеры в них легальны.
-                files=""
-                for f in {staged_files}; do
-                    case "$f" in
-                        *.example|*.sample|*.template|*.dist) ;;
-                        *) files="$files $f" ;;
-                    esac
-                done
-                [ -z "$files" ] && exit 0
-                bad=$(grep -nEi 'change-me|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|(sk|rk)-[A-Za-z0-9]{20,}|xox[baprs]-[A-Za-z0-9-]{10,}' $files || true)
-                if [ -n "$bad" ]; then
-                    echo "Коммит заблокирован: в staged .env найдены плейсхолдеры change-me или похожие на реальные секреты:"
-                    echo "$bad"
-                    echo "Уберите значения из .env (храните секреты в секрет-менеджере) либо не коммитьте .env."
-                    exit 1
-                fi
+            run: node tools/hooks/env-secret-guard.mjs
 
 commit-msg:
     commands:

@@ -1,4 +1,4 @@
-# BuildHub API (NestJS) — multi-stage build
+# Brickam API (NestJS) — multi-stage build
 FROM node:22-alpine AS build
 WORKDIR /workspace
 COPY package*.json ./

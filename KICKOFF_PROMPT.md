@@ -1,11 +1,11 @@
-# BuildHub — Kickoff-промпт для Claude Code
+# Brickam — Kickoff-промпт для Claude Code
 
-Ты — Claude Code, строишь маркетплейс стройматериалов **BuildHub** (Армения) в Nx-монорепо с нуля.
+Ты — Claude Code, строишь маркетплейс стройматериалов **Brickam** (Армения) в Nx-монорепо с нуля.
 
 ## Входные документы (прочти ПОЛНОСТЬЮ перед стартом)
-1. `buildhub_foundations_v8.md` — постоянный справочник: архитектура, конвенции, бизнес-правила, полная модель данных, настройки. Это закон.
-2. `buildhub_stages_v8.md` — план из 20 стейджей (0–19). У каждого: Цель · Задачи · Тесты · Чек-лист (✓).
-3. Стартовые конфиги (в `buildhub-starter/`) — положи в корень репо при инициализации:
+1. `brickam_foundations_v8.md` — постоянный справочник: архитектура, конвенции, бизнес-правила, полная модель данных, настройки. Это закон.
+2. `brickam_stages_v8.md` — план из 20 стейджей (0–19). У каждого: Цель · Задачи · Тесты · Чек-лист (✓).
+3. Стартовые конфиги (в `brickam-starter/`) — положи в корень репо при инициализации:
    `biome.json`, `config/*.toml`, `.env.example`, `commitlint.config.cjs`, `lefthook.yml`,
    `tools/hooks/single-scope-guard.mjs`, `nx.json` (layout+targets), `eslint.boundaries.snippet.mjs`,
    `tsconfig.base.strict.snippet.json`, `TOOLING.md`.

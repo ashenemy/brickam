@@ -1,15 +1,15 @@
 {
-    "_comment": "BuildHub API (NestJS) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY> и ARN секретов на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml) либо вписывается вручную.",
+    "_comment": "Brickam API (NestJS) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY> и ARN секретов на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml) либо вписывается вручную.",
 
-    "family": "buildhub-server",
+    "family": "brickam-server",
     "requiresCompatibilities": ["FARGATE"],
     "networkMode": "awsvpc",
     "cpu": "512",
     "memory": "1024",
 
     "_comment_roles": "executionRoleArn — роль, которой ECS тянет образ из ECR, пишет логи в CloudWatch и ЧИТАЕТ секреты из Secrets Manager (нужна политика secretsmanager:GetSecretValue). taskRole — роль самого приложения (доступ к S3 и т.п.).",
-    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-ecs-execution-role",
-    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-server-task-role",
+    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-ecs-execution-role",
+    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-server-task-role",
 
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
@@ -19,8 +19,8 @@
     "containerDefinitions": [
         {
             "name": "server",
-            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/buildhub-server:<sha>",
-            "image": "<ECR_REGISTRY>/buildhub-server:<IMAGE_TAG>",
+            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/brickam-server:<sha>",
+            "image": "<ECR_REGISTRY>/brickam-server:<IMAGE_TAG>",
             "essential": true,
 
             "portMappings": [
@@ -62,80 +62,80 @@
             "secrets": [
                 {
                     "name": "MONGO_URI",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/mongo-uri-XXXXXX"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/mongo-uri-XXXXXX"
                 },
                 {
                     "name": "REDIS_URL",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/redis-url-XXXXXX"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/redis-url-XXXXXX"
                 },
 
                 {
                     "name": "JWT_ACCESS_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/jwt-XXXXXX:accessSecret::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/jwt-XXXXXX:accessSecret::"
                 },
                 {
                     "name": "JWT_REFRESH_SECRET",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/jwt-XXXXXX:refreshSecret::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/jwt-XXXXXX:refreshSecret::"
                 },
 
                 {
                     "name": "TWILIO_ACCOUNT_SID",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/twilio-XXXXXX:accountSid::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/twilio-XXXXXX:accountSid::"
                 },
                 {
                     "name": "TWILIO_AUTH_TOKEN",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/twilio-XXXXXX:authToken::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/twilio-XXXXXX:authToken::"
                 },
                 {
                     "name": "TWILIO_FROM_NUMBER",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/twilio-XXXXXX:fromNumber::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/twilio-XXXXXX:fromNumber::"
                 },
 
                 {
                     "name": "ARCA_MERCHANT_ID",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/arca-XXXXXX:merchantId::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/arca-XXXXXX:merchantId::"
                 },
                 {
                     "name": "ARCA_PASSWORD",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/arca-XXXXXX:password::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/arca-XXXXXX:password::"
                 },
                 {
                     "name": "IDRAM_MERCHANT_ID",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/idram-XXXXXX:merchantId::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/idram-XXXXXX:merchantId::"
                 },
                 {
                     "name": "IDRAM_SECRET_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/idram-XXXXXX:secretKey::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/idram-XXXXXX:secretKey::"
                 },
 
                 {
                     "name": "SENTRY_DSN",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/sentry-dsn-XXXXXX"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/sentry-dsn-XXXXXX"
                 },
 
                 {
                     "name": "S3_ACCESS_KEY_ID",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/s3-XXXXXX:accessKeyId::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/s3-XXXXXX:accessKeyId::"
                 },
                 {
                     "name": "S3_SECRET_ACCESS_KEY",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/s3-XXXXXX:secretAccessKey::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/s3-XXXXXX:secretAccessKey::"
                 },
                 {
                     "name": "S3_BUCKET",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/s3-XXXXXX:bucket::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/s3-XXXXXX:bucket::"
                 },
                 {
                     "name": "S3_REGION",
-                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:buildhub/prod/s3-XXXXXX:region::"
+                    "valueFrom": "arn:aws:secretsmanager:<REGION>:<ACCOUNT_ID>:secret:brickam/prod/s3-XXXXXX:region::"
                 }
             ],
 
-            "_comment_logs": "Логи pino (JSON) уходят в CloudWatch Logs. Лог-группу /ecs/buildhub-server создайте заранее или включите awslogs-create-group.",
+            "_comment_logs": "Логи pino (JSON) уходят в CloudWatch Logs. Лог-группу /ecs/brickam-server создайте заранее или включите awslogs-create-group.",
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/buildhub-server",
+                    "awslogs-group": "/ecs/brickam-server",
                     "awslogs-region": "<REGION>",
                     "awslogs-stream-prefix": "server",
                     "awslogs-create-group": "true"
@@ -171,7 +171,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/buildhub-server",
+                    "awslogs-group": "/ecs/brickam-server",
                     "awslogs-region": "<REGION>",
                     "awslogs-stream-prefix": "xray",
                     "awslogs-create-group": "true"

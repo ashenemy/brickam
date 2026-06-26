@@ -1,7 +1,7 @@
 {
-    "_comment": "BuildHub vendor-web (Angular CSR за nginx) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY> на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml). Альтернатива ECS — раздача статики из S3+CloudFront (см. infra/ecs/README.md).",
+    "_comment": "Brickam vendor-web (Angular CSR за nginx) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY> на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml). Альтернатива ECS — раздача статики из S3+CloudFront (см. infra/ecs/README.md).",
 
-    "family": "buildhub-vendor-web",
+    "family": "brickam-vendor-web",
     "requiresCompatibilities": ["FARGATE"],
     "networkMode": "awsvpc",
     "_comment_size": "Чистая статика за nginx — минимальный валидный для Fargate размер 256/512.",
@@ -9,8 +9,8 @@
     "memory": "512",
 
     "_comment_roles": "executionRoleArn — роль, которой ECS тянет образ из ECR и пишет логи в CloudWatch. taskRole статике не нужен (nginx не ходит в AWS API) — оставлен для единообразия, при ненадобности уберите.",
-    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-ecs-execution-role",
-    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-web-task-role",
+    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-ecs-execution-role",
+    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/brickam-web-task-role",
 
     "runtimePlatform": {
         "cpuArchitecture": "X86_64",
@@ -20,8 +20,8 @@
     "containerDefinitions": [
         {
             "name": "vendor-web",
-            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/buildhub-vendor-web:<sha>",
-            "image": "<ECR_REGISTRY>/buildhub-vendor-web:<IMAGE_TAG>",
+            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/brickam-vendor-web:<sha>",
+            "image": "<ECR_REGISTRY>/brickam-vendor-web:<IMAGE_TAG>",
             "essential": true,
 
             "_comment_port": "non-root nginx слушает :8080 (Dockerfile.vendor-web → nginxinc/nginx-unprivileged). ALB target group и upstream reverse-proxy должны указывать на 8080. API вызывается с apex-домена https://<DOMAIN>/api (apiBaseUrl в config.vendor-web.prod.json), здесь /api не проксируется.",
@@ -40,7 +40,7 @@
             "logConfiguration": {
                 "logDriver": "awslogs",
                 "options": {
-                    "awslogs-group": "/ecs/buildhub-vendor-web",
+                    "awslogs-group": "/ecs/brickam-vendor-web",
                     "awslogs-region": "<REGION>",
                     "awslogs-stream-prefix": "vendor-web",
                     "awslogs-create-group": "true"

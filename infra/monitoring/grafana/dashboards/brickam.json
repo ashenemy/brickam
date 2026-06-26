@@ -5,7 +5,7 @@
     "editable": true,
     "graphTooltip": 0,
     "schemaVersion": 39,
-    "tags": ["buildhub"],
+    "tags": ["brickam"],
     "templating": {
         "list": []
     },
@@ -14,8 +14,8 @@
         "to": "now"
     },
     "timezone": "",
-    "title": "BuildHub — Server",
-    "uid": "buildhub-server",
+    "title": "Brickam — Server",
+    "uid": "brickam-server",
     "panels": [
         {
             "id": 1,
@@ -33,7 +33,7 @@
             },
             "targets": [
                 {
-                    "expr": "up{job=\"buildhub-server\"}",
+                    "expr": "up{job=\"brickam-server\"}",
                     "legendFormat": "up"
                 }
             ]
@@ -60,7 +60,7 @@
             },
             "targets": [
                 {
-                    "expr": "process_resident_memory_bytes{job=\"buildhub-server\"}",
+                    "expr": "process_resident_memory_bytes{job=\"brickam-server\"}",
                     "legendFormat": "rss"
                 }
             ]
@@ -87,7 +87,7 @@
             },
             "targets": [
                 {
-                    "expr": "nodejs_eventloop_lag_seconds{job=\"buildhub-server\"}",
+                    "expr": "nodejs_eventloop_lag_seconds{job=\"brickam-server\"}",
                     "legendFormat": "lag"
                 }
             ]
@@ -114,7 +114,7 @@
             },
             "targets": [
                 {
-                    "expr": "rate(process_cpu_seconds_total{job=\"buildhub-server\"}[5m])",
+                    "expr": "rate(process_cpu_seconds_total{job=\"brickam-server\"}[5m])",
                     "legendFormat": "cpu"
                 }
             ]
@@ -135,7 +135,7 @@
             },
             "targets": [
                 {
-                    "expr": "nodejs_active_handles_total{job=\"buildhub-server\"}",
+                    "expr": "nodejs_active_handles_total{job=\"brickam-server\"}",
                     "legendFormat": "handles"
                 }
             ]
@@ -163,7 +163,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\"}[5m]))",
+                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"brickam-server\"}[5m]))",
                     "legendFormat": "rps"
                 }
             ]
@@ -192,7 +192,7 @@
             },
             "targets": [
                 {
-                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\",status_code=~\"5..\"}[5m])) / sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\"}[5m]))",
+                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"brickam-server\",status_code=~\"5..\"}[5m])) / sum(rate(http_request_duration_seconds_count{job=\"brickam-server\"}[5m]))",
                     "legendFormat": "error-rate"
                 }
             ]
@@ -219,7 +219,7 @@
             },
             "targets": [
                 {
-                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"buildhub-server\"}[5m])) by (le))",
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"brickam-server\"}[5m])) by (le))",
                     "legendFormat": "p95"
                 }
             ]

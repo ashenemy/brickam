@@ -1,4 +1,4 @@
-# Миграции и seed-данные BuildHub
+# Миграции и seed-данные Brickam
 
 Пошаговая инструкция: как создать индексы (миграции) и залить демо-данные (seed)
 в MongoDB — локально, на стейджинге и в проде (AWS ECS).
@@ -18,7 +18,7 @@
 2. **Redis** — поднят (нужен приложению; для самих миграций/сида не обязателен,
    но окружение обычно поднимается целиком).
 3. **Заполненный `.env`** (скопируйте из `.env.example`), в первую очередь
-   `MONGO_URI`. Пример: `MONGO_URI=mongodb://localhost:27017/buildhub`.
+   `MONGO_URI`. Пример: `MONGO_URI=mongodb://localhost:27017/brickam`.
    Оба инструмента читают строку подключения **только** из переменной окружения
    `MONGO_URI` и завершатся с ошибкой, если она не задана.
 4. **Установлены зависимости**: `npm ci`.
@@ -132,8 +132,8 @@ Seed report:
 
 ```bash
 aws ecs run-task \
-  --cluster buildhub-cluster \
-  --task-definition buildhub-server \
+  --cluster brickam-cluster \
+  --task-definition brickam-server \
   --launch-type FARGATE \
   --network-configuration 'awsvpcConfiguration={subnets=[subnet-AAA,subnet-BBB],securityGroups=[sg-XXX],assignPublicIp=DISABLED}' \
   --overrides '{"containerOverrides":[{"name":"server","command":["npm","run","migrate"]}]}' \
@@ -143,8 +143,8 @@ aws ecs run-task \
 Дождитесь статуса `STOPPED` с `exitCode: 0`:
 
 ```bash
-aws ecs wait tasks-stopped --cluster buildhub-cluster --tasks <TASK_ARN>
-aws ecs describe-tasks --cluster buildhub-cluster --tasks <TASK_ARN> \
+aws ecs wait tasks-stopped --cluster brickam-cluster --tasks <TASK_ARN>
+aws ecs describe-tasks --cluster brickam-cluster --tasks <TASK_ARN> \
   --query 'tasks[0].containers[0].exitCode' --output text
 ```
 

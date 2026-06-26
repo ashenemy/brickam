@@ -17,7 +17,7 @@ global:
   # валидного формата (host:port / email); пароль — из файла-секрета.
   # TODO: впишите реальный SMTP-хост (напр. AWS SES email-smtp.<region>.amazonaws.com:587).
   smtp_smarthost: 'smtp.example:587'
-  smtp_from: 'alerts@buildhub.example'      # TODO: реальный from-адрес
+  smtp_from: 'alerts@brickam.example'      # TODO: реальный from-адрес
   smtp_auth_username: 'CHANGEME'            # TODO: SMTP-логин (для SES — SMTP username)
   smtp_auth_password_file: '/etc/alertmanager/secrets/smtp_password'  # TODO: файл с паролем
   smtp_require_tls: true
@@ -51,7 +51,7 @@ receivers:
         title: ':rotating_light: {{ .CommonLabels.alertname }}'
         text: "{{ range .Alerts }}*{{ .Annotations.summary }}*\n{{ .Annotations.description }}\n{{ end }}"
     email_configs:
-      - to: 'ops@buildhub.example'          # TODO: укажите реальный адрес дежурного
+      - to: 'ops@brickam.example'          # TODO: укажите реальный адрес дежурного
         send_resolved: true
 
 # Подавление warning, если по тому же инстансу уже горит critical.

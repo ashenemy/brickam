@@ -1,9 +1,9 @@
 # Провайдер дашбордов: подхватывает JSON из смонтированной папки.
 apiVersion: 1
 providers:
-  - name: BuildHub
+  - name: Brickam
     type: file
-    folder: BuildHub
+    folder: Brickam
     allowUiUpdates: true
     options:
       path: /var/lib/grafana/dashboards

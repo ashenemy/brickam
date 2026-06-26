@@ -1,5 +1,5 @@
 # =============================================================================
-# BuildHub — деплой в AWS ECS (Fargate).
+# Brickam — деплой в AWS ECS (Fargate).
 # Отдельный workflow, НЕ заменяет ci.yml / cd.yml (cd.yml продолжает паблишить
 # образы в GHCR и катить staging по SSH). Этот файл — прод-деплой в ECS:
 #   build+push в ECR (server + 3 web, matrix) → миграции one-off task →
@@ -35,7 +35,7 @@ permissions:
 env:
   # --- ВПИШИТЕ значения или заведите как секреты/variables ---
   AWS_REGION: ${{ secrets.AWS_REGION }}            # секрет/var, напр. eu-central-1
-  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}          # секрет/var, напр. buildhub-cluster
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER }}          # секрет/var, напр. brickam-cluster
   # ECR registry: <ACCOUNT_ID>.dkr.ecr.<REGION>.amazonaws.com — соберём из output логина ECR.
 
 jobs:
@@ -78,8 +78,8 @@ jobs:
           file: infra/Dockerfile.${{ matrix.app }}
           push: true
           tags: |
-            ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:${{ steps.tag.outputs.tag }}
-            ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:latest
+            ${{ steps.ecr.outputs.registry }}/brickam-${{ matrix.app }}:${{ steps.tag.outputs.tag }}
+            ${{ steps.ecr.outputs.registry }}/brickam-${{ matrix.app }}:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
@@ -103,7 +103,7 @@ jobs:
 
       - name: Запустить миграции (one-off task) и дождаться завершения
         env:
-          TASK_DEF: ${{ secrets.ECS_TASKDEF_SERVER }}   # секрет: имя/ARN task-def сервера (напр. buildhub-server)
+          TASK_DEF: ${{ secrets.ECS_TASKDEF_SERVER }}   # секрет: имя/ARN task-def сервера (напр. brickam-server)
           SUBNETS: ${{ secrets.ECS_SUBNETS }}           # секрет: subnet-AAA,subnet-BBB
           SECURITY_GROUPS: ${{ secrets.ECS_SECURITY_GROUPS }} # секрет: sg-XXX
         run: |
@@ -189,7 +189,7 @@ jobs:
         with:
           task-definition: ${{ steps.clean.outputs.path }}
           container-name: ${{ matrix.container }}
-          image: ${{ steps.ecr.outputs.registry }}/buildhub-${{ matrix.app }}:${{ needs.build-push.outputs.tag }}
+          image: ${{ steps.ecr.outputs.registry }}/brickam-${{ matrix.app }}:${{ needs.build-push.outputs.tag }}
 
       - name: Регистрация task-def + update-service (ждём стабилизации)
         uses: aws-actions/amazon-ecs-deploy-task-definition@v2

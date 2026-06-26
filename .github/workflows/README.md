@@ -29,7 +29,7 @@
 
 1. **build-push** (матрица `server`/`main-web`/`vendor-web`/`admin-web`): сборка
    образа из `infra/Dockerfile.<app>` и публикация в **GHCR**
-   (`ghcr.io/<owner>/buildhub-<app>:<sha>` + `:latest`), кэш слоёв через GHA.
+   (`ghcr.io/<owner>/brickam-<app>:<sha>` + `:latest`), кэш слоёв через GHA.
 2. **deploy-staging**: по SSH на стейджинг-хост — `docker compose -f
    docker-compose.staging.yml pull && up -d`, затем health-check `GET /api/health`
    (до 30 попыток). Выполняется только если задан секрет `STAGING_HOST`; иначе
