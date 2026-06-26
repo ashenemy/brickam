@@ -11,7 +11,18 @@ type ApiResponse<T> = {
 };
 
 /** Ключ платформенной настройки. */
-export type SettingKey = 'default' | 'media' | 'seo';
+export type SettingKey = 'default' | 'media' | 'seo' | 'social';
+
+/** Значение настройки 'social' — map платформа→url (пустые не показываются). */
+export type SocialSettings = {
+    facebook?: string;
+    instagram?: string;
+    x?: string;
+    youtube?: string;
+    telegram?: string;
+    whatsapp?: string;
+    tiktok?: string;
+};
 
 /** Значение настройки 'default'. */
 export type DefaultSettings = {

@@ -7,7 +7,20 @@ import {
     type MediaSettings,
     type SeoSettings,
     SettingsApiService,
+    type SocialSettings,
 } from './settings-api.service';
+
+/** Платформы соцсетей для секции «Social links». */
+const SOCIAL_PLATFORMS = [
+    'facebook',
+    'instagram',
+    'x',
+    'youtube',
+    'telegram',
+    'whatsapp',
+    'tiktok',
+] as const;
+type SocialPlatform = (typeof SOCIAL_PLATFORMS)[number];
 
 const TEXTAREA_CLASS =
     'min-w-0 rounded-md border-0 px-5 py-4 bg-[rgb(var(--color-neutral-900)/0.9)] text-text-primary font-input text-18 outline-none shadow-[inset_0_0_0_1px_var(--border-subtle),var(--shadow-inset)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]';
@@ -155,6 +168,29 @@ const TEXTAREA_CLASS =
                     </bh-button>
                 </div>
             </div>
+
+            <!-- Соцссылки витрины (футер) -->
+            <div class="flex flex-col gap-4 rounded-md p-5 bg-surface-card">
+                <h2 class="text-text-primary" style="font: var(--type-heading)">Social links</h2>
+                <p class="text-text-secondary" style="font: var(--type-product)">
+                    Заданные ссылки показываются иконками в футере витрины. Пустые — скрыты.
+                </p>
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                    @for (p of socialPlatforms; track p) {
+                        <bh-input
+                            [label]="p"
+                            placeholder="https://…"
+                            [value]="social()[p] ?? ''"
+                            (changed)="setSocial(p, $event)"
+                        />
+                    }
+                </div>
+                <div>
+                    <bh-button variant="primary" [disabled]="saving()" (clicked)="saveSocial()">
+                        {{ saving() ? t('admin.common.saving') : t('admin.common.save') }}
+                    </bh-button>
+                </div>
+            </div>
         </section>
     `,
 })
@@ -172,6 +208,8 @@ export class SettingsComponent {
     protected readonly maxVideo = signal('0');
     protected readonly maxImages = signal('0');
     protected readonly botUserAgents = signal('');
+    protected readonly social = signal<SocialSettings>({});
+    protected readonly socialPlatforms = SOCIAL_PLATFORMS;
 
     protected readonly saving = signal(false);
     protected readonly saved = signal(false);
@@ -197,6 +235,10 @@ export class SettingsComponent {
         });
         this.api.get<SeoSettings>('seo').subscribe({
             next: (v) => this.botUserAgents.set((v.botUserAgents ?? []).join('\n')),
+            error: (err) => this.error.set(this.errMsg(err)),
+        });
+        this.api.get<SocialSettings>('social').subscribe({
+            next: (v) => this.social.set(v ?? {}),
             error: (err) => this.error.set(this.errMsg(err)),
         });
     }
@@ -228,6 +270,14 @@ export class SettingsComponent {
             maxImagesPerProduct: this.num(this.maxImages()),
         };
         this.save(this.api.put('media', value));
+    }
+
+    protected setSocial(platform: SocialPlatform, value: string): void {
+        this.social.update((s) => ({ ...s, [platform]: value }));
+    }
+
+    protected saveSocial(): void {
+        this.save(this.api.put('social', this.social()));
     }
 
     protected saveSeo(): void {
