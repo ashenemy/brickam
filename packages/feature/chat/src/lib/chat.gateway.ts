@@ -26,9 +26,9 @@ type Ack<TData = unknown> = { ok: true; data?: TData } | { error: string };
  * на connection через TokenVerifierContract (auth не импортируется напрямую).
  * Ошибки доступа возвращаются в ack, сокет не роняется.
  *
- * TODO(масштабирование): для нескольких инстансов подключить Redis-adapter
- * (config.queue.redisUrl) через @socket.io/redis-adapter в bootstrap; по
- * умолчанию используется встроенный in-memory адаптер.
+ * Масштабирование (несколько инстансов): Redis-adapter Socket.IO подключается
+ * в bootstrap (setupWsRedisAdapter в apps/server) — авто в проде или при
+ * WS_REDIS_ADAPTER=1; в dev/тестах — встроенный in-memory адаптер.
  */
 @WebSocketGateway({
     namespace: '/chat',
