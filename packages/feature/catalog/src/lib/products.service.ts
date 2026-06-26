@@ -71,7 +71,15 @@ export class ProductsService
             ratingCount: doc.ratingCount,
         };
         if (doc.discount !== undefined) {
-            item.discount = doc.discount;
+            // Плоская копия: doc.discount — Mongoose-субдокумент с циклическими
+            // ссылками, ClassSerializerInterceptor на нём уходит в рекурсию.
+            const d = doc.discount;
+            item.discount = {
+                type: d.type,
+                value: d.value,
+                ...(d.activeFrom !== undefined ? { activeFrom: d.activeFrom } : {}),
+                ...(d.activeTo !== undefined ? { activeTo: d.activeTo } : {}),
+            };
         }
         return item;
     }
