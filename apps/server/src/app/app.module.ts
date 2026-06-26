@@ -29,7 +29,7 @@ import { VendorMembersModule } from '@brickam/vendor-members';
 import { VendorsModule } from '@brickam/vendors';
 import { WishlistModule } from '@brickam/wishlist';
 import { BullModule } from '@nestjs/bullmq';
-import { Module } from '@nestjs/common';
+import { type MiddlewareConsumer, Module, type NestModule } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ScheduleModule } from '@nestjs/schedule';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
@@ -37,6 +37,8 @@ import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { LoggerModule } from 'nestjs-pino';
 import { HealthModule } from './health/health.module';
 import { MetricsController } from './observability/metrics.controller';
+import { XRayMiddleware } from './observability/xray.middleware';
+import { CsrfGuard } from './security/csrf.guard';
 import { SeoModule } from './seo/seo.module';
 
 @Module({
@@ -124,6 +126,15 @@ import { SeoModule } from './seo/seo.module';
         HealthModule,
         SeoModule,
     ],
-    providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
+    providers: [
+        { provide: APP_GUARD, useClass: ThrottlerGuard },
+        // CSRF-защита cookie-аутентификации (Origin-проверка мутаций в проде).
+        { provide: APP_GUARD, useClass: CsrfGuard },
+    ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+    /** Глобальная трассировка X-Ray до контроллеров (no-op вне прода). */
+    configure(consumer: MiddlewareConsumer): void {
+        consumer.apply(XRayMiddleware).forRoutes('*');
+    }
+}
