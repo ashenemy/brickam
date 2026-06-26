@@ -59,7 +59,7 @@ export const en: Dictionary = {
     'errors.idempotency.inProgress': 'A request with this Idempotency-Key is still being processed',
     'errors.disputes.notAdmin': 'Administrator role required',
     'errors.audit.notAdmin': 'Administrator role required',
-    'common.appName': 'BuildHub',
+    'common.appName': 'Brickam',
     'lang.hy': 'Armenian',
     'lang.ru': 'Russian',
     'lang.en': 'English',
@@ -413,10 +413,10 @@ export const en: Dictionary = {
     'footer.rights': 'All rights reserved.',
 
     // SEO (main-web)
-    'seo.siteTitle': 'BuildHub — Construction materials marketplace',
+    'seo.siteTitle': 'Brickam — Construction materials marketplace',
     'seo.siteDescription':
-        'BuildHub — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
-    'seo.catalogTitle': 'Catalog — BuildHub',
+        'Brickam — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
+    'seo.catalogTitle': 'Catalog — Brickam',
 
     // CMS pages (main-web)
     'pages.loading': 'Loading…',

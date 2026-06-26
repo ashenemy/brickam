@@ -7,7 +7,7 @@ import { translate } from '../lib/translate';
 export type { Lang, TranslateParams } from '../@types';
 export { DEFAULT_LANG, SUPPORTED_LANGS } from '../@types';
 
-const STORAGE_KEY = 'buildhub.lang';
+const STORAGE_KEY = 'brickam.lang';
 
 /**
  * Angular-сервис языка: реактивный текущий язык (signal), переключатель,

@@ -59,7 +59,7 @@ export const ru: Dictionary = {
     'errors.idempotency.inProgress': 'Запрос с этим Idempotency-Key ещё обрабатывается',
     'errors.disputes.notAdmin': 'Требуется роль администратора',
     'errors.audit.notAdmin': 'Требуется роль администратора',
-    'common.appName': 'BuildHub',
+    'common.appName': 'Brickam',
     'lang.hy': 'Армянский',
     'lang.ru': 'Русский',
     'lang.en': 'Английский',
@@ -413,10 +413,10 @@ export const ru: Dictionary = {
     'footer.rights': 'Все права защищены.',
 
     // SEO (main-web)
-    'seo.siteTitle': 'BuildHub — маркетплейс стройматериалов',
+    'seo.siteTitle': 'Brickam — маркетплейс стройматериалов',
     'seo.siteDescription':
-        'BuildHub — маркетплейс стройматериалов Армении. Десятки проверенных продавцов, доставка за 48 часов.',
-    'seo.catalogTitle': 'Каталог — BuildHub',
+        'Brickam — маркетплейс стройматериалов Армении. Десятки проверенных продавцов, доставка за 48 часов.',
+    'seo.catalogTitle': 'Каталог — Brickam',
 
     // CMS pages (main-web)
     'pages.loading': 'Загрузка…',

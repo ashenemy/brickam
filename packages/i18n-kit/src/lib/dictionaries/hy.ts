@@ -59,7 +59,7 @@ export const hy: Dictionary = {
     'errors.idempotency.inProgress': 'Այս Idempotency-Key-ով հարցումը դեռ մշակվում է',
     'errors.disputes.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
     'errors.audit.notAdmin': 'Անհրաժեշտ է ադմինիստրատորի դեր',
-    'common.appName': 'BuildHub',
+    'common.appName': 'Brickam',
     'lang.hy': 'Հայերեն',
     'lang.ru': 'Ռուսերեն',
     'lang.en': 'Անգլերեն',
@@ -413,10 +413,10 @@ export const hy: Dictionary = {
     'footer.rights': 'Բոլոր իրավունքները պաշտպանված են։',
 
     // SEO (main-web)
-    'seo.siteTitle': 'BuildHub — շինանյութերի շուկա',
+    'seo.siteTitle': 'Brickam — շինանյութերի շուկա',
     'seo.siteDescription':
-        'BuildHub — Հայաստանի շինանյութերի շուկա։ Տասնյակ վստահելի վաճառողներ, առաքում 48 ժամում։',
-    'seo.catalogTitle': 'Կատալոգ — BuildHub',
+        'Brickam — Հայաստանի շինանյութերի շուկա։ Տասնյակ վստահելի վաճառողներ, առաքում 48 ժամում։',
+    'seo.catalogTitle': 'Կատալոգ — Brickam',
 
     // CMS pages (main-web)
     'pages.loading': 'Բեռնում…',
