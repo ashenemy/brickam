@@ -20,7 +20,9 @@ services:
         image: redis:7-alpine
         restart: unless-stopped
         ports:
-            - '6379:6379'
+            # Хост-порт переопределяется REDIS_PORT (на случай конфликта с другим
+            # локальным redis); внутри сети сервисы всегда ходят в redis:6379.
+            - '${REDIS_PORT:-6379}:6379'
         deploy:
             resources:
                 limits:
