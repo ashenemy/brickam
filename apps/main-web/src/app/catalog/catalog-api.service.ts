@@ -14,6 +14,7 @@ import type {
     ProductDetail,
     ProductFilters,
     ProductListResult,
+    SocialLink,
 } from './models';
 
 /**
@@ -35,6 +36,16 @@ export class CatalogApiService {
             timeout(REQUEST_TIMEOUT_MS),
             map((res) => res.data),
         );
+    }
+
+    /** Соцссылки витрины (для футера) — только заданные в админке. */
+    getSocialLinks(): Observable<SocialLink[]> {
+        return this.http
+            .get<ApiResponse<SocialLink[]>>(`${this.base}/catalog/categories/social-links`)
+            .pipe(
+                timeout(REQUEST_TIMEOUT_MS),
+                map((res) => res.data),
+            );
     }
 
     /** Список товаров с серверной фильтрацией и пагинацией. */

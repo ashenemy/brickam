@@ -103,3 +103,9 @@ export type ProductListResult = {
     data: ProductListItem[];
     meta: PageMeta;
 };
+
+/** Соцссылка витрины (для футера) — из админ-настройки. */
+export type SocialLink = {
+    platform: string;
+    url: string;
+};

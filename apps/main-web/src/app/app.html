@@ -21,7 +21,12 @@
     <router-outlet />
 </main>
 
-<bh-footer [copyright]="footerCopyright()" [legal]="footerLegal" (legalClick)="onLegal($event)" />
+<bh-footer
+    [copyright]="footerCopyright()"
+    [legal]="footerLegal"
+    [socials]="socials()"
+    (legalClick)="onLegal($event)"
+/>
 
 <!-- Небольшой брендовый градиент под футером. -->
 <div

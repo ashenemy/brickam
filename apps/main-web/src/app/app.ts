@@ -20,7 +20,7 @@ import { SessionStore } from './auth/session.store';
 import { CartStore } from './cart/cart.store';
 import { CartBadgeComponent } from './cart/cart-badge.component';
 import { CatalogApiService } from './catalog/catalog-api.service';
-import type { Category } from './catalog/models';
+import type { Category, SocialLink } from './catalog/models';
 import { ChatStore } from './chat/chat.store';
 import { CurrencyStore } from './currency/currency.store';
 import { LoyaltyStore } from './loyalty/loyalty.store';
@@ -72,6 +72,7 @@ export class App implements OnInit {
     protected readonly navItems = NAV.map((n) => n.label);
 
     private readonly categories = signal<Category[]>([]);
+    protected readonly socials = signal<SocialLink[]>([]);
 
     /** Группы мега-меню: корни + подкатегории, локализованные текущим языком. */
     protected readonly categoryGroups = computed<CategoryGroup[]>(() => {
@@ -120,6 +121,10 @@ export class App implements OnInit {
         this.catalogApi.getCategories().subscribe({
             next: (cats) => this.categories.set(cats),
             error: () => this.categories.set([]),
+        });
+        this.catalogApi.getSocialLinks().subscribe({
+            next: (links) => this.socials.set(links),
+            error: () => this.socials.set([]),
         });
     }
 
