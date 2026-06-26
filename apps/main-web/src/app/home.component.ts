@@ -19,19 +19,14 @@ import {
 } from '@brickam/ui-kit';
 import { catchError, map, of, timeout } from 'rxjs';
 import { CatalogApiService } from './catalog/catalog-api.service';
-import type { ProductListItem } from './catalog/models';
+import type { Category, ProductListItem } from './catalog/models';
 import { CurrencyStore } from './currency/currency.store';
 import { SeoService } from './seo/seo.service';
 
-/** Курируемые маркетинговые блоки (не каталожные данные): комнаты и trust-бар. */
-const ROOM_IMG = '/assets/demo/room-living.png';
-const ROOMS = [
-    { area: 'a', label: 'Living room' },
-    { area: 'b', label: 'Wardrobe' },
-    { area: 'c', label: 'Bathroom' },
-    { area: 'd', label: 'Kitchen' },
-    { area: 'e', label: 'Hallway' },
-];
+/** Раскладка бенто «Shop by room»: первая плитка большая, остальные — сеткой. */
+const BENTO_AREAS = ['a', 'b', 'c', 'd', 'e'];
+
+/** Trust-бар — курируемый маркетинговый блок (не каталожные данные). */
 const FEATURES: FeatureItem[] = [
     { icon: 'local_shipping', title: 'Fast Delivery', subtitle: 'Delivery in 48 h' },
     { icon: 'autorenew', title: '24 Hours Return', subtitle: '100% money-back guarantee' },
@@ -56,17 +51,19 @@ const BEST_DEALS_COUNT = 10;
                     </h2>
                     <mat-icon class="text-accent">arrow_forward</mat-icon>
                 </header>
-                <div class="bh-bento">
-                    @for (room of rooms; track room.area) {
-                        <bh-room-card
-                            class="block"
-                            [style.grid-area]="room.area"
-                            [image]="roomImg"
-                            [label]="room.label"
-                            (cardClick)="goCatalog()"
-                        />
-                    }
-                </div>
+                @if (rooms().length) {
+                    <div class="bh-bento">
+                        @for (room of rooms(); track room.slug) {
+                            <bh-room-card
+                                class="block"
+                                [style.grid-area]="room.area"
+                                [image]="room.cover"
+                                [label]="room.label"
+                                (cardClick)="goCategory(room.slug)"
+                            />
+                        }
+                    </div>
+                }
             </section>
 
             <bh-feature-bar [items]="features" />
@@ -147,12 +144,26 @@ export class HomeComponent implements OnInit {
 
     protected readonly lang = this.i18n.lang;
 
-    protected readonly rooms = ROOMS;
-    protected readonly roomImg = ROOM_IMG;
     protected readonly features = FEATURES;
 
     protected readonly loading = signal(true);
     private readonly items = signal<ProductListItem[]>([]);
+    private readonly categories = signal<Category[]>([]);
+
+    /** Featured-категории для «Shop by room» (флаг featuredOnHome из API). */
+    protected readonly rooms = computed(() => {
+        const lang = this.lang();
+        return this.categories()
+            .filter((c) => c.featuredOnHome)
+            .sort((a, b) => a.order - b.order)
+            .slice(0, BENTO_AREAS.length)
+            .map((c, i) => ({
+                slug: c.slug,
+                area: BENTO_AREAS[i],
+                label: c.name[lang],
+                cover: c.coverUrl ?? '',
+            }));
+    });
 
     /** Карточки переформатируются при смене валюты/языка. */
     protected readonly cards = computed(() => {
@@ -190,6 +201,15 @@ export class HomeComponent implements OnInit {
                 this.items.set(data);
                 this.loading.set(false);
             });
+
+        // Featured-категории для блока «Shop by room».
+        this.api
+            .getCategories()
+            .pipe(
+                timeout(4000),
+                catchError(() => of([] as Category[])),
+            )
+            .subscribe((cats) => this.categories.set(cats));
     }
 
     private toCard(item: ProductListItem): Product {
@@ -209,8 +229,8 @@ export class HomeComponent implements OnInit {
         return card;
     }
 
-    protected goCatalog(): void {
-        void this.router.navigate(['/catalog']);
+    protected goCategory(slug: string): void {
+        void this.router.navigate(['/catalog'], { queryParams: { category: slug } });
     }
 
     protected openProduct(slug: string): void {

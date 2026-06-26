@@ -12,6 +12,8 @@ export type Category = {
     icon?: string;
     order: number;
     calculatorType?: string;
+    coverUrl?: string;
+    featuredOnHome?: boolean;
 };
 
 /** Тип медиа обложки/галереи. */
