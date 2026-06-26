@@ -9,7 +9,7 @@ export * from './lib/core/rating.component';
 export * from './lib/core/tag.component';
 // feedback
 export * from './lib/feedback/modal.component';
-export * from './lib/feedback/toast.component';
+export * from './lib/feedback/toast.service';
 export * from './lib/forms/checkbox.component';
 // forms
 export * from './lib/forms/input.component';

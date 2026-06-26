@@ -1,5 +1,3 @@
-import { A11yModule } from '@angular/cdk/a11y';
-import { DOCUMENT } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -8,76 +6,59 @@ import {
     input,
     model,
     output,
+    type TemplateRef,
+    viewChild,
 } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatDialog, type MatDialogConfig, type MatDialogRef } from '@angular/material/dialog';
+import { MatIcon } from '@angular/material/icon';
 
 let modalUid = 0;
 
 /**
- * BRICK Modal — центрированный диалог на затемнённом скриме, тёмная glass-карточка.
- * Перенесён с React (feedback/Modal.jsx).
- *
- * a11y-фиксы поверх исходника: role="dialog" + aria-modal, FocusTrap (cdkTrapFocus
- * autoCapture), возврат фокуса на триггер, закрытие по Esc и клику на бэкдроп,
- * блокировка скролла body, aria-labelledby на заголовок.
- *
- * Контент: основной `<ng-content>`, плюс слоты `[slot=header]` и `[slot=footer]`.
- * Видимость управляется через `open` (model — поддерживает two-way `[(open)]`).
+ * BRICK Modal — декларативная обёртка над официальным `MatDialog`: видимость
+ * управляется через [(open)], а контент (основной + слоты header/footer) рендерится
+ * официальным диалогом (overlay, FocusTrap, restoreFocus, Esc/backdrop — «из коробки»).
+ * На мобиле ширина ≈92vw. Кнопка закрытия — matIconButton + mat-icon.
  */
 @Component({
     selector: 'bh-modal',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [A11yModule],
+    imports: [MatIconButton, MatIcon],
     template: `
-        @if (open()) {
-            <div
-                class="fixed inset-0 z-[100] flex items-center justify-center p-6 bg-[rgba(0,0,0,0.6)] backdrop-blur-glass-sm"
-                (click)="onBackdrop()"
-            >
-                <div
-                    cdkTrapFocus
-                    [cdkTrapFocusAutoCapture]="true"
-                    role="dialog"
-                    aria-modal="true"
-                    [attr.aria-label]="title() ? null : ariaLabel() || null"
-                    [attr.aria-labelledby]="title() ? titleId : null"
-                    class="w-full max-h-[90vh] overflow-y-auto p-7 rounded-xl bg-surface-card text-text-primary shadow-[var(--shadow-float),inset_0_0_0_0.5px_var(--border-default)]"
-                    [style.maxWidth.px]="width()"
-                    (click)="$event.stopPropagation()"
-                    (keydown.escape)="onEscape()"
-                >
-                    <div
-                        class="flex items-start justify-between gap-4"
-                        [class.mb-5]="title()"
-                    >
-                        @if (title()) {
-                            <h3 [id]="titleId" class="m-0 text-text-primary" style="font: var(--type-h1)">
-                                {{ title() }}
-                            </h3>
-                        }
-                        <ng-content select="[slot=header]" />
-                        <button
-                            type="button"
-                            aria-label="Close"
-                            class="ml-auto flex shrink-0 items-center justify-center w-8 h-8 rounded-sm border-0 bg-surface-chip text-text-secondary text-18 leading-none cursor-pointer transition-colors duration-fast ease-out hover:text-text-primary focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                            (click)="requestClose()"
-                        >
-                            &times;
-                        </button>
-                    </div>
-
-                    <ng-content />
-
-                    <div class="mt-6 flex justify-end gap-3 empty:hidden">
-                        <ng-content select="[slot=footer]" />
-                    </div>
-                </div>
+        <ng-template #content>
+            <div class="bh-modal-head">
+                @if (title()) {
+                    <h3 [id]="titleId" class="m-0 text-text-primary" style="font: var(--type-h1)">
+                        {{ title() }}
+                    </h3>
+                }
+                <ng-content select="[slot=header]" />
+                <button matIconButton aria-label="Close" class="ml-auto" (click)="requestClose()">
+                    <mat-icon>close</mat-icon>
+                </button>
             </div>
+
+            <ng-content />
+
+            <div class="bh-modal-foot mt-6 flex justify-end gap-3 empty:hidden">
+                <ng-content select="[slot=footer]" />
+            </div>
+        </ng-template>
+    `,
+    styles: `
+        .bh-modal-head {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 1rem;
+            margin-bottom: var(--space-5);
         }
     `,
 })
 export class ModalComponent {
-    private readonly document = inject(DOCUMENT);
+    private readonly dialog = inject(MatDialog);
 
     /** Видимость диалога. Two-way: `[(open)]`. */
     readonly open = model(false);
@@ -90,42 +71,48 @@ export class ModalComponent {
     readonly close = output<void>();
 
     protected readonly titleId = `bh-modal-title-${++modalUid}`;
-
-    private previousOverflow: string | null = null;
-    private previousActive: HTMLElement | null = null;
+    private readonly contentTpl = viewChild<TemplateRef<unknown>>('content');
+    private ref: MatDialogRef<unknown> | undefined;
 
     constructor() {
         effect(() => {
-            const body = this.document.body;
-            if (this.open()) {
-                this.previousActive = this.document.activeElement as HTMLElement | null;
-                this.previousOverflow = body.style.overflow;
-                body.style.overflow = 'hidden';
-            } else {
-                if (this.previousOverflow !== null) {
-                    body.style.overflow = this.previousOverflow;
-                    this.previousOverflow = null;
-                }
-                this.previousActive?.focus?.();
-                this.previousActive = null;
-            }
+            const isOpen = this.open();
+            const tpl = this.contentTpl(); // зависимость: эффект перезапустится, когда шаблон готов
+            if (isOpen && tpl) this.openDialog(tpl);
+            else if (!isOpen) this.ref?.close();
         });
     }
 
-    protected onBackdrop(): void {
-        if (this.closeOnBackdrop()) {
-            this.requestClose();
-        }
-    }
-
-    protected onEscape(): void {
-        if (this.closeOnEscape()) {
-            this.requestClose();
-        }
+    private openDialog(tpl: TemplateRef<unknown>): void {
+        if (this.ref) return;
+        // disableClose:true — закрытие по backdrop/Esc обрабатываем сами, чтобы
+        // closeOnBackdrop/closeOnEscape работали независимо.
+        const config: MatDialogConfig = {
+            width: `min(${this.width()}px, 92vw)`,
+            maxWidth: '92vw',
+            maxHeight: '90vh',
+            disableClose: true,
+            ariaModal: true,
+            panelClass: 'bh-modal-panel',
+            restoreFocus: true,
+        };
+        if (this.title()) config.ariaLabelledBy = this.titleId;
+        else if (this.ariaLabel()) config.ariaLabel = this.ariaLabel();
+        this.ref = this.dialog.open(tpl, config);
+        this.ref.backdropClick().subscribe(() => {
+            if (this.closeOnBackdrop()) this.requestClose();
+        });
+        this.ref.keydownEvents().subscribe((event) => {
+            if (event.key === 'Escape' && this.closeOnEscape()) this.requestClose();
+        });
+        this.ref.afterClosed().subscribe(() => {
+            this.ref = undefined;
+            if (this.open()) this.open.set(false);
+            this.close.emit();
+        });
     }
 
     protected requestClose(): void {
         this.open.set(false);
-        this.close.emit();
     }
 }

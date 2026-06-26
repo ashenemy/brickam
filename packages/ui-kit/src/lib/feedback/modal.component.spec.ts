@@ -1,5 +1,6 @@
 import { Component } from '@angular/core';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ModalComponent } from './modal.component';
 
 @Component({
@@ -31,12 +32,15 @@ function getDialog(): HTMLElement | null {
     return document.querySelector('[role="dialog"]');
 }
 
-describe('ModalComponent', () => {
+describe('ModalComponent (MatDialog)', () => {
     beforeEach(async () => {
-        await TestBed.configureTestingModule({ imports: [HostComponent] }).compileComponents();
+        await TestBed.configureTestingModule({
+            imports: [HostComponent],
+            providers: [provideNoopAnimations()],
+        }).compileComponents();
     });
 
-    it('рендерит диалог и контент при open=true', async () => {
+    it('открывает диалог и рендерит контент при open=true', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         fixture.detectChanges();
         await fixture.whenStable();
@@ -45,7 +49,7 @@ describe('ModalComponent', () => {
         expect(dialog?.textContent).toContain('Body content');
     });
 
-    it('не рендерит диалог при open=false', async () => {
+    it('не открывает диалог при open=false', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         fixture.componentInstance.open = false;
         fixture.detectChanges();
@@ -84,8 +88,7 @@ describe('ModalComponent', () => {
         const fixture = TestBed.createComponent(HostComponent);
         fixture.detectChanges();
         await fixture.whenStable();
-        const backdrop = fixture.nativeElement.querySelector('.fixed') as HTMLElement;
-        backdrop.click();
+        (document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(fixture.componentInstance.closes).toBe(1);
@@ -96,8 +99,7 @@ describe('ModalComponent', () => {
         fixture.componentInstance.closeOnBackdrop = false;
         fixture.detectChanges();
         await fixture.whenStable();
-        const backdrop = fixture.nativeElement.querySelector('.fixed') as HTMLElement;
-        backdrop.click();
+        (document.querySelector('.cdk-overlay-backdrop') as HTMLElement).click();
         fixture.detectChanges();
         await fixture.whenStable();
         expect(fixture.componentInstance.closes).toBe(0);
