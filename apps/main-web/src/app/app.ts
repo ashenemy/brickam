@@ -1,7 +1,7 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, inject, type OnInit, PLATFORM_ID } from '@angular/core';
+import { Component, effect, inject, type OnInit, PLATFORM_ID } from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { LangSwitcherComponent } from '@brickam/i18n-kit/browser';
+import { LangSwitcherComponent, LanguageService } from '@brickam/i18n-kit/browser';
 import { NavbarComponent, FooterComponent as UiFooterComponent } from '@brickam/ui-kit';
 import { SessionStore } from './auth/session.store';
 import { CartStore } from './cart/cart.store';
@@ -41,7 +41,18 @@ export class App implements OnInit {
     private readonly currencyStore = inject(CurrencyStore);
     private readonly loyaltyStore = inject(LoyaltyStore);
     private readonly router = inject(Router);
+    private readonly i18n = inject(LanguageService);
     private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+    constructor() {
+        // Синхронизируем <html lang> с текущим языком i18n (hy/ru/en).
+        effect(() => {
+            const lang = this.i18n.lang();
+            if (this.isBrowser && typeof document !== 'undefined') {
+                document.documentElement.lang = lang;
+            }
+        });
+    }
 
     ngOnInit(): void {
         // Подтягиваем счётчики вишлиста/чата и валюты при старте — только в браузере.
