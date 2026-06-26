@@ -101,23 +101,46 @@ function xmlEscape(s: string): string {
         .replace(/'/g, '&apos;');
 }
 
+/** Обрезает строку до n символов с многоточием (для подписи на обложке). */
+function clip(s: string, n: number): string {
+    return s.length > n ? `${s.slice(0, n - 1)}…` : s;
+}
+
 /**
- * Уникальная SVG-обложка товара как data-URI (хранится прямо в БД, переносится с
- * mongodump, без зависимости от MinIO). Цвет — по хэшу slug; текст — название/спека.
+ * Уникальная SVG-обложка товара как data-URI (хранится в БД, переносится mongodump,
+ * без MinIO). Брендовый градиент по хэшу slug + кирпичный паттерн (строительная
+ * тема) + крупная монограмма + название/бренд на тёмном скриме внизу.
  */
-function svgCover(slug: string, label: string, subtitle: string): string {
+function svgCover(slug: string, name: string, subtitle: string): string {
     const hue = hash(slug) % 360;
-    const initials = label.slice(0, 2).toUpperCase();
+    const initials = name
+        .replace(/[^A-Za-zА-Яа-я0-9 ]/g, '')
+        .slice(0, 2)
+        .toUpperCase();
     const svg =
         `<svg xmlns='http://www.w3.org/2000/svg' width='600' height='600' viewBox='0 0 600 600'>` +
-        `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
-        `<stop offset='0' stop-color='hsl(${hue},58%,46%)'/>` +
-        `<stop offset='1' stop-color='hsl(${(hue + 28) % 360},64%,26%)'/>` +
-        `</linearGradient></defs>` +
+        `<defs>` +
+        `<linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+        `<stop offset='0' stop-color='hsl(${hue},56%,44%)'/>` +
+        `<stop offset='1' stop-color='hsl(${(hue + 26) % 360},62%,24%)'/>` +
+        `</linearGradient>` +
+        // Кирпичная кладка: смещённые ряды кирпичей, едва заметные.
+        `<pattern id='brick' width='120' height='64' patternUnits='userSpaceOnUse'>` +
+        `<rect x='2' y='2' width='116' height='28' rx='3' fill='#fff' opacity='0.06'/>` +
+        `<rect x='-58' y='34' width='116' height='28' rx='3' fill='#fff' opacity='0.06'/>` +
+        `<rect x='62' y='34' width='116' height='28' rx='3' fill='#fff' opacity='0.06'/>` +
+        `</pattern>` +
+        `<linearGradient id='scrim' x1='0' y1='0' x2='0' y2='1'>` +
+        `<stop offset='0' stop-color='#000' stop-opacity='0'/>` +
+        `<stop offset='1' stop-color='#000' stop-opacity='0.55'/>` +
+        `</linearGradient>` +
+        `</defs>` +
         `<rect width='600' height='600' fill='url(#g)'/>` +
-        `<text x='300' y='340' text-anchor='middle' font-family='Poppins,Arial,sans-serif' font-size='220' font-weight='700' fill='rgba(255,255,255,0.16)'>${xmlEscape(initials)}</text>` +
-        `<text x='40' y='524' font-family='Poppins,Arial,sans-serif' font-size='36' font-weight='700' fill='#ffffff'>${xmlEscape(label)}</text>` +
-        `<text x='40' y='562' font-family='Arial,sans-serif' font-size='22' fill='rgba(255,255,255,0.82)'>${xmlEscape(subtitle)}</text>` +
+        `<rect width='600' height='600' fill='url(#brick)'/>` +
+        `<text x='300' y='300' text-anchor='middle' dominant-baseline='middle' font-family='Poppins,Arial,sans-serif' font-size='200' font-weight='700' fill='#fff' opacity='0.14'>${xmlEscape(initials)}</text>` +
+        `<rect x='0' y='430' width='600' height='170' fill='url(#scrim)'/>` +
+        `<text x='40' y='540' font-family='Poppins,Arial,sans-serif' font-size='34' font-weight='700' fill='#ffffff'>${xmlEscape(clip(name, 26))}</text>` +
+        `<text x='40' y='576' font-family='Arial,sans-serif' font-size='22' fill='rgba(255,255,255,0.85)'>${xmlEscape(subtitle)}</text>` +
         `</svg>`;
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
@@ -176,7 +199,7 @@ export function buildProducts(): SeedRecord[] {
                     description,
                     cover: {
                         mediaType: 'image',
-                        url: svgCover(slug, enLabel, `${brand} • ${spec}`),
+                        url: svgCover(slug, `${enLabel} ${spec}`, `${brand}`),
                     },
                     gallery: [],
                     price,
