@@ -265,6 +265,7 @@ export const en: Dictionary = {
     'aiAssistant.status.processing': 'Processing',
     'aiAssistant.status.done': 'Done',
     'aiAssistant.status.failed': 'Failed',
+    'admin.nav.categories': 'Categories',
     'admin.nav.moderation': 'Moderation',
     'admin.nav.settings': 'Settings',
     'admin.nav.disputes': 'Disputes',

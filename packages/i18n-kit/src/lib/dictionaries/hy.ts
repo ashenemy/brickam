@@ -265,6 +265,7 @@ export const hy: Dictionary = {
     'aiAssistant.status.processing': 'Գեներացում',
     'aiAssistant.status.done': 'Պատրաստ է',
     'aiAssistant.status.failed': 'Սխալ',
+    'admin.nav.categories': 'Կատեգորիաներ',
     'admin.nav.moderation': 'Մոդերացիա',
     'admin.nav.settings': 'Կարգավորումներ',
     'admin.nav.disputes': 'Վեճեր',

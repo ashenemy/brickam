@@ -265,6 +265,7 @@ export const ru: Dictionary = {
     'aiAssistant.status.processing': 'Генерация',
     'aiAssistant.status.done': 'Готово',
     'aiAssistant.status.failed': 'Ошибка',
+    'admin.nav.categories': 'Категории',
     'admin.nav.moderation': 'Модерация',
     'admin.nav.settings': 'Настройки',
     'admin.nav.disputes': 'Споры',
