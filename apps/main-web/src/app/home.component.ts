@@ -33,10 +33,10 @@ export class HomeComponent {
         // Дефолтные мета сайта; реагируют на смену языка (i18n.lang() — зависимость).
         effect(() => {
             this.i18n.lang();
-            const title = this.tr('seo.siteTitle', 'BuildHub — Construction materials marketplace');
+            const title = this.tr('seo.siteTitle', 'Brickam — Construction materials marketplace');
             const description = this.tr(
                 'seo.siteDescription',
-                'BuildHub — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
+                'Brickam — marketplace of construction materials in Armenia. Dozens of trusted vendors, delivery within 48 hours.',
             );
             this.seo.set({ title, description, type: 'website' });
         });

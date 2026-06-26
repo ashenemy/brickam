@@ -88,11 +88,11 @@ describe('CurrencyStore', () => {
     it('select персистит выбор в localStorage', () => {
         const { store } = makeStore();
         store.select('EUR');
-        expect(localStorage.getItem('buildhub.currency')).toBe('EUR');
+        expect(localStorage.getItem('brickam.currency')).toBe('EUR');
     });
 
     it('восстанавливает выбор из localStorage при старте', () => {
-        localStorage.setItem('buildhub.currency', 'RUB');
+        localStorage.setItem('brickam.currency', 'RUB');
         const { store } = makeStore();
         expect(store.selected()).toBe('RUB');
     });

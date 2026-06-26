@@ -11,7 +11,7 @@ const CONFIG: RuntimeConfig = {
     supportedLangs: ['hy', 'ru', 'en'],
 };
 
-const AUTHED_KEY = 'buildhub.authed';
+const AUTHED_KEY = 'brickam.authed';
 const ME_URL = 'http://api.test/api/auth/me';
 
 describe('SessionStore', () => {
@@ -48,7 +48,7 @@ describe('SessionStore', () => {
         session.applyTokens({ accessToken: 'acc', refreshToken: 'ref' });
         flushMe();
         expect(tokenStore.get()).toBe('acc');
-        expect(localStorage.getItem('buildhub.token')).toBeNull();
+        expect(localStorage.getItem('brickam.token')).toBeNull();
     });
 
     it('applyTokens кладёт accessToken, поднимает authed-флаг и isAuthenticated=true', () => {

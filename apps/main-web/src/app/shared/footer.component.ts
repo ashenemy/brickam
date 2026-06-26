@@ -54,7 +54,7 @@ export class FooterComponent {
     protected readonly copyright = computed(() => {
         this.lang();
         const year = new Date().getFullYear();
-        return `© ${year} BuildHub. ${this.ph('rights')}`;
+        return `© ${year} Brickam. ${this.ph('rights')}`;
     });
 
     protected ph(key: string): string {

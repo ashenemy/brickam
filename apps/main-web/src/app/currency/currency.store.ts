@@ -4,7 +4,7 @@ import { catchError, forkJoin, of } from 'rxjs';
 import { CurrencyApiService } from './currency-api.service';
 
 const BASE_CURRENCY = 'AMD';
-const STORAGE_KEY = 'buildhub.currency';
+const STORAGE_KEY = 'brickam.currency';
 
 /**
  * Глобальное состояние валюты ОТОБРАЖЕНИЯ (signals). База — AMD.
