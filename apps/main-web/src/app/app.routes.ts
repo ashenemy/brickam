@@ -13,6 +13,7 @@ import { HomeComponent } from './home.component';
 import { LoyaltyPageComponent } from './loyalty/loyalty-page.component';
 import { OrderDetailComponent } from './orders/order-detail.component';
 import { OrderHistoryComponent } from './orders/order-history.component';
+import { ProfilePageComponent } from './profile/profile-page.component';
 import { WishlistPageComponent } from './wishlist/wishlist-page.component';
 
 // Приватные маршруты покупателя: roleGuard сам редиректит на /login,
@@ -45,6 +46,7 @@ export const appRoutes: Route[] = [
     { path: 'checkout', component: CheckoutPageComponent, canActivate: buyer },
     { path: 'orders', component: OrderHistoryComponent, canActivate: buyer },
     { path: 'orders/:id', component: OrderDetailComponent, canActivate: buyer },
+    { path: 'profile', component: ProfilePageComponent, canActivate: buyer },
     { path: 'login', component: LoginPageComponent },
     { path: 'register', component: RegisterPageComponent },
     { path: 'forbidden', component: ForbiddenComponent },

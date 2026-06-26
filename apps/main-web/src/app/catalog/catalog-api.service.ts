@@ -2,7 +2,11 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { RUNTIME_CONFIG } from '@brickam/config-kit/browser';
 import { type Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { map, timeout } from 'rxjs/operators';
+
+/** Таймаут запросов каталога — страховка, чтобы SSR не зависал на медленном API. */
+const REQUEST_TIMEOUT_MS = 8000;
+
 import type {
     ApiListResponse,
     ApiResponse,
@@ -27,9 +31,10 @@ export class CatalogApiService {
 
     /** Список категорий каталога. */
     getCategories(): Observable<Category[]> {
-        return this.http
-            .get<ApiResponse<Category[]>>(`${this.base}/catalog/categories`)
-            .pipe(map((res) => res.data));
+        return this.http.get<ApiResponse<Category[]>>(`${this.base}/catalog/categories`).pipe(
+            timeout(REQUEST_TIMEOUT_MS),
+            map((res) => res.data),
+        );
     }
 
     /** Список товаров с серверной фильтрацией и пагинацией. */
@@ -59,7 +64,10 @@ export class CatalogApiService {
                     params,
                 },
             )
-            .pipe(map((res) => ({ data: res.data, meta: res.meta })));
+            .pipe(
+                timeout(REQUEST_TIMEOUT_MS),
+                map((res) => ({ data: res.data, meta: res.meta })),
+            );
     }
 
     /** Товары по списку id (публичный эндпоинт). Сохраняет порядок ответа бэкенда. */
@@ -72,7 +80,10 @@ export class CatalogApiService {
             .get<ApiResponse<ProductListResult['data']>>(`${this.base}/catalog/products/by-ids`, {
                 params,
             })
-            .pipe(map((res) => res.data));
+            .pipe(
+                timeout(REQUEST_TIMEOUT_MS),
+                map((res) => res.data),
+            );
     }
 
     /** Детальная карточка товара по slug. */
@@ -81,6 +92,9 @@ export class CatalogApiService {
             .get<ApiResponse<ProductDetail>>(
                 `${this.base}/catalog/products/${encodeURIComponent(slug)}`,
             )
-            .pipe(map((res) => res.data));
+            .pipe(
+                timeout(REQUEST_TIMEOUT_MS),
+                map((res) => res.data),
+            );
     }
 }
