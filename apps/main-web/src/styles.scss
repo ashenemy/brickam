@@ -8,7 +8,8 @@ html,
 body {
     margin: 0;
     min-height: 100%;
-    background: rgb(var(--color-bg-app));
+    /* По дизайн-гайду самый тёмный фон приложения (#191C1F), карточки — на стекле. */
+    background: rgb(var(--color-bg-deep));
     color: rgb(var(--color-text-primary));
     font-family: var(--font-body);
 }

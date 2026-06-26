@@ -1,51 +1,102 @@
 import { isPlatformBrowser } from '@angular/common';
-import { Component, effect, inject, type OnInit, PLATFORM_ID } from '@angular/core';
+import {
+    Component,
+    computed,
+    effect,
+    inject,
+    type OnInit,
+    PLATFORM_ID,
+    signal,
+} from '@angular/core';
 import { Router, RouterModule } from '@angular/router';
-import { LangSwitcherComponent, LanguageService } from '@brickam/i18n-kit/browser';
-import { NavbarComponent, FooterComponent as UiFooterComponent } from '@brickam/ui-kit';
+import { LanguageService } from '@brickam/i18n-kit/browser';
+import {
+    type CategoryGroup,
+    NavbarComponent,
+    type SearchMode,
+    FooterComponent as UiFooterComponent,
+} from '@brickam/ui-kit';
 import { SessionStore } from './auth/session.store';
 import { CartStore } from './cart/cart.store';
 import { CartBadgeComponent } from './cart/cart-badge.component';
+import { CatalogApiService } from './catalog/catalog-api.service';
+import type { Category } from './catalog/models';
 import { ChatStore } from './chat/chat.store';
-import { ChatBadgeComponent } from './chat/chat-badge.component';
 import { CurrencyStore } from './currency/currency.store';
-import { CurrencySwitcherComponent } from './currency/currency-switcher.component';
 import { LoyaltyStore } from './loyalty/loyalty.store';
-import { LoyaltyBadgeComponent } from './loyalty/loyalty-badge.component';
-import { FooterComponent } from './shared/footer.component';
+import { LangCurrencySwitcherComponent } from './shared/lang-currency-switcher.component';
+import { UserMenuComponent } from './shared/user-menu.component';
 import { WishlistStore } from './wishlist/wishlist.store';
 import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
+
+/** Пункты основной навигации (label → маршрут). */
+const NAV: { label: string; route: string }[] = [
+    { label: 'Catalog', route: '/catalog' },
+    { label: 'Calculators', route: '/calculators' },
+    { label: 'Describe project', route: '/ai' },
+];
+
+/** Слаги CMS-страниц для футера (label → /p/slug). */
+const LEGAL: Record<string, string> = {
+    About: 'about',
+    'Terms of use': 'terms',
+    'Privacy policy': 'privacy',
+};
 
 @Component({
     imports: [
         RouterModule,
         NavbarComponent,
         UiFooterComponent,
-        FooterComponent,
-        LangSwitcherComponent,
         WishlistBadgeComponent,
         CartBadgeComponent,
-        ChatBadgeComponent,
-        CurrencySwitcherComponent,
-        LoyaltyBadgeComponent,
+        LangCurrencySwitcherComponent,
+        UserMenuComponent,
     ],
     selector: 'app-root',
     templateUrl: './app.html',
     styleUrl: './app.scss',
 })
 export class App implements OnInit {
-    protected readonly wishlistStore = inject(WishlistStore);
-    protected readonly session = inject(SessionStore);
+    private readonly session = inject(SessionStore);
+    private readonly wishlistStore = inject(WishlistStore);
     private readonly cartStore = inject(CartStore);
     private readonly chatStore = inject(ChatStore);
     private readonly currencyStore = inject(CurrencyStore);
     private readonly loyaltyStore = inject(LoyaltyStore);
+    private readonly catalogApi = inject(CatalogApiService);
     private readonly router = inject(Router);
     private readonly i18n = inject(LanguageService);
     private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
+    protected readonly navItems = NAV.map((n) => n.label);
+
+    private readonly categories = signal<Category[]>([]);
+
+    /** Группы мега-меню: корни + подкатегории, локализованные текущим языком. */
+    protected readonly categoryGroups = computed<CategoryGroup[]>(() => {
+        const lang = this.i18n.lang();
+        const all = this.categories();
+        const roots = all.filter((c) => !c.parentId).sort((a, b) => a.order - b.order);
+        return roots.map((root) => ({
+            slug: root.slug,
+            label: root.name[lang],
+            ...(root.icon ? { icon: root.icon } : {}),
+            items: all
+                .filter((c) => c.parentId === root.id)
+                .sort((a, b) => a.order - b.order)
+                .map((c) => ({ slug: c.slug, label: c.name[lang] })),
+        }));
+    });
+
+    protected readonly footerCopyright = computed(() => {
+        this.i18n.lang();
+        return `© ${new Date().getFullYear()} Brickam. ${this.tr('footer.rights', 'All rights reserved.')}`;
+    });
+    protected readonly footerLegal = Object.keys(LEGAL);
+
     constructor() {
-        // Синхронизируем <html lang> с текущим языком i18n (hy/ru/en).
+        // <html lang> синхронизируется с выбранным языком.
         effect(() => {
             const lang = this.i18n.lang();
             if (this.isBrowser && typeof document !== 'undefined') {
@@ -55,27 +106,45 @@ export class App implements OnInit {
     }
 
     ngOnInit(): void {
-        // Подтягиваем счётчики вишлиста/чата и валюты при старте — только в браузере.
-        // load()/loadChats() глушат 401/ошибку через catchError и не падают.
-        if (this.isBrowser) {
-            // Подтянуть роль из GET /auth/me, если сессия жива (после перезагрузки).
-            if (this.session.isAuthenticated()) {
-                this.session.loadProfile();
-            }
-            this.wishlistStore.load();
-            this.cartStore.load();
-            this.chatStore.loadChats();
-            this.currencyStore.load();
-            this.loyaltyStore.load();
+        if (!this.isBrowser) {
+            return;
         }
+        if (this.session.isAuthenticated()) {
+            this.session.loadProfile();
+        }
+        this.wishlistStore.load();
+        this.cartStore.load();
+        this.chatStore.loadChats();
+        this.currencyStore.load();
+        this.loyaltyStore.load();
+        this.catalogApi.getCategories().subscribe({
+            next: (cats) => this.categories.set(cats),
+            error: () => this.categories.set([]),
+        });
     }
 
-    protected onNav(_item: string): void {
-        // навигация по разделам — подключится с реальными маршрутами каталога (Stage 4+)
+    protected onNav(label: string): void {
+        const route = NAV.find((n) => n.label === label)?.route ?? '/';
+        void this.router.navigate([route]);
     }
 
-    protected logout(): void {
-        this.session.logout();
-        this.router.navigate(['/login']);
+    protected onSearch(event: { query: string; mode: SearchMode }): void {
+        const query = event.query.trim();
+        const path = event.mode === 'ai' ? '/ai' : '/catalog';
+        void this.router.navigate([path], query ? { queryParams: { q: query } } : {});
+    }
+
+    protected onCategory(slug: string): void {
+        void this.router.navigate(['/catalog'], { queryParams: { category: slug } });
+    }
+
+    protected onLegal(label: string): void {
+        const slug = LEGAL[label];
+        if (slug) void this.router.navigate(['/p', slug]);
+    }
+
+    private tr(key: string, fallback: string): string {
+        const value = this.i18n.t(key);
+        return value === key ? fallback : value;
     }
 }

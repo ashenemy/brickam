@@ -1,69 +1,31 @@
-<header class="sticky top-0 z-20">
-    <bh-navbar (nav)="onNav($event)" />
-    <div class="flex justify-end items-center gap-4 px-6 py-2 bg-bg-app">
-        <a
-            href="/catalog"
-            routerLink="/catalog"
-            class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-            style="font: var(--type-label)"
-            >Catalog</a
-        >
-        <a
-            href="/ai"
-            routerLink="/ai"
-            class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-            style="font: var(--type-label)"
-            >Describe project</a
-        >
-        <a
-            href="/calculators"
-            routerLink="/calculators"
-            class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-            style="font: var(--type-label)"
-            >Calculators</a
-        >
-        @if (session.isAuthenticated()) {
-            <a
-                href="/orders"
-                routerLink="/orders"
-                data-testid="nav-orders"
-                class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                style="font: var(--type-label)"
-                >My orders</a
-            >
-        }
-        <app-loyalty-badge />
-        <app-wishlist-badge />
-        <app-cart-badge />
-        <app-chat-badge />
-        <app-currency-switcher />
-        <bh-lang-switcher />
-        @if (session.isAuthenticated()) {
-            <button
-                type="button"
-                (click)="logout()"
-                data-testid="nav-logout"
-                class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                style="font: var(--type-label)"
-            >
-                Logout
-            </button>
-        } @else {
-            <a
-                href="/login"
-                routerLink="/login"
-                data-testid="nav-login"
-                class="text-text-primary hover:text-accent transition-colors duration-base cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                style="font: var(--type-label)"
-                >Login</a
-            >
-        }
-    </div>
+<header class="sticky top-0 z-30 mx-auto w-full max-w-content px-4 pt-4 sm:px-6">
+    <bh-navbar
+        [navItems]="navItems"
+        logoSrc="/assets/logo.svg"
+        [groups]="categoryGroups()"
+        searchPlaceholder="Search materials, tools…"
+        (nav)="onNav($event)"
+        (search)="onSearch($event)"
+        (categoryNavigate)="onCategory($event)"
+    >
+        <div slot="actions" class="flex items-center gap-2 sm:gap-3">
+            <app-lang-currency />
+            <app-wishlist-badge />
+            <app-cart-badge />
+            <app-user-menu />
+        </div>
+    </bh-navbar>
 </header>
 
-<main class="mx-auto w-full max-w-content px-6 py-10">
+<main class="mx-auto w-full max-w-content px-4 py-8 sm:px-6">
     <router-outlet />
 </main>
 
-<bh-footer />
-<app-footer />
+<bh-footer [copyright]="footerCopyright()" [legal]="footerLegal" (legalClick)="onLegal($event)" />
+
+<!-- Небольшой брендовый градиент под футером. -->
+<div
+    aria-hidden="true"
+    class="h-24 w-full"
+    style="background: linear-gradient(to bottom, rgb(var(--color-bg-deep)), rgb(var(--color-accent) / 0.06))"
+></div>

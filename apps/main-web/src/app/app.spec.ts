@@ -29,7 +29,8 @@ describe('App', () => {
         await fixture.whenStable();
         const el = fixture.nativeElement as HTMLElement;
         expect(el.querySelector('bh-navbar')).toBeTruthy();
+        // Один футер (дедуп): bh-footer; локальный app-footer удалён.
         expect(el.querySelector('bh-footer')).toBeTruthy();
-        expect(el.querySelector('app-footer')).toBeTruthy();
+        expect(el.querySelector('app-footer')).toBeNull();
     });
 });
