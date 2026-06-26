@@ -46,4 +46,6 @@ export class CategoryDto implements CategoryContract {
     @ApiPropertyOptional() icon?: string;
     @ApiProperty() order!: number;
     @ApiPropertyOptional() calculatorType?: string;
+    @ApiPropertyOptional() coverUrl?: string;
+    @ApiPropertyOptional() featuredOnHome?: boolean;
 }

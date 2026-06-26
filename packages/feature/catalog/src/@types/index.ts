@@ -69,6 +69,8 @@ export type CategoryContract = {
     icon?: string;
     order: number;
     calculatorType?: string;
+    coverUrl?: string;
+    featuredOnHome?: boolean;
 };
 
 /** Лимиты медиа определённого типа. */

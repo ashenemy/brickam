@@ -1,6 +1,6 @@
 import { ApiProperty, ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
+import { IsBoolean, IsInt, IsOptional, IsString, ValidateNested } from 'class-validator';
 import { LocalizedTextDto } from './media.dto';
 
 /** Создание категории (требует аутентификации). */
@@ -28,6 +28,16 @@ export class CreateCategoryDto {
     @IsOptional()
     @IsString()
     calculatorType?: string;
+
+    @ApiPropertyOptional({ description: 'URL обложки категории (data-URI/S3)' })
+    @IsOptional()
+    @IsString()
+    coverUrl?: string;
+
+    @ApiPropertyOptional({ description: 'Показывать на главной (Shop by room)', default: false })
+    @IsOptional()
+    @IsBoolean()
+    featuredOnHome?: boolean;
 
     @ApiPropertyOptional({ description: 'Порядок вывода', default: 0 })
     @IsOptional()

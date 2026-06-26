@@ -37,6 +37,12 @@ export class CategoriesService extends BaseCrudService<
         if (doc.calculatorType !== undefined) {
             contract.calculatorType = doc.calculatorType;
         }
+        if (doc.coverUrl !== undefined) {
+            contract.coverUrl = doc.coverUrl;
+        }
+        if (doc.featuredOnHome !== undefined) {
+            contract.featuredOnHome = doc.featuredOnHome;
+        }
         return contract;
     }
 

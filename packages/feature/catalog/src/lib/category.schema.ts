@@ -39,6 +39,14 @@ export class Category extends BaseSchema {
     @Prop({ type: String, required: false })
     calculatorType?: string;
 
+    /** Обложка категории (data-URI/S3-URL) — для витрины/главной. */
+    @Prop({ type: String, required: false })
+    coverUrl?: string;
+
+    /** Показывать категорию в блоке «Shop by room» на главной. */
+    @Prop({ type: Boolean, default: false })
+    featuredOnHome?: boolean;
+
     @Prop({ type: Number, default: 0 })
     order!: number;
 }
