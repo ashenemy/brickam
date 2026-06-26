@@ -17,7 +17,7 @@ import {
     ProductCardComponent,
     RoomCardComponent,
 } from '@brickam/ui-kit';
-import { catchError, map, of, timeout } from 'rxjs';
+import { catchError, map, of } from 'rxjs';
 import { CatalogApiService } from './catalog/catalog-api.service';
 import type { Category, ProductListItem } from './catalog/models';
 import { CurrencyStore } from './currency/currency.store';
@@ -194,7 +194,6 @@ export class HomeComponent implements OnInit {
             .getProducts({ page: 1, pageSize: BEST_DEALS_COUNT, sort: 'rating_desc' })
             .pipe(
                 map((res) => res.data),
-                timeout(4000),
                 catchError(() => of([] as ProductListItem[])),
             )
             .subscribe((data) => {
@@ -205,10 +204,7 @@ export class HomeComponent implements OnInit {
         // Featured-категории для блока «Shop by room».
         this.api
             .getCategories()
-            .pipe(
-                timeout(4000),
-                catchError(() => of([] as Category[])),
-            )
+            .pipe(catchError(() => of([] as Category[])))
             .subscribe((cats) => this.categories.set(cats));
     }
 
