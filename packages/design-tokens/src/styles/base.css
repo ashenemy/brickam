@@ -1,0 +1,41 @@
+/* BRICK base-слой: брендовые глобальные хелперы поверх Tailwind preflight.
+   Перенесён из _input/tokens/base.css и адаптирован под прод-имена токенов
+   (цвета — RGB-каналы через rgb(var(--color-*)), блюр — --blur-glass).
+   box-sizing/сброс полей и фон/цвет body уже дают Tailwind preflight + styles.scss,
+   поэтому здесь только то, чего нет: сигнатурное стекло, выделение, скроллбар. */
+
+body {
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+}
+
+/* Сигнатурная полупрозрачная «стеклянная» поверхность (nav, карточки, модалки). */
+.brick-glass {
+    background: var(--glass-fill);
+    -webkit-backdrop-filter: blur(var(--blur-glass));
+    backdrop-filter: blur(var(--blur-glass));
+    box-shadow: var(--shadow-glass);
+    border-radius: var(--radius-xl);
+}
+
+::selection {
+    background: rgb(var(--color-brick-orange));
+    color: rgb(var(--color-white));
+}
+
+/* Тёплый тонкий скроллбар в тон тёмной оболочке. */
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--color-neutral-700)) transparent;
+}
+*::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+*::-webkit-scrollbar-thumb {
+    background: rgb(var(--color-neutral-700));
+    border-radius: 999px;
+}
+*::-webkit-scrollbar-track {
+    background: transparent;
+}

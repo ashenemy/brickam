@@ -1,0 +1,28 @@
+// BRICK — базовая M3-тема Angular Material.
+// Эмитит системные переменные --mat-sys-* (тёмная тёплая палитра + брендовые
+// шрифты). Точечные бренд-оверрайды этих переменных живут в material-bridge.css,
+// который в массиве styles грузится ПОСЛЕ этого файла → бренд перекрывает базу.
+// Поэтому этот файл должен стоять ПЕРВЫМ style-entry в project.json.
+@use "@angular/material" as mat;
+
+html {
+    color-scheme: dark;
+
+    @include mat.theme(
+        (
+            color: (
+                primary: mat.$orange-palette,
+                tertiary: mat.$orange-palette,
+                theme-type: dark,
+            ),
+            typography: (
+                plain-family: "Public Sans",
+                brand-family: "Poppins",
+                bold-weight: 700,
+                medium-weight: 500,
+                regular-weight: 400,
+            ),
+            density: 0,
+        )
+    );
+}

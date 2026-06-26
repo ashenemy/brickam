@@ -1,5 +1,8 @@
 /* Единый вход дизайн-системы BRICK. Линкуется приложениями (styles).
    Один файл подтягивает шрифты, токены и мост Material. */
 @import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Public+Sans:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap");
+/* Material Symbols Outlined — fontSet для <mat-icon> (тонкие line-иконки, ~Iconex). */
+@import url("https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200");
 @import "./tokens.css";
 @import "./material-bridge.css";
+@import "./base.css";
