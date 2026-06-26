@@ -46,9 +46,8 @@ export type AnalyticsDashboard = {
 };
 
 /**
- * Доступ к API аналитики вендора.
- * TODO: на бэкенде контроллер analytics ещё не реализован (модуль-плейсхолдер);
- * пути выбраны по образцу ТЗ — GET /analytics/dashboard?from=&to= и export.csv/.xlsx.
+ * Доступ к API аналитики вендора:
+ * GET /analytics/dashboard?from=&to= и экспорт export.csv/.xlsx.
  * Экспорт — прямые ссылки (открывать в новой вкладке / blob).
  */
 @Injectable({ providedIn: 'root' })

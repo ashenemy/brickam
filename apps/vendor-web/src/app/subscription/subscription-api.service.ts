@@ -21,9 +21,7 @@ export type Subscription = {
 };
 
 /**
- * Доступ к API подписки вендора.
- * TODO: на бэкенде контроллер subscriptions ещё не реализован (модуль-плейсхолдер);
- * пути по образцу ТЗ — GET /subscription и PUT /subscription {plan}.
+ * Доступ к API подписки вендора: GET /subscription и PUT /subscription {plan}.
  */
 @Injectable({ providedIn: 'root' })
 export class SubscriptionApiService {

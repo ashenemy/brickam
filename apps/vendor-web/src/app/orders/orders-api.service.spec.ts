@@ -42,13 +42,19 @@ describe('OrdersApiService', () => {
 
     afterEach(() => httpMock.verify());
 
-    it('list шлёт GET /orders/vendor-orders', () => {
+    it('list шлёт GET /orders/vendor-orders с пагинацией', () => {
         let result: VendorOrder[] | undefined;
         service.list().subscribe((items) => (result = items));
 
-        const req = httpMock.expectOne('http://api.test/api/orders/vendor-orders');
+        const req = httpMock.expectOne(
+            'http://api.test/api/orders/vendor-orders?page=1&pageSize=50',
+        );
         expect(req.request.method).toBe('GET');
-        req.flush({ success: true, data: [mockOrder()] });
+        req.flush({
+            success: true,
+            data: [mockOrder()],
+            meta: { page: 1, pageSize: 50, total: 1, totalPages: 1 },
+        });
 
         expect(result?.[0].id).toBe('vo1');
     });

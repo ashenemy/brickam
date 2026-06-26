@@ -1,4 +1,4 @@
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { RUNTIME_CONFIG } from '@brickam/config-kit/browser';
 import type { Observable } from 'rxjs';
@@ -8,6 +8,13 @@ import { map } from 'rxjs/operators';
 type ApiResponse<T> = {
     success: boolean;
     data: T;
+};
+
+/** Конверт постраничного ответа API ({ success, data, meta }). */
+type ApiListResponse<T> = {
+    success: boolean;
+    data: T[];
+    meta: { page: number; pageSize: number; total: number; totalPages: number };
 };
 
 /** Статус доставки саб-заказа вендора (DeliveryStatus бэкенда). */
@@ -38,8 +45,7 @@ export type VendorOrder = {
 /**
  * Доступ к API вендорских саб-заказов.
  * Смена статуса доставки: PATCH /orders/vendor-orders/:id/delivery {status,note?}.
- * Листинг: GET /orders/vendor-orders (TODO: точный путь/фильтр уточнить —
- * в бэкенде отдельного листинг-эндпоинта пока нет; используем разумный путь).
+ * Листинг: GET /orders/vendor-orders?page=&pageSize= (постраничный конверт {data,meta}).
  */
 @Injectable({ providedIn: 'root' })
 export class OrdersApiService {
@@ -50,11 +56,11 @@ export class OrdersApiService {
         return this.config.apiBaseUrl.replace(/\/$/, '');
     }
 
-    /** Список вендорских саб-заказов. */
-    list(): Observable<VendorOrder[]> {
-        // TODO: подтвердить путь листинга вендорских саб-заказов на бэкенде.
+    /** Список вендорских саб-заказов (одна страница; бэкенд пагинирует). */
+    list(page = 1, pageSize = 50): Observable<VendorOrder[]> {
+        const params = new HttpParams().set('page', String(page)).set('pageSize', String(pageSize));
         return this.http
-            .get<ApiResponse<VendorOrder[]>>(`${this.base}/orders/vendor-orders`)
+            .get<ApiListResponse<VendorOrder>>(`${this.base}/orders/vendor-orders`, { params })
             .pipe(map((res) => res.data));
     }
 
