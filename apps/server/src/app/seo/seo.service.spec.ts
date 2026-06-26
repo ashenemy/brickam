@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { loadSeoConfig, type SeoConfig } from './seo.config';
 import { escapeXml, SeoService } from './seo.service';
 
-const config: SeoConfig = { baseUrl: 'https://buildhub.am', globalPrefix: 'api' };
+const config: SeoConfig = { baseUrl: 'https://brickam.am', globalPrefix: 'api' };
 
 describe('escapeXml', () => {
     it('экранирует все пять XML-сущностей и не задваивает амперсанд', () => {
@@ -50,13 +50,13 @@ describe('SeoService', () => {
     it('collectUrls собирает статику + страницы + товары как абсолютные URL', async () => {
         const urls = await service.collectUrls();
         expect(urls).toEqual([
-            'https://buildhub.am/',
-            'https://buildhub.am/catalog',
-            'https://buildhub.am/pages/about',
-            'https://buildhub.am/pages/terms',
-            'https://buildhub.am/pages/privacy',
-            'https://buildhub.am/product/cement-m500-pro',
-            'https://buildhub.am/product/tile & stone',
+            'https://brickam.am/',
+            'https://brickam.am/catalog',
+            'https://brickam.am/pages/about',
+            'https://brickam.am/pages/terms',
+            'https://brickam.am/pages/privacy',
+            'https://brickam.am/product/cement-m500-pro',
+            'https://brickam.am/product/tile & stone',
         ]);
     });
 
@@ -65,9 +65,9 @@ describe('SeoService', () => {
         expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
         expect(xml).toContain('<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">');
         expect(xml).toContain('</urlset>');
-        expect(xml).toContain('<loc>https://buildhub.am/</loc>');
-        expect(xml).toContain('<loc>https://buildhub.am/pages/privacy</loc>');
-        expect(xml).toContain('<loc>https://buildhub.am/product/cement-m500-pro</loc>');
+        expect(xml).toContain('<loc>https://brickam.am/</loc>');
+        expect(xml).toContain('<loc>https://brickam.am/pages/privacy</loc>');
+        expect(xml).toContain('<loc>https://brickam.am/product/cement-m500-pro</loc>');
         // 2 статики + 3 страницы + 2 товара = 7 <url>.
         expect(xml.match(/<url>/g)).toHaveLength(7);
         // lastmod опущен (детерминированность).
@@ -76,7 +76,7 @@ describe('SeoService', () => {
 
     it('экранирует спецсимволы slug в <loc>', async () => {
         const xml = await service.generateSitemap();
-        expect(xml).toContain('<loc>https://buildhub.am/product/tile &amp; stone</loc>');
+        expect(xml).toContain('<loc>https://brickam.am/product/tile &amp; stone</loc>');
         expect(xml).not.toContain('product/tile & stone</loc>');
     });
 
@@ -94,7 +94,7 @@ describe('SeoService', () => {
         const robots = service.generateRobots();
         expect(robots).toContain('User-agent: *');
         expect(robots).toContain('Allow: /');
-        expect(robots).toContain('Sitemap: https://buildhub.am/api/sitemap.xml');
-        expect(service.sitemapUrl).toBe('https://buildhub.am/api/sitemap.xml');
+        expect(robots).toContain('Sitemap: https://brickam.am/api/sitemap.xml');
+        expect(service.sitemapUrl).toBe('https://brickam.am/api/sitemap.xml');
     });
 });

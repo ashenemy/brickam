@@ -56,8 +56,8 @@ function initSentry(): void {
 
 const buildSwaggerConfig = () =>
     new DocumentBuilder()
-        .setTitle('BuildHub API')
-        .setDescription('API маркетплейса стройматериалов BuildHub')
+        .setTitle('Brickam API')
+        .setDescription('API маркетплейса стройматериалов Brickam')
         .setVersion('1.0')
         .addBearerAuth()
         .addTag('health')
@@ -118,7 +118,7 @@ async function bootstrap(): Promise<void> {
 
     await app.listen(port);
     Logger.log(
-        `🚀 BuildHub API: http://localhost:${port}/${globalPrefix} (docs: /${globalPrefix}/docs)`,
+        `🚀 Brickam API: http://localhost:${port}/${globalPrefix} (docs: /${globalPrefix}/docs)`,
         'Bootstrap',
     );
 }

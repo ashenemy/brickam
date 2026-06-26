@@ -25,7 +25,7 @@ const segmentHandler: ((req: Request, res: Response, next: NextFunction) => void
     // Исходящие вызовы (PSP, S3, SES) — как поддоменные сегменты трассы.
     AWSXRay.captureHTTPsGlobal(http, true);
     AWSXRay.captureHTTPsGlobal(https, true);
-    return openSegment('BuildHub');
+    return openSegment('Brickam');
 })();
 
 @Injectable()
