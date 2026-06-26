@@ -1,16 +1,27 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
 import { MatButton } from '@angular/material/button';
 import { MatIcon } from '@angular/material/icon';
-import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
+import { MatToolbar } from '@angular/material/toolbar';
 import { IconButtonComponent } from '../core/icon-button.component';
 import { LogoComponent } from '../core/logo.component';
 import { SearchBarComponent } from '../forms/search-bar.component';
 
+/** Группа мега-меню категорий: корень + его подкатегории (уже локализовано). */
+export interface CategoryGroup {
+    slug: string;
+    label: string;
+    icon?: string;
+    items: { slug: string; label: string }[];
+}
+
+export type SearchMode = 'normal' | 'ai';
+
 /**
- * Navbar — шапка маркетплейса BRICK на официальном `mat-toolbar` (многострочный):
- * логотип, навигация, корзина/язык/валюта, затем «Categories» + поиск. Иконки —
- * mat-icon, кнопки — matButton/matIconButton. Адаптив (mobile-first): на узких
- * экранах навигация сворачивается в бургер-меню, строки переносятся, без overflow.
+ * Navbar — шапка маркетплейса BRICK на `mat-toolbar` (glass). Логотип (img или
+ * встроенный bh-logo), основная навигация, проецируемые действия (`[slot=actions]`:
+ * вишлист/корзина/юзер/язык-валюта), кнопка «Categories» с мега-меню из API,
+ * поиск с переключателем режимов (обычный/AI). Адаптив: на мобиле навигация и
+ * категории — в полноширинном выезжающем drawer (бургер справа, только < lg).
  */
 @Component({
     selector: 'bh-navbar',
@@ -18,7 +29,6 @@ import { SearchBarComponent } from '../forms/search-bar.component';
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [
         MatToolbar,
-        MatToolbarRow,
         MatButton,
         MatIcon,
         LogoComponent,
@@ -26,16 +36,20 @@ import { SearchBarComponent } from '../forms/search-bar.component';
         SearchBarComponent,
     ],
     template: `
-        <mat-toolbar class="bh-navbar rounded-2xl bg-[var(--glass-fill)] p-4 backdrop-blur-glass shadow-glass sm:p-7">
-            <!-- Row 1 -->
-            <mat-toolbar-row class="bh-row flex items-center gap-4 sm:gap-8">
+        <mat-toolbar class="bh-navbar block rounded-2xl bg-[var(--glass-fill)] p-4 backdrop-blur-glass shadow-glass sm:p-7">
+            <!-- Row 1: logo · nav · actions -->
+            <div class="flex items-center gap-4 sm:gap-8">
                 <a
                     class="shrink-0 cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                     href="#"
                     aria-label="Home"
                     (click)="onLogo($event)"
                 >
-                    <bh-logo [height]="32" />
+                    @if (logoSrc()) {
+                        <img [src]="logoSrc()" alt="BRICK" class="h-8 w-auto" />
+                    } @else {
+                        <bh-logo [height]="32" />
+                    }
                 </a>
 
                 <nav class="hidden flex-1 gap-8 lg:flex lg:gap-12" aria-label="Primary">
@@ -52,92 +66,125 @@ import { SearchBarComponent } from '../forms/search-bar.component';
                     }
                 </nav>
 
-                <div class="ml-auto flex items-center gap-3 lg:ml-0 sm:gap-4">
-                    <button matButton class="bh-lang" (click)="langChange.emit()">
-                        {{ lang() }} · {{ currency() }}
-                    </button>
-
-                    <div class="relative">
-                        <bh-icon-button variant="plain" [size]="44" ariaLabel="Cart" (clicked)="cart.emit()">
-                            <mat-icon>shopping_cart</mat-icon>
-                        </bh-icon-button>
-                        @if (cartCount() > 0) {
-                            <span
-                                class="pointer-events-none absolute -right-0.5 -top-0.5 inline-flex h-[18px] min-w-[18px] items-center justify-center rounded-pill bg-accent px-1.5 text-white"
-                                style="font: var(--type-meta); font-size: 11px"
-                                [attr.aria-label]="cartCount() + ' items in cart'"
-                                >{{ cartCount() }}</span
-                            >
-                        }
-                    </div>
-
+                <div class="ml-auto flex items-center gap-3 sm:gap-4">
+                    <ng-content select="[slot=actions]" />
                     <bh-icon-button
                         class="lg:hidden"
                         variant="plain"
                         [size]="44"
-                        [active]="menuOpen()"
-                        ariaLabel="Toggle navigation menu"
-                        (clicked)="toggleMenu()"
+                        [active]="drawerOpen()"
+                        ariaLabel="Toggle menu"
+                        (clicked)="toggleDrawer()"
                     >
-                        <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
+                        <mat-icon>{{ drawerOpen() ? 'close' : 'menu' }}</mat-icon>
                     </bh-icon-button>
                 </div>
-            </mat-toolbar-row>
+            </div>
 
-            <!-- Collapsible nav (mobile) -->
-            @if (menuOpen()) {
-                <mat-toolbar-row class="bh-row mt-4 flex flex-col items-start gap-3 lg:hidden">
-                    <nav class="flex w-full flex-col gap-3" aria-label="Primary mobile">
-                        @for (item of navItems(); track item) {
-                            <a
-                                class="cursor-pointer rounded-sm py-1 transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                                [class.text-accent]="item === active()"
-                                [class.text-text-primary]="item !== active()"
-                                href="#"
-                                style="font: var(--type-label)"
-                                (click)="onNav($event, item)"
-                                >{{ item }}</a
-                            >
-                        }
-                    </nav>
-                </mat-toolbar-row>
-            }
-
-            <!-- Row 2 -->
-            <mat-toolbar-row class="bh-row mt-5 flex flex-col items-stretch gap-3 sm:mt-6 md:flex-row md:items-center md:gap-5">
-                <button matButton="filled" class="bh-categories h-14 gap-3 sm:h-16" (click)="categories.emit()">
-                    <mat-icon>menu</mat-icon>
-                    Categories
+            <!-- Row 2: categories + search -->
+            <div class="mt-5 flex flex-col items-stretch gap-3 sm:mt-6 md:flex-row md:items-center md:gap-5">
+                <button
+                    matButton="filled"
+                    class="bh-categories h-14 gap-3 sm:h-16"
+                    [attr.aria-expanded]="megaOpen()"
+                    (click)="toggleMega()"
+                >
+                    <mat-icon>{{ megaOpen() ? 'close' : 'category' }}</mat-icon>
+                    {{ categoriesLabel() }}
                 </button>
 
                 <bh-search-bar
                     class="block min-w-0 flex-1"
                     [hasIcon]="true"
                     [placeholder]="searchPlaceholder()"
-                    (submitted)="search.emit($event)"
+                    (submitted)="search.emit({ query: $event, mode: searchMode() })"
                 >
-                    <mat-icon slot="icon">search</mat-icon>
+                    <mat-icon slot="icon">{{ searchMode() === 'ai' ? 'auto_awesome' : 'search' }}</mat-icon>
                     <mat-icon slot="go">arrow_forward</mat-icon>
                 </bh-search-bar>
-            </mat-toolbar-row>
+
+                <!-- Переключатель режима поиска: обычный / AI -->
+                <div class="flex shrink-0 rounded-md bg-[rgb(var(--color-neutral-900)/0.6)] p-1 shadow-inset" role="tablist" aria-label="Search mode">
+                    <button
+                        type="button"
+                        role="tab"
+                        [attr.aria-selected]="searchMode() === 'normal'"
+                        [class]="modeBtn(searchMode() === 'normal')"
+                        (click)="setMode('normal')"
+                    >
+                        <mat-icon class="text-18">search</mat-icon>
+                    </button>
+                    <button
+                        type="button"
+                        role="tab"
+                        [attr.aria-selected]="searchMode() === 'ai'"
+                        [class]="modeBtn(searchMode() === 'ai')"
+                        (click)="setMode('ai')"
+                    >
+                        <mat-icon class="text-18">auto_awesome</mat-icon>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mega-menu категорий (desktop dropdown / в drawer на мобиле) -->
+            @if (megaOpen() && groups().length) {
+                <div class="bh-mega mt-4 grid gap-x-8 gap-y-5 rounded-xl bg-surface-card p-6 shadow-float sm:grid-cols-2 lg:grid-cols-3">
+                    @for (group of groups(); track group.slug) {
+                        <div class="min-w-0">
+                            <button
+                                type="button"
+                                class="mb-2 flex items-center gap-2 text-left text-accent"
+                                style="font: var(--type-label)"
+                                (click)="onCategory(group.slug)"
+                            >
+                                @if (group.icon) {
+                                    <mat-icon class="text-20">{{ group.icon }}</mat-icon>
+                                }
+                                {{ group.label }}
+                            </button>
+                            <ul class="m-0 flex list-none flex-col gap-1 p-0">
+                                @for (item of group.items; track item.slug) {
+                                    <li>
+                                        <button
+                                            type="button"
+                                            class="cursor-pointer text-left text-text-secondary transition-colors duration-base hover:text-text-primary"
+                                            style="font: var(--type-body); font-size: var(--fs-14)"
+                                            (click)="onCategory(item.slug)"
+                                        >
+                                            {{ item.label }}
+                                        </button>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Мобильный drawer: навигация (полная ширина) -->
+            @if (drawerOpen()) {
+                <nav class="mt-4 flex flex-col gap-1 lg:hidden" aria-label="Primary mobile">
+                    @for (item of navItems(); track item) {
+                        <a
+                            class="cursor-pointer rounded-sm py-2 transition-colors duration-base"
+                            [class.text-accent]="item === active()"
+                            [class.text-text-primary]="item !== active()"
+                            href="#"
+                            style="font: var(--type-label)"
+                            (click)="onNav($event, item)"
+                            >{{ item }}</a
+                        >
+                    }
+                </nav>
+            }
         </mat-toolbar>
     `,
     styles: `
-        /* mat-toolbar как glass-оболочка: сбрасываем фон/высоту/паддинги Material,
-           строки растягиваем по высоте контента (2-рядный бренд-хедер). */
         .bh-navbar.mat-toolbar {
             display: block;
             height: auto;
             background: var(--glass-fill);
             color: rgb(var(--color-text-primary));
-        }
-        .bh-navbar .bh-row.mat-toolbar-row {
-            height: auto;
-            padding: 0;
-            white-space: normal;
-        }
-        .bh-lang.mat-mdc-button {
-            font-family: var(--font-display);
         }
         .bh-categories.mat-mdc-unelevated-button {
             border-radius: var(--radius-xl);
@@ -146,36 +193,55 @@ import { SearchBarComponent } from '../forms/search-bar.component';
     `,
 })
 export class NavbarComponent {
-    readonly navItems = input<string[]>(['About us', 'For partners', 'Delivery', 'Payments']);
+    readonly navItems = input<string[]>([]);
     readonly active = input<string>();
-    readonly cartCount = input(0);
-    readonly lang = input('EN');
-    readonly currency = input('₽');
+    readonly logoSrc = input<string>();
     readonly searchPlaceholder = input('Search');
+    readonly categoriesLabel = input('Categories');
+    /** Группы мега-меню (корень + подкатегории), уже локализованные шеллом. */
+    readonly groups = input<CategoryGroup[]>([]);
 
     readonly nav = output<string>();
-    readonly search = output<string>();
-    readonly cart = output<void>();
-    readonly categories = output<void>();
-    readonly langChange = output<void>();
+    readonly search = output<{ query: string; mode: SearchMode }>();
+    readonly categoryNavigate = output<string>();
 
-    protected readonly menuOpen = signal(false);
+    protected readonly drawerOpen = signal(false);
+    protected readonly megaOpen = signal(false);
+    protected readonly searchMode = signal<SearchMode>('normal');
 
-    protected toggleMenu(): void {
-        this.menuOpen.update((open) => !open);
+    protected modeBtn(active: boolean): string {
+        return [
+            'inline-flex h-9 w-10 items-center justify-center rounded-sm transition-colors duration-base',
+            active ? 'bg-accent text-text-on-accent shadow-accent' : 'text-text-secondary',
+        ].join(' ');
+    }
+
+    protected toggleDrawer(): void {
+        this.drawerOpen.update((v) => !v);
+    }
+
+    protected toggleMega(): void {
+        this.megaOpen.update((v) => !v);
+    }
+
+    protected setMode(mode: SearchMode): void {
+        this.searchMode.set(mode);
     }
 
     protected onLogo(event: Event): void {
         event.preventDefault();
-        const first = this.navItems()[0];
-        if (first) {
-            this.nav.emit(first);
-        }
+        this.nav.emit('');
     }
 
     protected onNav(event: Event, item: string): void {
         event.preventDefault();
-        this.menuOpen.set(false);
+        this.drawerOpen.set(false);
         this.nav.emit(item);
+    }
+
+    protected onCategory(slug: string): void {
+        this.megaOpen.set(false);
+        this.drawerOpen.set(false);
+        this.categoryNavigate.emit(slug);
     }
 }
