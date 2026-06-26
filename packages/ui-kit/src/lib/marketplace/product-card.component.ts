@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatCard } from '@angular/material/card';
+import { MatIcon } from '@angular/material/icon';
 import { BadgeComponent } from '../core/badge.component';
 import { RatingComponent } from '../core/rating.component';
 
@@ -15,19 +18,20 @@ export interface Product {
 }
 
 /**
- * ProductCard — фирменная стеклянная карточка товара. Сверху панель с фото,
- * снизу инфо-панель (название / поставщик / цена), кнопка «Add to cart»
- * проявляется при наведении. Опц. рейтинг и промо-бейдж.
- * Перенесён с React (marketplace/ProductCard.jsx).
+ * ProductCard — фирменная стеклянная карточка товара на официальном `mat-card`.
+ * Сверху белая панель с фото, снизу инфо-панель (название/поставщик/цена), кнопка
+ * «Add to cart» (matButton) проявляется при наведении/фокусе. Бейдж/рейтинг — core
+ * на Material. Адаптив: занимает ширину ячейки сетки (2 колонки на мобиле).
  */
 @Component({
     selector: 'bh-product-card',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [BadgeComponent, RatingComponent],
+    imports: [MatCard, MatButton, MatIcon, BadgeComponent, RatingComponent],
     template: `
-        <article
-            class="group block w-full cursor-pointer rounded-xl bg-[var(--glass-fill)] p-2 backdrop-blur-glass shadow-glass transition-[box-shadow,transform] duration-base ease-soft hover:-translate-y-0.5 hover:shadow-glass-hover focus-within:outline focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-[rgb(var(--color-accent))]"
+        <mat-card
+            appearance="outlined"
+            class="bh-product-card group block w-full cursor-pointer rounded-xl bg-[var(--glass-fill)] p-2 backdrop-blur-glass shadow-glass transition-[box-shadow,transform] duration-base ease-soft hover:-translate-y-0.5 hover:shadow-glass-hover"
             (click)="cardClick.emit(product())"
         >
             <!-- Image panel -->
@@ -93,18 +97,30 @@ export interface Product {
                     </div>
 
                     <button
-                        type="button"
-                        class="inline-flex h-10 shrink-0 items-center gap-2 whitespace-nowrap rounded-md border-0 bg-transparent px-3.5 text-accent shadow-[inset_0_0_0_1px_rgb(var(--color-accent))] opacity-0 translate-y-1 cursor-pointer transition-[opacity,transform] duration-base ease-out group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                        style="font: var(--type-button); font-size: var(--fs-14)"
+                        matButton="outlined"
+                        class="bh-add-btn shrink-0 opacity-0 translate-y-1 transition-[opacity,transform] duration-base ease-out group-hover:opacity-100 group-hover:translate-y-0 focus-visible:opacity-100 focus-visible:translate-y-0"
                         [attr.aria-label]="addLabel() + ': ' + product().title"
                         (click)="onAdd($event)"
                     >
                         {{ addLabel() }}
-                        <ng-content select="[slot=cart-icon]" />
+                        <ng-content select="[slot=cart-icon]">
+                            <mat-icon>shopping_cart</mat-icon>
+                        </ng-content>
                     </button>
                 </div>
             </div>
-        </article>
+        </mat-card>
+    `,
+    styles: `
+        /* Снимаем дефолтные паддинги/фон mat-card — карточка несёт свой glass-вид. */
+        .bh-product-card.mat-mdc-card {
+            border: 0;
+            background: var(--glass-fill);
+            overflow: visible;
+        }
+        .bh-add-btn {
+            font-family: var(--font-display);
+        }
     `,
 })
 export class ProductCardComponent {

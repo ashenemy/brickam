@@ -1,16 +1,18 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
+import { MatIconButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
 import { LogoComponent } from '../core/logo.component';
 
 /**
- * Footer — ряд соцсетей, скачивание приложения, юридические ссылки.
- * Лежит на глубоком фоне приложения. Адаптив: flex-wrap, без overflow.
- * Перенесён с React (marketplace/Footer.jsx).
+ * Footer — соцсети, скачивание приложения, юридические ссылки. Соцкнопки —
+ * официальный `matIconButton`, QR/иконки — `mat-icon`. Лежит на глубоком фоне.
+ * Адаптив: flex-wrap, без overflow (на мобиле — колонкой).
  */
 @Component({
     selector: 'bh-footer',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LogoComponent],
+    imports: [LogoComponent, MatIconButton, MatIcon],
     template: `
         <footer
             class="bg-bg-deep px-6 py-10 sm:px-12"
@@ -20,14 +22,14 @@ import { LogoComponent } from '../core/logo.component';
                 <bh-logo [height]="32" />
 
                 <div
-                    class="flex flex-wrap items-center gap-3.5 text-text-secondary"
+                    class="flex flex-wrap items-center gap-2 text-text-secondary"
                     style="font: var(--type-caption)"
                 >
                     <span>Follow us:</span>
                     @for (social of socials(); track social) {
                         <button
-                            type="button"
-                            class="inline-flex h-8 w-8 items-center justify-center rounded-pill bg-surface-chip text-text-primary text-12 cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                            matIconButton
+                            class="bh-social"
                             [attr.title]="social"
                             [attr.aria-label]="social"
                             (click)="socialClick.emit(social)"
@@ -43,15 +45,10 @@ import { LogoComponent } from '../core/logo.component';
                 >
                     <span>Download the app</span>
                     <span
-                        class="inline-flex h-9 w-9 items-center justify-center rounded-sm bg-white"
+                        class="inline-flex h-9 w-9 items-center justify-center rounded-sm bg-white text-text-inverse"
                         aria-hidden="true"
                     >
-                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--color-text-inverse))" stroke-width="2">
-                            <rect x="3" y="3" width="7" height="7" />
-                            <rect x="14" y="3" width="7" height="7" />
-                            <rect x="3" y="14" width="7" height="7" />
-                            <rect x="14" y="14" width="7" height="7" />
-                        </svg>
+                        <mat-icon>qr_code_2</mat-icon>
                     </span>
                 </div>
             </div>
@@ -77,6 +74,18 @@ import { LogoComponent } from '../core/logo.component';
                 {{ copyright() }}
             </div>
         </footer>
+    `,
+    styles: `
+        .bh-social.mat-mdc-icon-button {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            border-radius: var(--radius-pill);
+            background: rgb(var(--color-surface-chip));
+            color: rgb(var(--color-text-primary));
+            font-size: var(--fs-12);
+            line-height: 32px;
+        }
     `,
 })
 export class FooterComponent {

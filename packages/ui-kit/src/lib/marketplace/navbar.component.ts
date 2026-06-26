@@ -1,26 +1,34 @@
 import { ChangeDetectionStrategy, Component, input, output, signal } from '@angular/core';
+import { MatButton } from '@angular/material/button';
+import { MatIcon } from '@angular/material/icon';
+import { MatToolbar, MatToolbarRow } from '@angular/material/toolbar';
 import { IconButtonComponent } from '../core/icon-button.component';
 import { LogoComponent } from '../core/logo.component';
 import { SearchBarComponent } from '../forms/search-bar.component';
 
 /**
- * Navbar — шапка маркетплейса BRICK. Glass-оболочка: логотип, основная навигация,
- * корзина, язык/валюта, затем кнопка «Categories» + строка поиска.
- * Адаптив (mobile-first): на узких экранах навигация сворачивается в бургер-меню,
- * строки переносятся, без overflow.
- * Перенесён с React (marketplace/Navbar.jsx).
+ * Navbar — шапка маркетплейса BRICK на официальном `mat-toolbar` (многострочный):
+ * логотип, навигация, корзина/язык/валюта, затем «Categories» + поиск. Иконки —
+ * mat-icon, кнопки — matButton/matIconButton. Адаптив (mobile-first): на узких
+ * экранах навигация сворачивается в бургер-меню, строки переносятся, без overflow.
  */
 @Component({
     selector: 'bh-navbar',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [LogoComponent, IconButtonComponent, SearchBarComponent],
+    imports: [
+        MatToolbar,
+        MatToolbarRow,
+        MatButton,
+        MatIcon,
+        LogoComponent,
+        IconButtonComponent,
+        SearchBarComponent,
+    ],
     template: `
-        <header
-            class="rounded-2xl bg-[var(--glass-fill)] p-4 backdrop-blur-glass shadow-glass sm:p-7"
-        >
+        <mat-toolbar class="bh-navbar rounded-2xl bg-[var(--glass-fill)] p-4 backdrop-blur-glass shadow-glass sm:p-7">
             <!-- Row 1 -->
-            <div class="flex items-center gap-4 sm:gap-8">
+            <mat-toolbar-row class="bh-row flex items-center gap-4 sm:gap-8">
                 <a
                     class="shrink-0 cursor-pointer rounded-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                     href="#"
@@ -30,10 +38,7 @@ import { SearchBarComponent } from '../forms/search-bar.component';
                     <bh-logo [height]="32" />
                 </a>
 
-                <nav
-                    class="hidden flex-1 gap-8 lg:flex lg:gap-12"
-                    aria-label="Primary"
-                >
+                <nav class="hidden flex-1 gap-8 lg:flex lg:gap-12" aria-label="Primary">
                     @for (item of navItems(); track item) {
                         <a
                             class="cursor-pointer whitespace-nowrap transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
@@ -48,32 +53,13 @@ import { SearchBarComponent } from '../forms/search-bar.component';
                 </nav>
 
                 <div class="ml-auto flex items-center gap-3 lg:ml-0 sm:gap-4">
-                    <button
-                        type="button"
-                        class="inline-flex h-9 items-center gap-1.5 rounded-sm px-3 text-text-primary shadow-[inset_0_0_0_1px_var(--border-default)] cursor-pointer focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                        style="font: var(--type-button); font-size: var(--fs-14)"
-                        (click)="langChange.emit()"
-                    >
+                    <button matButton class="bh-lang" (click)="langChange.emit()">
                         {{ lang() }} · {{ currency() }}
                     </button>
 
                     <div class="relative">
                         <bh-icon-button variant="plain" [size]="44" ariaLabel="Cart" (clicked)="cart.emit()">
-                            <svg
-                                width="24"
-                                height="24"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                stroke-width="1.8"
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                aria-hidden="true"
-                            >
-                                <path d="M3 4h2l2.4 12.2a1 1 0 0 0 1 .8h8.7a1 1 0 0 0 1-.78L21 8H6" />
-                                <circle cx="9.5" cy="20" r="1.3" />
-                                <circle cx="17.5" cy="20" r="1.3" />
-                            </svg>
+                            <mat-icon>shopping_cart</mat-icon>
                         </bh-icon-button>
                         @if (cartCount() > 0) {
                             <span
@@ -93,59 +79,34 @@ import { SearchBarComponent } from '../forms/search-bar.component';
                         ariaLabel="Toggle navigation menu"
                         (clicked)="toggleMenu()"
                     >
-                        <svg
-                            width="24"
-                            height="24"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            stroke-width="2"
-                            stroke-linecap="round"
-                            aria-hidden="true"
-                        >
-                            <path d="M4 7h16M4 12h11M4 17h16" />
-                        </svg>
+                        <mat-icon>{{ menuOpen() ? 'close' : 'menu' }}</mat-icon>
                     </bh-icon-button>
                 </div>
-            </div>
+            </mat-toolbar-row>
 
             <!-- Collapsible nav (mobile) -->
             @if (menuOpen()) {
-                <nav class="mt-4 flex flex-col gap-3 lg:hidden" aria-label="Primary mobile">
-                    @for (item of navItems(); track item) {
-                        <a
-                            class="cursor-pointer rounded-sm py-1 transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                            [class.text-accent]="item === active()"
-                            [class.text-text-primary]="item !== active()"
-                            href="#"
-                            style="font: var(--type-label)"
-                            (click)="onNav($event, item)"
-                            >{{ item }}</a
-                        >
-                    }
-                </nav>
+                <mat-toolbar-row class="bh-row mt-4 flex flex-col items-start gap-3 lg:hidden">
+                    <nav class="flex w-full flex-col gap-3" aria-label="Primary mobile">
+                        @for (item of navItems(); track item) {
+                            <a
+                                class="cursor-pointer rounded-sm py-1 transition-colors duration-base focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                                [class.text-accent]="item === active()"
+                                [class.text-text-primary]="item !== active()"
+                                href="#"
+                                style="font: var(--type-label)"
+                                (click)="onNav($event, item)"
+                                >{{ item }}</a
+                            >
+                        }
+                    </nav>
+                </mat-toolbar-row>
             }
 
             <!-- Row 2 -->
-            <div class="mt-5 flex flex-col items-stretch gap-3 sm:mt-6 md:flex-row md:items-center md:gap-5">
-                <button
-                    type="button"
-                    class="inline-flex h-14 shrink-0 items-center justify-center gap-3 rounded-xl border-0 bg-[rgb(var(--color-neutral-900)/0.7)] px-5 text-white shadow-inset cursor-pointer sm:h-16 sm:px-7 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
-                    style="font: var(--type-h2)"
-                    (click)="categories.emit()"
-                >
-                    <svg
-                        width="26"
-                        height="26"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        aria-hidden="true"
-                    >
-                        <path d="M4 7h16M4 12h11M4 17h16" />
-                    </svg>
+            <mat-toolbar-row class="bh-row mt-5 flex flex-col items-stretch gap-3 sm:mt-6 md:flex-row md:items-center md:gap-5">
+                <button matButton="filled" class="bh-categories h-14 gap-3 sm:h-16" (click)="categories.emit()">
+                    <mat-icon>menu</mat-icon>
                     Categories
                 </button>
 
@@ -155,37 +116,33 @@ import { SearchBarComponent } from '../forms/search-bar.component';
                     [placeholder]="searchPlaceholder()"
                     (submitted)="search.emit($event)"
                 >
-                    <svg
-                        slot="icon"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2"
-                        stroke-linecap="round"
-                        aria-hidden="true"
-                    >
-                        <circle cx="11" cy="11" r="7" />
-                        <path d="M21 21l-4-4" />
-                    </svg>
-                    <svg
-                        slot="go"
-                        width="22"
-                        height="22"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        stroke-width="2.4"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                        aria-hidden="true"
-                    >
-                        <path d="M5 12h13M13 6l6 6-6 6" />
-                    </svg>
+                    <mat-icon slot="icon">search</mat-icon>
+                    <mat-icon slot="go">arrow_forward</mat-icon>
                 </bh-search-bar>
-            </div>
-        </header>
+            </mat-toolbar-row>
+        </mat-toolbar>
+    `,
+    styles: `
+        /* mat-toolbar как glass-оболочка: сбрасываем фон/высоту/паддинги Material,
+           строки растягиваем по высоте контента (2-рядный бренд-хедер). */
+        .bh-navbar.mat-toolbar {
+            display: block;
+            height: auto;
+            background: var(--glass-fill);
+            color: rgb(var(--color-text-primary));
+        }
+        .bh-navbar .bh-row.mat-toolbar-row {
+            height: auto;
+            padding: 0;
+            white-space: normal;
+        }
+        .bh-lang.mat-mdc-button {
+            font-family: var(--font-display);
+        }
+        .bh-categories.mat-mdc-unelevated-button {
+            border-radius: var(--radius-xl);
+            font: var(--type-h2);
+        }
     `,
 })
 export class NavbarComponent {

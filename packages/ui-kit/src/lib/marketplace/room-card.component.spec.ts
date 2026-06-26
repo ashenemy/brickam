@@ -41,8 +41,10 @@ describe('RoomCardComponent', () => {
     it('применяет высоту через style', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
-        const link = (fixture.nativeElement as HTMLElement).querySelector('a') as HTMLElement;
-        expect(link.style.height).toBe('280px');
+        const card = (fixture.nativeElement as HTMLElement).querySelector(
+            'mat-card',
+        ) as HTMLElement;
+        expect(card.style.height).toBe('280px');
     });
 
     it('эмитит cardClick по клику', async () => {
