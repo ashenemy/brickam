@@ -12,7 +12,7 @@ async function main(): Promise<void> {
     const uri = process.env['MONGO_URI'];
     if (uri === undefined || uri.length === 0) {
         // eslint-disable-next-line no-console
-        console.error('MONGO_URI не задан. Пример: MONGO_URI=mongodb://localhost:27017/buildhub');
+        console.error('MONGO_URI не задан. Пример: MONGO_URI=mongodb://localhost:27017/brickam');
         process.exitCode = 1;
         return;
     }

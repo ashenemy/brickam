@@ -266,12 +266,12 @@ export function buildProducts(): SeedRecord[] {
             const cover = isVideo
                 ? {
                       mediaType: 'video',
-                      url: `https://cdn.buildhub.am/products/${slug}/cover.mp4`,
-                      thumbnailUrl: `https://cdn.buildhub.am/products/${slug}/cover.jpg`,
+                      url: `https://cdn.brickam.am/products/${slug}/cover.mp4`,
+                      thumbnailUrl: `https://cdn.brickam.am/products/${slug}/cover.jpg`,
                   }
                 : {
                       mediaType: 'image',
-                      url: `https://cdn.buildhub.am/products/${slug}/cover.jpg`,
+                      url: `https://cdn.brickam.am/products/${slug}/cover.jpg`,
                   };
 
             let discount: Record<string, unknown> | undefined;
@@ -298,7 +298,7 @@ export function buildProducts(): SeedRecord[] {
                 gallery: [
                     {
                         mediaType: 'image',
-                        url: `https://cdn.buildhub.am/products/${slug}/g1.jpg`,
+                        url: `https://cdn.brickam.am/products/${slug}/g1.jpg`,
                     },
                 ],
                 price,

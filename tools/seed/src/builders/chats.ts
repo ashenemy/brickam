@@ -133,7 +133,7 @@ export function buildChats(clock: ChatSeedClock): SeedRecord[] {
                 currency: 'AMD',
                 validUntil: clock.validUntil,
                 status: c.invoiceStatus,
-                pdfUrl: `https://cdn.buildhub.am/invoices/${invoiceNumber}.pdf`,
+                pdfUrl: `https://cdn.brickam.am/invoices/${invoiceNumber}.pdf`,
             },
         });
 

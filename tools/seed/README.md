@@ -1,4 +1,4 @@
-# tools/seed — идемпотентный сид BuildHub
+# tools/seed — идемпотентный сид Brickam
 
 Единственная команда наполняет MongoDB убедительными демо-данными. Повторный
 запуск **не плодит дублей** (Stage 14, Foundations §15/§19).
@@ -7,9 +7,9 @@
 
 ```bash
 # из корня монорепо
-MONGO_URI=mongodb://localhost:27017/buildhub npm run seed
+MONGO_URI=mongodb://localhost:27017/brickam npm run seed
 # или напрямую через Nx
-MONGO_URI=mongodb://localhost:27017/buildhub npx nx run seed:seed
+MONGO_URI=mongodb://localhost:27017/brickam npx nx run seed:seed
 ```
 
 Команда `seed` сначала собирает TypeScript (`build` → `tsc -p tsconfig.lib.json`),

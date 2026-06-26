@@ -107,7 +107,7 @@ export function buildVendors(): SeedRecord[] {
             ownerUserId: vendorOwnerUserId(v.slug),
             region: v.region,
             city: v.city,
-            logo: `https://cdn.buildhub.am/vendors/${v.slug}/logo.png`,
+            logo: `https://cdn.brickam.am/vendors/${v.slug}/logo.png`,
             ratingAvg: 0,
             ratingCount: 0,
         },
