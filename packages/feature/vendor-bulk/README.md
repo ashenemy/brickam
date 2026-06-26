@@ -1,6 +1,6 @@
 # @brickam/vendor-bulk
 
-Массовые операции над товарами вендора BuildHub (Stage 15, Foundations §14).
+Массовые операции над товарами вендора Brickam (Stage 15, Foundations §14).
 Предпросмотр (до/после) и применение операций над выборкой товаров: цена
 (percent/amount/set), скидка (set/remove), остаток (set/inc), статус, категория.
 
