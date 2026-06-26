@@ -40,6 +40,9 @@ type RefundResponse = {
 /** Статус «оплачен» в ArCa getOrderStatus. */
 const ARCA_STATUS_PAID = 2;
 
+/** Таймаут сетевых запросов к ArCa (мс) — защита от зависания PSP. */
+const ARCA_TIMEOUT_MS = 10_000;
+
 /**
  * Провайдер карточного эквайринга ArCa (ArmenianCard) — VPOS, redirect-флоу с
  * pull-подтверждением. `initiate` регистрирует заказ и отдаёт `formUrl`; покупатель
@@ -70,12 +73,7 @@ export class ArcaPaymentProvider extends PaymentProvider {
             returnUrl: input.returnUrl,
         });
 
-        const res = await fetch(`${this.cfg.gatewayUrl}/registerOrder.do`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            body,
-        });
-        const data = (await res.json()) as RegisterOrderResponse;
+        const data = (await this.postForm('registerOrder.do', body)) as RegisterOrderResponse;
 
         if (String(data.errorCode ?? '') !== '0' || !data.formUrl || !data.orderId) {
             throw new Error(
@@ -86,7 +84,11 @@ export class ArcaPaymentProvider extends PaymentProvider {
         return { redirectUrl: data.formUrl, providerRef: data.orderId };
     }
 
-    /** Тянет статус заказа из ArCa; success === статус «оплачен» (2). */
+    /**
+     * Тянет статус заказа из ArCa; success === статус «оплачен» (2). При сетевой
+     * ошибке/таймауте возвращает `null` (не подтверждаем) — вызывающий код решает,
+     * что делать (например, оставить платёж Pending и повторить позже).
+     */
     override async getStatus(providerRef: string): Promise<StatusResult | null> {
         const body = new URLSearchParams({
             userName: this.cfg.username,
@@ -94,15 +96,14 @@ export class ArcaPaymentProvider extends PaymentProvider {
             orderId: providerRef,
         });
 
-        const res = await fetch(`${this.cfg.gatewayUrl}/getOrderStatus.do`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            body,
-        });
-        const data = (await res.json()) as OrderStatusResponse;
-        const status = data.OrderStatus ?? data.orderStatus;
-
-        return { success: status === ARCA_STATUS_PAID };
+        try {
+            const data = (await this.postForm('getOrderStatus.do', body)) as OrderStatusResponse;
+            const status = data.OrderStatus ?? data.orderStatus;
+            return { success: status === ARCA_STATUS_PAID };
+        } catch (err) {
+            this.logger.warn(`ArCa getOrderStatus failed for ${providerRef}: ${String(err)}`);
+            return null;
+        }
     }
 
     /** Возврат средств через ArCa refund.do; success === errorCode '0'. */
@@ -114,12 +115,13 @@ export class ArcaPaymentProvider extends PaymentProvider {
             amount: String(Math.round(amount * 100)),
         });
 
-        const res = await fetch(`${this.cfg.gatewayUrl}/refund.do`, {
-            method: 'POST',
-            headers: { 'content-type': 'application/x-www-form-urlencoded' },
-            body,
-        });
-        const data = (await res.json()) as RefundResponse;
+        let data: RefundResponse;
+        try {
+            data = (await this.postForm('refund.do', body)) as RefundResponse;
+        } catch (err) {
+            this.logger.warn(`ArCa refund request failed: orderId=${providerRef}: ${String(err)}`);
+            return { success: false };
+        }
         const success = String(data.errorCode ?? '') === '0';
 
         if (!success) {
@@ -139,5 +141,28 @@ export class ArcaPaymentProvider extends PaymentProvider {
     /** Синхронный charge для redirect-флоу не используется. */
     override async charge(_amount: number, _ref: string): Promise<ChargeResult> {
         throw new Error('ArcaPaymentProvider does not support synchronous charge; use initiate');
+    }
+
+    /**
+     * POST form-urlencoded к API ArCa с таймаутом (AbortController). Бросает при
+     * сетевой ошибке/таймауте/не-2xx — вызывающий метод решает, ловить ли ошибку.
+     */
+    private async postForm(path: string, body: URLSearchParams): Promise<unknown> {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), ARCA_TIMEOUT_MS);
+        try {
+            const res = await fetch(`${this.cfg.gatewayUrl}/${path}`, {
+                method: 'POST',
+                headers: { 'content-type': 'application/x-www-form-urlencoded' },
+                body,
+                signal: controller.signal,
+            });
+            if (res.ok === false) {
+                throw new Error(`ArCa ${path} HTTP ${res.status}`);
+            }
+            return await res.json();
+        } finally {
+            clearTimeout(timer);
+        }
     }
 }

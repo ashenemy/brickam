@@ -30,6 +30,7 @@ describe('PaymentsService', () => {
         findById: ReturnType<typeof vi.fn>;
         findByOrder: ReturnType<typeof vi.fn>;
         findByProviderRef: ReturnType<typeof vi.fn>;
+        markSucceeded: ReturnType<typeof vi.fn>;
     };
     let provider: {
         name: string;
@@ -48,6 +49,8 @@ describe('PaymentsService', () => {
             findById: vi.fn(),
             findByOrder: vi.fn(),
             findByProviderRef: vi.fn(),
+            // По умолчанию атомарный переход «успешен» и возвращает Succeeded-док.
+            markSucceeded: vi.fn().mockResolvedValue(makeDoc({ status: PaymentStatus.Succeeded })),
         };
         provider = {
             name: 'mock',
@@ -151,8 +154,8 @@ describe('PaymentsService', () => {
             const result = await service.handleArcaReturn('arca-1');
 
             expect(repo.findByProviderRef).toHaveBeenCalledWith('arca-1');
-            expect(doc.status).toBe(PaymentStatus.Succeeded);
-            expect(doc.save).toHaveBeenCalled();
+            // Подтверждение — атомарным переходом, а не save() на документе.
+            expect(repo.markSucceeded).toHaveBeenCalledWith('p1', 'arca-1');
             expect(result).toEqual({ orderId: 'o1' });
         });
 
@@ -163,7 +166,7 @@ describe('PaymentsService', () => {
             const result = await service.handleArcaReturn('arca-1');
 
             expect(provider.getStatus).not.toHaveBeenCalled();
-            expect(doc.save).not.toHaveBeenCalled();
+            expect(repo.markSucceeded).not.toHaveBeenCalled();
             expect(result).toEqual({ orderId: 'o1' });
         });
 
@@ -226,9 +229,8 @@ describe('PaymentsService', () => {
                 { ref: 'mock_ref', status: 'succeeded' },
                 'mock',
             );
-            expect(doc.status).toBe(PaymentStatus.Succeeded);
-            expect(doc.providerRef).toBe('mock_ref');
-            expect(doc.save).toHaveBeenCalled();
+            // Подтверждение — атомарным переходом (защита от гонки вебхуков).
+            expect(repo.markSucceeded).toHaveBeenCalledWith('p1', 'mock_ref');
             expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Succeeded });
         });
 
@@ -255,7 +257,7 @@ describe('PaymentsService', () => {
 
             const result = await service.handleWebhook({}, 'mock');
 
-            expect(doc.save).not.toHaveBeenCalled();
+            expect(repo.markSucceeded).not.toHaveBeenCalled();
             expect(result).toEqual({ paymentId: 'p1', status: PaymentStatus.Succeeded });
         });
 

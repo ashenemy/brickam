@@ -3,6 +3,7 @@ import { Permission } from '@brickam/domain-kit';
 import { Auth } from '@brickam/server-kit';
 import { Body, Controller, Get, Headers, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { Response } from 'express';
 import { PaymentsService } from './payments.service';
 import { Public } from './public.decorator';
@@ -26,6 +27,8 @@ export class PaymentsController {
      */
     @Post('webhook')
     @Public()
+    // Лимит на публичный вебхук — защита от флуда (PSP шлёт единичные события).
+    @Throttle({ default: { ttl: 60_000, limit: 60 } })
     @ApiOkResponse({ description: 'Платёж подтверждён (или уже был подтверждён)' })
     async handleWebhook(
         @Body() payload: Record<string, unknown>,
@@ -40,6 +43,7 @@ export class PaymentsController {
      */
     @Get('arca/callback')
     @Public()
+    @Throttle({ default: { ttl: 60_000, limit: 60 } })
     async arcaCallback(@Query('orderId') arcaOrderId: string, @Res() res: Response): Promise<void> {
         const { orderId } = await this.paymentsService.handleArcaReturn(arcaOrderId);
         res.redirect(302, `${siteUrl()}/orders/${orderId}`);
@@ -52,6 +56,7 @@ export class PaymentsController {
      */
     @Post('idram/callback')
     @Public()
+    @Throttle({ default: { ttl: 60_000, limit: 60 } })
     async idramCallback(
         @Body() payload: Record<string, unknown>,
         @Res() res: Response,
@@ -68,6 +73,7 @@ export class PaymentsController {
     /** Возврат средств по платежу. Доступ — управление заказами. */
     @Post(':id/refund')
     @Auth(Permission.OrdersView)
+    @Throttle({ default: { ttl: 60_000, limit: 10 } })
     @ApiOkResponse({ description: 'Платёж возвращён' })
     refund(@Param('id') id: string): Promise<PaymentResult> {
         return this.paymentsService.refund(id);

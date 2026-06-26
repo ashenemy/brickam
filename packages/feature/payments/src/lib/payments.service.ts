@@ -97,8 +97,11 @@ export class PaymentsService implements PaymentsServiceContract {
         if (payment.status !== PaymentStatus.Succeeded) {
             const status = await this.provider.getStatus(arcaOrderId);
             if (status?.success) {
-                payment.status = PaymentStatus.Succeeded;
-                await payment.save();
+                // Атомарный переход (идемпотентно при повторном возврате/гонке).
+                await this.paymentsRepository.markSucceeded(
+                    payment.id ?? payment._id.toString(),
+                    arcaOrderId,
+                );
             }
         }
 
@@ -161,9 +164,13 @@ export class PaymentsService implements PaymentsServiceContract {
         }
 
         if (event.success) {
-            payment.status = PaymentStatus.Succeeded;
-            payment.providerRef = event.providerRef;
-            await payment.save();
+            // Атомарный переход Pending→Succeeded: при гонке двух вебхуков
+            // фактически подтвердит платёж ровно один запрос (см. markSucceeded).
+            const updated = await this.paymentsRepository.markSucceeded(
+                paymentId,
+                event.providerRef,
+            );
+            return { paymentId, status: updated?.status ?? PaymentStatus.Succeeded };
         }
 
         return { paymentId, status: payment.status };
