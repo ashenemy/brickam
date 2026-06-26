@@ -40,6 +40,21 @@
                 {
                     "name": "CORS_ORIGINS",
                     "value": "https://<DOMAIN>,https://vendor.<DOMAIN>,https://admin.<DOMAIN>"
+                },
+                {
+                    "_comment": "AWS X-Ray: SDK шлёт сегменты в локальный daemon-sidecar по UDP. Адрес — loopback задачи (контейнеры одной Fargate-задачи делят network namespace).",
+                    "name": "AWS_XRAY_DAEMON_ADDRESS",
+                    "value": "127.0.0.1:2000"
+                },
+                {
+                    "_comment": "Поведение SDK при отсутствии активного сегмента (вне HTTP-контекста) — логировать, а не падать.",
+                    "name": "AWS_XRAY_CONTEXT_MISSING",
+                    "value": "LOG_ERROR"
+                },
+                {
+                    "_comment": "_X_AMZN_TRACE_ID — корневой trace-id входящего запроса; в рантайме его проставляет ALB/SDK на каждый запрос, статикой не задаётся. Объявлен пустым, чтобы инструментация (код — отдельно) могла его читать/наследовать.",
+                    "name": "_X_AMZN_TRACE_ID",
+                    "value": ""
                 }
             ],
 
@@ -137,6 +152,30 @@
                 "timeout": 5,
                 "retries": 3,
                 "startPeriod": 20
+            }
+        },
+        {
+            "_comment": "Sidecar AWS X-Ray daemon — принимает сегменты от SDK по UDP :2000 и батчами шлёт их в сервис X-Ray. Не essential: падение демона трассировки не должно ронять API. taskRole должна иметь политику AWSXRayDaemonWriteAccess (xray:PutTraceSegments, xray:PutTelemetryRecords).",
+            "name": "xray-daemon",
+            "image": "amazon/aws-xray-daemon",
+            "essential": false,
+            "cpu": 32,
+            "memoryReservation": 64,
+            "portMappings": [
+                {
+                    "name": "xray",
+                    "containerPort": 2000,
+                    "protocol": "udp"
+                }
+            ],
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/buildhub-server",
+                    "awslogs-region": "<REGION>",
+                    "awslogs-stream-prefix": "xray",
+                    "awslogs-create-group": "true"
+                }
             }
         }
     ]

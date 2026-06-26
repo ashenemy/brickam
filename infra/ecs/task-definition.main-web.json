@@ -1,0 +1,68 @@
+{
+    "_comment": "BuildHub main-web (Angular SSR, Node) — шаблон ECS task definition (Fargate). Все ARN/ID — ПЛЕЙСХОЛДЕРЫ: замените <ACCOUNT_ID>, <REGION>, <ECR_REGISTRY>, <DOMAIN> на реальные перед `aws ecs register-task-definition`. Образ подставляется в CI (deploy-ecs.yml).",
+
+    "family": "buildhub-main-web",
+    "requiresCompatibilities": ["FARGATE"],
+    "networkMode": "awsvpc",
+    "_comment_size": "SSR-рендер лёгкий, но это Node-процесс — берём минимальный валидный для Fargate размер 256/512.",
+    "cpu": "256",
+    "memory": "512",
+
+    "_comment_roles": "executionRoleArn — роль, которой ECS тянет образ из ECR и пишет логи в CloudWatch (+ читает SSM/Secrets, если URL вынесены в secrets). taskRole для статики/SSR не обязателен — приложение не ходит в AWS API; оставлен для единообразия, при ненадобности уберите.",
+    "executionRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-ecs-execution-role",
+    "taskRoleArn": "arn:aws:iam::<ACCOUNT_ID>:role/buildhub-web-task-role",
+
+    "runtimePlatform": {
+        "cpuArchitecture": "X86_64",
+        "operatingSystemFamily": "LINUX"
+    },
+
+    "containerDefinitions": [
+        {
+            "name": "main-web",
+            "_comment_image": "Образ из ECR. Тег <IMAGE_TAG> подставляет CI (обычно github.sha). Пример: 123456789012.dkr.ecr.eu-central-1.amazonaws.com/buildhub-main-web:<sha>",
+            "image": "<ECR_REGISTRY>/buildhub-main-web:<IMAGE_TAG>",
+            "essential": true,
+
+            "portMappings": [
+                {
+                    "name": "http",
+                    "containerPort": 4000,
+                    "protocol": "tcp",
+                    "appProtocol": "http"
+                }
+            ],
+
+            "_comment_env": "SSR-рендер обращается к API и строит абсолютные ссылки (SEO/canonical). API_BASE_URL — базовый URL API (apex/api), SITE_URL — собственный публичный URL фронта. Значения — ПЛЕЙСХОЛДЕРЫ https://<DOMAIN>; если хотите управлять ими централизованно, вынесите в SSM Parameter Store и перенесите в блок `secrets` (valueFrom = ARN параметра).",
+            "environment": [
+                { "name": "NODE_ENV", "value": "production" },
+                { "name": "PORT", "value": "4000" },
+                { "name": "API_BASE_URL", "value": "https://<DOMAIN>/api" },
+                { "name": "SITE_URL", "value": "https://<DOMAIN>" }
+            ],
+
+            "_comment_logs": "Логи SSR-сервера уходят в CloudWatch Logs. Лог-группа создаётся автоматически (awslogs-create-group).",
+            "logConfiguration": {
+                "logDriver": "awslogs",
+                "options": {
+                    "awslogs-group": "/ecs/buildhub-main-web",
+                    "awslogs-region": "<REGION>",
+                    "awslogs-stream-prefix": "main-web",
+                    "awslogs-create-group": "true"
+                }
+            },
+
+            "_comment_health": "Контейнерный health-check: SSR отдаёт корневую страницу. wget есть в alpine-образе (Dockerfile.main-web на node:22-alpine).",
+            "healthCheck": {
+                "command": [
+                    "CMD-SHELL",
+                    "wget -qO- http://localhost:4000/ >/dev/null 2>&1 || exit 1"
+                ],
+                "interval": 30,
+                "timeout": 5,
+                "retries": 3,
+                "startPeriod": 20
+            }
+        }
+    ]
+}

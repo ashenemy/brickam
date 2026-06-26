@@ -147,19 +147,19 @@ jobs:
             service: ${{ secrets.ECS_SERVICE_SERVER }}        # секрет: имя ECS-сервиса
             taskdef: infra/ecs/task-definition.server.json
             container: server
-          # Для фронтов добавьте свои шаблоны task-def и секреты сервисов:
-          # - app: main-web
-          #   service: ${{ secrets.ECS_SERVICE_MAIN_WEB }}
-          #   taskdef: infra/ecs/task-definition.main-web.json
-          #   container: main-web
-          # - app: vendor-web
-          #   service: ${{ secrets.ECS_SERVICE_VENDOR_WEB }}
-          #   taskdef: infra/ecs/task-definition.vendor-web.json
-          #   container: vendor-web
-          # - app: admin-web
-          #   service: ${{ secrets.ECS_SERVICE_ADMIN_WEB }}
-          #   taskdef: infra/ecs/task-definition.admin-web.json
-          #   container: admin-web
+          # Фронты: свой ECR-образ, свой task-def и секрет с именем ECS-сервиса.
+          - app: main-web
+            service: ${{ secrets.ECS_SERVICE_MAIN_WEB }}       # секрет: имя ECS-сервиса
+            taskdef: infra/ecs/task-definition.main-web.json
+            container: main-web
+          - app: vendor-web
+            service: ${{ secrets.ECS_SERVICE_VENDOR_WEB }}     # секрет: имя ECS-сервиса
+            taskdef: infra/ecs/task-definition.vendor-web.json
+            container: vendor-web
+          - app: admin-web
+            service: ${{ secrets.ECS_SERVICE_ADMIN_WEB }}      # секрет: имя ECS-сервиса
+            taskdef: infra/ecs/task-definition.admin-web.json
+            container: admin-web
     steps:
       - uses: actions/checkout@v4
 

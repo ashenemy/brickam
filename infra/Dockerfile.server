@@ -14,6 +14,10 @@ RUN apk add --no-cache ffmpeg
 COPY --from=build /workspace/dist/apps/server ./
 COPY --from=build /workspace/node_modules ./node_modules
 COPY --from=build /workspace/config ./config
+# Непривилегированный рантайм: встроенный в node-образ пользователь `node` (uid 1000).
+# Файлы скопированы root-ом, но world-readable — node их читает; временные файлы
+# рендера ffmpeg пишутся в /tmp (доступен всем). Порт 3000 > 1024 — права на bind не нужны.
+USER node
 EXPOSE 3000
 # Health-check: API отвечает на /api/health (wget есть в busybox alpine).
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \

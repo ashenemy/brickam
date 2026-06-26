@@ -139,6 +139,90 @@
                     "legendFormat": "handles"
                 }
             ]
+        },
+        {
+            "id": 6,
+            "title": "RPS (запросов/с)",
+            "_comment": "Требует гистограмму http_request_duration_seconds (HTTP-интерсептор сервера).",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 0,
+                "y": 13
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\"}[5m]))",
+                    "legendFormat": "rps"
+                }
+            ]
+        },
+        {
+            "id": 7,
+            "title": "Доля ошибок 5xx",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "percentunit",
+                    "max": 1,
+                    "min": 0
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 8,
+                "y": 13
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\",status_code=~\"5..\"}[5m])) / sum(rate(http_request_duration_seconds_count{job=\"buildhub-server\"}[5m]))",
+                    "legendFormat": "error-rate"
+                }
+            ]
+        },
+        {
+            "id": 8,
+            "title": "Латентность p95",
+            "type": "timeseries",
+            "datasource": {
+                "type": "prometheus",
+                "uid": "prometheus"
+            },
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 7,
+                "w": 8,
+                "x": 16,
+                "y": 13
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job=\"buildhub-server\"}[5m])) by (le))",
+                    "legendFormat": "p95"
+                }
+            ]
         }
     ]
 }

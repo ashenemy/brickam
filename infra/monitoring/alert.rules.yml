@@ -1,5 +1,9 @@
-# Правила алертов BuildHub. Используют метрики, доступные по умолчанию
-# (prom-client default metrics + признак up от Prometheus).
+# Правила алертов BuildHub. Группа `buildhub` использует метрики, доступные по
+# умолчанию (prom-client default metrics + признак up от Prometheus). Группы ниже
+# (http / infra) опираются на ДОПОЛНИТЕЛЬНЫЕ метрики, которые поставляет
+# инструментация приложения и экспортеры (см. комментарии у каждого правила) —
+# код/таргеты заводятся отдельно; правила готовы и активируются, как только
+# соответствующие серии появятся в Prometheus.
 groups:
   - name: buildhub
     rules:
@@ -32,3 +36,72 @@ groups:
         annotations:
           summary: 'Высокий лаг event loop'
           description: 'Лаг event loop > 0.5s более 5 минут — возможна перегрузка CPU.'
+
+  # HTTP-метрики: требуется гистограмма http_request_duration_seconds с меткой
+  # status_code (её экспонирует HTTP-интерсептор сервера — код заводится отдельно).
+  - name: buildhub-http
+    rules:
+      # Доля 5xx-ответов > 1% за 5 минут.
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_request_duration_seconds_count{job="buildhub-server",status_code=~"5.."}[5m]))
+            /
+          sum(rate(http_request_duration_seconds_count{job="buildhub-server"}[5m]))
+            > 0.01
+        for: 5m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'Высокая доля ошибок 5xx'
+          description: 'Доля 5xx-ответов превышает 1% более 5 минут ({{ $value | humanizePercentage }}).'
+
+      # p95 латентности запросов > 1s за 5 минут.
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95,
+            sum(rate(http_request_duration_seconds_bucket{job="buildhub-server"}[5m])) by (le)
+          ) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Высокая латентность API (p95)'
+          description: 'p95 времени ответа превышает 1s более 5 минут ({{ $value | humanizeDuration }}).'
+
+  # Инфраструктурные зависимости: метрики поставляют экспортеры/инструментация
+  # (bullmq-gauge приложения, redis_exporter, mongodb_exporter) — таргеты в
+  # prometheus.yml и сами экспортеры заводятся отдельно.
+  - name: buildhub-infra
+    rules:
+      # Затор очереди BullMQ: ожидающих задач > 1000 более 10 минут (gauge
+      # bullmq_queue_waiting{queue=...} экспонирует приложение).
+      - alert: BullMQQueueBacklog
+        expr: sum(bullmq_queue_waiting{job="buildhub-server"}) > 1000
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Затор очереди BullMQ'
+          description: 'В очередях BullMQ скопилось {{ $value }} ожидающих задач более 10 минут — проверьте воркеры.'
+
+      # Использование памяти Redis > 90% от maxmemory (метрики redis_exporter).
+      - alert: RedisHighMemory
+        expr: |
+          redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+            and redis_memory_max_bytes > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: 'Redis у предела памяти'
+          description: 'Redis использует {{ $value | humanizePercentage }} maxmemory более 5 минут — риск вытеснения ключей/OOM.'
+
+      # Mongo недоступен (метрика mongodb_up из mongodb_exporter).
+      - alert: MongoDown
+        expr: mongodb_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: 'MongoDB недоступна'
+          description: 'mongodb_exporter сообщает mongodb_up=0 дольше 1 минуты — БД недоступна.'
