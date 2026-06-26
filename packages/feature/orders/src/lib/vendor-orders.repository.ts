@@ -1,7 +1,8 @@
+import type { Page, PaginationParams } from '@brickam/core-kit';
 import { BaseRepository } from '@brickam/db-kit';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import type { Model } from 'mongoose';
+import type { HydratedDocument, Model } from 'mongoose';
 import { VendorOrder, type VendorOrderDocument } from './vendor-order.schema';
 
 /** Репозиторий саб-заказов вендоров поверх Mongoose-модели (Foundations §7). */
@@ -19,6 +20,17 @@ export class VendorOrdersRepository extends BaseRepository<VendorOrder> {
     /** Саб-заказы вендора (новейшие первыми) — для кабинета продавца. */
     findByVendor(vendorId: string): Promise<VendorOrderDocument[]> {
         return this.find({ vendorId }, { sort: { createdAt: -1 } });
+    }
+
+    /**
+     * Постраничные саб-заказы вендора (новейшие первыми) — для кабинета продавца.
+     * Защищает от выгрузки всего списка при большом числе заказов вендора.
+     */
+    findByVendorPaginated(
+        vendorId: string,
+        params: PaginationParams,
+    ): Promise<Page<HydratedDocument<VendorOrder>>> {
+        return this.findPaginated({ vendorId }, params, { sort: { createdAt: -1 } });
     }
 
     /**

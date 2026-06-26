@@ -79,6 +79,7 @@ describe('OrdersService', () => {
         create: ReturnType<typeof vi.fn>;
         findById: ReturnType<typeof vi.fn>;
         findByVendor: ReturnType<typeof vi.fn>;
+        findByVendorPaginated: ReturnType<typeof vi.fn>;
         aggregate: ReturnType<typeof vi.fn>;
     };
     let deliveryRepo: { findByUser: ReturnType<typeof vi.fn> };
@@ -112,6 +113,7 @@ describe('OrdersService', () => {
             create: vi.fn(),
             findById: vi.fn(),
             findByVendor: vi.fn(),
+            findByVendorPaginated: vi.fn(),
             aggregate: vi.fn(),
         };
         deliveryRepo = { findByUser: vi.fn() };
@@ -750,28 +752,42 @@ describe('OrdersService', () => {
     });
 
     describe('listVendorOrders (§14)', () => {
-        it('возвращает саб-заказы вендора', async () => {
-            vendorOrdersRepo.findByVendor.mockResolvedValue([
-                {
-                    id: 'vo1',
-                    _id: { toString: () => 'vo1' },
-                    orderId: 'order1',
-                    vendorId: 'v1',
-                    items: [],
-                    subtotal: 2000,
-                    commissionPercentSnapshot: 10,
-                    commissionAmount: 200,
-                    payoutAmount: 1800,
-                    deliveryStatus: DeliveryStatus.Accepted,
-                    deliveryEvents: [],
+        it('возвращает постраничные саб-заказы вендора', async () => {
+            vendorOrdersRepo.findByVendorPaginated.mockResolvedValue({
+                data: [
+                    {
+                        id: 'vo1',
+                        _id: { toString: () => 'vo1' },
+                        orderId: 'order1',
+                        vendorId: 'v1',
+                        items: [],
+                        subtotal: 2000,
+                        commissionPercentSnapshot: 10,
+                        commissionAmount: 200,
+                        payoutAmount: 1800,
+                        deliveryStatus: DeliveryStatus.Accepted,
+                        deliveryEvents: [],
+                    },
+                ],
+                meta: {
+                    page: 1,
+                    pageSize: 20,
+                    total: 1,
+                    totalPages: 1,
+                    hasNext: false,
+                    hasPrev: false,
                 },
-            ]);
+            });
 
-            const result = await service.listVendorOrders('v1');
+            const result = await service.listVendorOrders('v1', { page: 1, pageSize: 20 });
 
-            expect(vendorOrdersRepo.findByVendor).toHaveBeenCalledWith('v1');
-            expect(result).toHaveLength(1);
-            expect(result[0]?.vendorId).toBe('v1');
+            expect(vendorOrdersRepo.findByVendorPaginated).toHaveBeenCalledWith('v1', {
+                page: 1,
+                pageSize: 20,
+            });
+            expect(result.data).toHaveLength(1);
+            expect(result.data[0]?.vendorId).toBe('v1');
+            expect(result.meta.total).toBe(1);
         });
     });
 });

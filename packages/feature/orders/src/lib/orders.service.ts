@@ -368,10 +368,20 @@ export class OrdersService implements OrdersServiceContract, OrdersAnalyticsCont
         return this.toOrderContract(doc);
     }
 
-    /** Саб-заказы вендора для кабинета продавца (Stage 15, §14). */
-    async listVendorOrders(vendorId: string): Promise<VendorOrderContract[]> {
-        const docs = await this.vendorOrdersRepository.findByVendor(vendorId);
-        return docs.map((doc) => this.toVendorOrderContract(doc));
+    /** Постраничные саб-заказы вендора для кабинета продавца (Stage 15, §14). */
+    async listVendorOrders(
+        vendorId: string,
+        query: OrdersQueryDto,
+    ): Promise<Page<VendorOrderContract>> {
+        const pageSize = Math.min(query.pageSize, this.config.pagination.maxPageSize);
+        const page = await this.vendorOrdersRepository.findByVendorPaginated(vendorId, {
+            page: query.page,
+            pageSize,
+        });
+        return {
+            data: page.data.map((doc) => this.toVendorOrderContract(doc)),
+            meta: page.meta,
+        };
     }
 
     /** Сохранённые адреса доставки пользователя (для подстановки в checkout). */

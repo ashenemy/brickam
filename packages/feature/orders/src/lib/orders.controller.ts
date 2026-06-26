@@ -10,6 +10,7 @@ import {
 } from '@brickam/server-kit';
 import { Body, Controller, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { ApiOkResponse, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import type { CheckoutResult, OrderContract, VendorOrderContract } from '../@types';
 import { CheckoutDto } from './dto/checkout.dto';
 import { OrdersQueryDto } from './dto/orders-query.dto';
@@ -26,6 +27,8 @@ export class OrdersController {
 
     /** Оформляет заказ из корзины. Идемпотентно по заголовку Idempotency-Key. */
     @Post('checkout')
+    // Строгий лимит на оформление: защита от спама/перебора (поверх глобального).
+    @Throttle({ default: { ttl: 60_000, limit: 15 } })
     @Idempotent()
     @ApiOkResponse({ type: OrderDto, description: 'Оформленный заказ' })
     checkout(
@@ -37,6 +40,7 @@ export class OrdersController {
 
     /** Подтверждает оплату заказа. Идемпотентно по заголовку Idempotency-Key. */
     @Post(':id/pay')
+    @Throttle({ default: { ttl: 60_000, limit: 15 } })
     @Idempotent()
     @ApiOkResponse({ type: OrderDto, description: 'Оплаченный заказ' })
     pay(@CurrentUser('id') buyerId: string, @Param('id') id: string): Promise<OrderContract> {
@@ -53,17 +57,18 @@ export class OrdersController {
         return this.ordersService.listOrders(buyerId, query);
     }
 
-    /** Саб-заказы текущего вендора (кабинет продавца). */
+    /** Постраничные саб-заказы текущего вендора (кабинет продавца). */
     @Get('vendor-orders')
     @Auth(Permission.OrdersView)
-    @ApiOkResponse({ type: VendorOrderDto, isArray: true, description: 'Саб-заказы вендора' })
+    @ApiPaginatedOk(VendorOrderDto)
     vendorOrders(
         @CurrentVendor() vendor: VendorContext | undefined,
-    ): Promise<VendorOrderContract[]> {
+        @Query() query: OrdersQueryDto,
+    ): Promise<Page<VendorOrderContract>> {
         if (!vendor) {
             throw new ForbiddenException('errors.orders.noVendor');
         }
-        return this.ordersService.listVendorOrders(vendor.id);
+        return this.ordersService.listVendorOrders(vendor.id, query);
     }
 
     /** Заказ покупателя по id. */
