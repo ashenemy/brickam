@@ -34,9 +34,9 @@ describe('I18nService', () => {
         expect(svc.translate('errors.forbidden', 'en')).toBe('Access denied');
     });
 
-    it('использует дефолтный язык (hy) без явного', () => {
+    it('использует дефолтный язык (en) без явного', () => {
         const svc = new I18nService();
-        expect(svc.translate('errors.notFound')).toBe(dictionaries.hy['errors.notFound']);
+        expect(svc.translate('errors.notFound')).toBe(dictionaries.en['errors.notFound']);
     });
 
     it('setDefaultLang меняет язык по умолчанию', () => {
@@ -49,13 +49,13 @@ describe('I18nService', () => {
         const svc = new I18nService();
         expect(svc.resolveLang('ru-RU,ru;q=0.9')).toBe('ru');
         expect(svc.resolveLang('en-US')).toBe('en');
-        expect(svc.resolveLang('fr')).toBe('hy'); // не поддерживается → дефолт
-        expect(svc.resolveLang(null)).toBe('hy');
+        expect(svc.resolveLang('fr')).toBe('en'); // не поддерживается → дефолт
+        expect(svc.resolveLang(null)).toBe('en');
     });
 
     it('langs и isSupported', () => {
         const svc = new I18nService();
-        expect(svc.langs).toEqual(['hy', 'ru', 'en']);
+        expect(svc.langs).toEqual(['en', 'ru', 'hy']);
         expect(svc.isSupported('ru')).toBe(true);
         expect(svc.isSupported('de')).toBe(false);
     });
