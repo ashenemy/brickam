@@ -443,6 +443,35 @@ const LEAVES: CategorySeed[] = [
 
 const CATEGORIES: CategorySeed[] = [...ROOTS, ...LEAVES];
 
+/** Корни, показываемые в блоке «Shop by room» на главной (с обложками). */
+const FEATURED_HOME = ['building', 'finishing', 'plumbing', 'flooring', 'tools'];
+
+/** Детерминированный хэш (FNV-1a) — для цвета обложки категории. */
+function hash(s: string): number {
+    let h = 2166136261;
+    for (let i = 0; i < s.length; i += 1) {
+        h ^= s.charCodeAt(i);
+        h = Math.imul(h, 16777619) >>> 0;
+    }
+    return h >>> 0;
+}
+
+/** SVG-обложка категории как data-URI (в БД, без MinIO). */
+function categoryCover(slug: string, label: string): string {
+    const hue = hash(slug) % 360;
+    const text = label.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+    const svg =
+        `<svg xmlns='http://www.w3.org/2000/svg' width='640' height='420' viewBox='0 0 640 420'>` +
+        `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
+        `<stop offset='0' stop-color='hsl(${hue},52%,40%)'/>` +
+        `<stop offset='1' stop-color='hsl(${(hue + 24) % 360},58%,22%)'/>` +
+        `</linearGradient></defs>` +
+        `<rect width='640' height='420' fill='url(#g)'/>` +
+        `<text x='40' y='370' font-family='Poppins,Arial,sans-serif' font-size='40' font-weight='700' fill='#ffffff'>${text}</text>` +
+        `</svg>`;
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}
+
 /** Все slug категорий — для перекрёстных ссылок в товарах. */
 export const CATEGORY_SLUGS: string[] = CATEGORIES.map((c) => c.slug);
 
@@ -465,6 +494,11 @@ export function buildCategories(): SeedRecord[] {
         };
         if (c.parentSlug !== undefined) {
             doc['parentId'] = categoryId(c.parentSlug);
+        }
+        // Корни из FEATURED_HOME выводятся на главной с обложкой.
+        if (FEATURED_HOME.includes(c.slug)) {
+            doc['featuredOnHome'] = true;
+            doc['coverUrl'] = categoryCover(c.slug, c.name.en);
         }
         return { collection: COLLECTIONS.categories, key: { slug: c.slug }, doc };
     });
