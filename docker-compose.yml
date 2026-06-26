@@ -39,8 +39,11 @@ services:
             MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:-brickam-local}
             MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:-brickam-local-s3-secret}
         ports:
-            - '9000:9000' # S3 API
-            - '9001:9001' # веб-консоль
+            # Хост-порты переопределяются (конфликт с другим локальным S3/ClickHouse);
+            # внутри сети всегда minio:9000. При смене MINIO_API_PORT задайте и
+            # S3_PUBLIC_URL=http://localhost:<port>/<bucket> для отдачи медиа в браузер.
+            - '${MINIO_API_PORT:-9000}:9000' # S3 API
+            - '${MINIO_CONSOLE_PORT:-9001}:9001' # веб-консоль
         volumes:
             - minio-data:/data
         healthcheck:
