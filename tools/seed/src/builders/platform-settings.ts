@@ -1,11 +1,26 @@
 import { COLLECTIONS, type SeedRecord } from '../types';
 
 /**
- * Единый документ настроек платформы (ключ 'default'): media (лимиты/форматы),
- * aiPrompts (системные подсказки §13), seo.botUserAgents (§19). Ровно один.
+ * Документы настроек платформы: 'default' (media/aiPrompts/seo) и 'social'
+ * (соцссылки витрины — map платформа→url, редактируются в админке, читаются
+ * публично футером). Пустые значения футер не показывает.
  */
 export function buildPlatformSettings(): SeedRecord[] {
     return [
+        {
+            collection: COLLECTIONS.platformSettings,
+            key: { key: 'social' },
+            doc: {
+                _id: 'platform_settings_social',
+                key: 'social',
+                scope: 'global',
+                value: {
+                    facebook: 'https://facebook.com/brickam',
+                    instagram: 'https://instagram.com/brickam',
+                    telegram: 'https://t.me/brickam',
+                },
+            },
+        },
         {
             collection: COLLECTIONS.platformSettings,
             key: { key: 'default' },

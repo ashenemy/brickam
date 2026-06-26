@@ -68,16 +68,18 @@ describe('runSeed — объём и качество', () => {
         }
     });
 
-    it('platform_settings — ровно один документ с непустым seo.botUserAgents', async () => {
+    it('platform_settings — default с seo.botUserAgents и social со ссылками', async () => {
         const store = new InMemorySeedStore();
         await runSeed(store);
 
         const settings = store.documents(COLLECTIONS.platformSettings);
-        expect(settings.length).toBe(1);
-        const value = settings[0]?.['value'] as {
-            seo: { botUserAgents: string[] };
-        };
-        expect(value.seo.botUserAgents.length).toBeGreaterThan(0);
+        const byKey = new Map(settings.map((s) => [s['key'] as string, s]));
+
+        const def = byKey.get('default')?.['value'] as { seo: { botUserAgents: string[] } };
+        expect(def.seo.botUserAgents.length).toBeGreaterThan(0);
+
+        const social = byKey.get('social')?.['value'] as Record<string, string>;
+        expect(Object.values(social).some((url) => url.startsWith('http'))).toBe(true);
     });
 });
 
