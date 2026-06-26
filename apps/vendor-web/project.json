@@ -22,6 +22,7 @@
                     }
                 ],
                 "styles": [
+                    "packages/design-tokens/src/styles/material-theme.scss",
                     "packages/design-tokens/src/styles/index.css",
                     "apps/vendor-web/src/styles.scss"
                 ]
