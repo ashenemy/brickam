@@ -156,7 +156,9 @@ services:
             - redis
             - minio
         environment:
-            NODE_ENV: production
+            # dev-режим в локальном Docker-стеке: грузит config/development.toml
+            # (sms/payment=mock, CORS на localhost), CSRF off, обычные cookie по http.
+            NODE_ENV: development
             MONGO_URI: mongodb://mongo:27017/buildhub
             REDIS_URL: redis://redis:6379
             JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-change-me-access}
