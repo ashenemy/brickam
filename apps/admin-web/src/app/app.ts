@@ -17,6 +17,7 @@ import { SessionStore } from './auth/session.store';
 type AdminNavItem = { labelKey: string; path: string };
 
 const NAV: readonly AdminNavItem[] = [
+    { labelKey: 'admin.nav.categories', path: 'categories' },
     { labelKey: 'admin.nav.moderation', path: 'moderation' },
     { labelKey: 'admin.nav.settings', path: 'settings' },
     { labelKey: 'admin.nav.disputes', path: 'disputes' },

@@ -12,6 +12,12 @@ export const appRoutes: Route[] = [
     { path: 'login', component: LoginPageComponent },
     { path: '', component: HomeComponent, canActivate: admin },
     {
+        path: 'categories',
+        canActivate: admin,
+        loadComponent: () =>
+            import('./categories/categories.component').then((m) => m.CategoriesComponent),
+    },
+    {
         path: 'moderation',
         canActivate: admin,
         loadComponent: () =>
