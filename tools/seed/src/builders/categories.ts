@@ -456,10 +456,13 @@ function hash(s: string): number {
     return h >>> 0;
 }
 
-/** SVG-обложка категории как data-URI (в БД, без MinIO). */
-function categoryCover(slug: string, label: string): string {
+/**
+ * SVG-обложка категории как data-URI (в БД, без MinIO). Только градиент по хэшу
+ * slug — подпись рисует карточка (bh-room-card) поверх, текст в обложку не пишем,
+ * чтобы не дублировался с локализованным именем.
+ */
+function categoryCover(slug: string): string {
     const hue = hash(slug) % 360;
-    const text = label.replace(/&/g, '&amp;').replace(/</g, '&lt;');
     const svg =
         `<svg xmlns='http://www.w3.org/2000/svg' width='640' height='420' viewBox='0 0 640 420'>` +
         `<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>` +
@@ -467,7 +470,6 @@ function categoryCover(slug: string, label: string): string {
         `<stop offset='1' stop-color='hsl(${(hue + 24) % 360},58%,22%)'/>` +
         `</linearGradient></defs>` +
         `<rect width='640' height='420' fill='url(#g)'/>` +
-        `<text x='40' y='370' font-family='Poppins,Arial,sans-serif' font-size='40' font-weight='700' fill='#ffffff'>${text}</text>` +
         `</svg>`;
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;
 }
@@ -498,7 +500,7 @@ export function buildCategories(): SeedRecord[] {
         // Корни из FEATURED_HOME выводятся на главной с обложкой.
         if (FEATURED_HOME.includes(c.slug)) {
             doc['featuredOnHome'] = true;
-            doc['coverUrl'] = categoryCover(c.slug, c.name.en);
+            doc['coverUrl'] = categoryCover(c.slug);
         }
         return { collection: COLLECTIONS.categories, key: { slug: c.slug }, doc };
     });
