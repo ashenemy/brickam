@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
+import { SessionStore } from '../auth/session.store';
 import type { ProductListItem } from '../catalog/models';
 import { WishlistPageComponent } from './wishlist-page.component';
 
@@ -42,6 +43,8 @@ describe('WishlistPageComponent', () => {
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
+                // Страница вишлиста — для авторизованных: стор грузит вишлист через API.
+                { provide: SessionStore, useValue: { isAuthenticated: () => true } },
             ],
         }).compileComponents();
 

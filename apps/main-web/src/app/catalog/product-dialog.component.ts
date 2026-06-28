@@ -15,7 +15,7 @@ import { ProductDetailsViewComponent } from './product-details-view.component';
             <button type="button" class="bh-dialog-close" aria-label="Close" (click)="ref.close()">
                 <mat-icon>close</mat-icon>
             </button>
-            <div class="max-h-[85vh] overflow-y-auto rounded-lg bg-surface-card p-6">
+            <div class="max-h-[85vh] overflow-y-auto rounded-md bg-surface-card p-4">
                 <app-product-details-view [product]="data" />
             </div>
         </div>

@@ -1,4 +1,4 @@
-import { isPlatformBrowser, NgOptimizedImage } from '@angular/common';
+import { isPlatformBrowser } from '@angular/common';
 import {
     ChangeDetectionStrategy,
     Component,
@@ -30,17 +30,17 @@ import type { Media, ProductDetail } from './models';
     selector: 'app-product-details-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ButtonComponent, WishlistHeartComponent, CurrencyDisplayPipe, NgOptimizedImage],
+    imports: [ButtonComponent, WishlistHeartComponent, CurrencyDisplayPipe],
     template: `
         <div class="flex flex-col gap-8 lg:flex-row">
             <!-- Медиа -->
             <div class="flex flex-col gap-3 lg:w-1/2">
-                <div class="relative aspect-square w-full overflow-hidden rounded-xl bg-surface-card-alt">
+                <div class="relative aspect-square w-full overflow-hidden rounded-md bg-surface-card-alt">
                     @if (activeMedia(); as m) {
                         @if (m.mediaType === 'video' && !videoFailed()) {
                             <video
                                 #coverVideo
-                                class="h-full w-full object-cover"
+                                class="absolute inset-0 h-full w-full object-cover"
                                 autoplay
                                 muted
                                 loop
@@ -52,21 +52,15 @@ import type { Media, ProductDetail } from './models';
                             </video>
                         } @else if (m.mediaType === 'video' && videoFailed()) {
                             <img
-                                [ngSrc]="m.thumbnailUrl ?? ''"
+                                [src]="m.thumbnailUrl ?? ''"
                                 [alt]="heading()"
-                                fill
-                                priority
-                                sizes="(min-width: 1024px) 50vw, 100vw"
-                                class="object-cover"
+                                class="absolute inset-0 h-full w-full object-cover"
                             />
                         } @else {
                             <img
-                                [ngSrc]="m.url"
+                                [src]="m.url"
                                 [alt]="heading()"
-                                fill
-                                priority
-                                sizes="(min-width: 1024px) 50vw, 100vw"
-                                class="object-cover"
+                                class="absolute inset-0 h-full w-full object-cover"
                             />
                         }
                     }
@@ -74,11 +68,11 @@ import type { Media, ProductDetail } from './models';
 
                 <!-- Галерея -->
                 @if (gallery().length > 1) {
-                    <div class="flex gap-2 overflow-x-auto">
+                    <div class="flex gap-3 overflow-x-auto">
                         @for (g of gallery(); track $index) {
                             <button
                                 type="button"
-                                class="h-16 w-16 shrink-0 cursor-pointer overflow-hidden rounded-md border-0 bg-surface-card-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                                class="h-20 w-20 shrink-0 cursor-pointer overflow-hidden rounded-md border-0 bg-surface-card-alt focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                                 [attr.aria-label]="ph('galleryItem') + ' ' + ($index + 1)"
                                 (click)="selectMedia($index)"
                             >
