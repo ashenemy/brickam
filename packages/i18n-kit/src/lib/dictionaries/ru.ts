@@ -451,4 +451,6 @@ export const ru: Dictionary = {
     'user.profile': 'Профиль',
     'user.orders': 'История заказов',
     'user.logout': 'Выход',
+    'wishlist.added': 'Добавлено в избранное',
+    'wishlist.removed': 'Удалено из избранного',
 };

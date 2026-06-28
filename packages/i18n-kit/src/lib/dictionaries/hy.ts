@@ -451,4 +451,6 @@ export const hy: Dictionary = {
     'user.profile': 'Իմ էջը',
     'user.orders': 'Պատվերների պատմություն',
     'user.logout': 'Ելք',
+    'wishlist.added': 'Ավելացվեց ընտրանի',
+    'wishlist.removed': 'Հեռացվեց ընտրանուց',
 };
