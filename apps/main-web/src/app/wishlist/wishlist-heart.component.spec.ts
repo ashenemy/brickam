@@ -2,6 +2,7 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { Component } from '@angular/core';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { WishlistStore } from './wishlist.store';
 import { WishlistHeartComponent } from './wishlist-heart.component';
@@ -29,6 +30,7 @@ describe('WishlistHeartComponent', () => {
             providers: [
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
             ],
         }).compileComponents();

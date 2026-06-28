@@ -33,6 +33,20 @@ body {
     border: 0;
 }
 
+/* Снакбары вишлиста: успех (добавлено) / нейтральный (удалено). */
+.bh-snack-success .mdc-snackbar__surface {
+    background: rgb(var(--color-success)) !important;
+}
+.bh-snack-success .mdc-snackbar__label {
+    color: #fff !important;
+}
+.bh-snack-info .mdc-snackbar__surface {
+    background: rgb(var(--color-surface-card-alt)) !important;
+}
+.bh-snack-info .mdc-snackbar__label {
+    color: rgb(var(--color-text-primary)) !important;
+}
+
 /* Попапы товара/галереи: убрать дефолтные паддинги mat-dialog (контент несёт свои). */
 .bh-dialog .mat-mdc-dialog-surface {
     padding: 0;
