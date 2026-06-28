@@ -453,4 +453,5 @@ export const ru: Dictionary = {
     'user.logout': 'Выход',
     'wishlist.added': 'Добавлено в избранное',
     'wishlist.removed': 'Удалено из избранного',
+    'cart.added': 'Добавлено в корзину',
 };

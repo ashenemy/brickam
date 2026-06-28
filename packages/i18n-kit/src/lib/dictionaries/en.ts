@@ -453,4 +453,5 @@ export const en: Dictionary = {
     'user.logout': 'Log out',
     'wishlist.added': 'Added to wishlist',
     'wishlist.removed': 'Removed from wishlist',
+    'cart.added': 'Added to cart',
 };

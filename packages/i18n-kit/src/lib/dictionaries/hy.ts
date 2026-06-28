@@ -453,4 +453,5 @@ export const hy: Dictionary = {
     'user.logout': 'Ելք',
     'wishlist.added': 'Ավելացվեց ընտրանի',
     'wishlist.removed': 'Հեռացվեց ընտրանուց',
+    'cart.added': 'Ավելացվեց զամբյուղ',
 };
