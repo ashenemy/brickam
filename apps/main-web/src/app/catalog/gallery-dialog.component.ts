@@ -19,7 +19,7 @@ export interface GalleryDialogData {
                 <mat-icon>close</mat-icon>
             </button>
             <bh-gallery
-                class="block h-full w-full overflow-hidden rounded-lg bg-surface-card"
+                class="block h-full w-full overflow-hidden rounded-lg bg-surface-card p-1"
                 [images]="data.images"
             />
         </div>
