@@ -33,6 +33,14 @@ body {
     border: 0;
 }
 
+/* Попапы товара/галереи: убрать дефолтные паддинги mat-dialog (контент несёт свои). */
+.bh-dialog .mat-mdc-dialog-surface {
+    padding: 0;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    background: transparent;
+}
+
 /* Иконки-кнопки шапки: бордер + полностью круглая форма, контент строго по центру. */
 .bh-icon-bordered.mat-mdc-icon-button {
     display: inline-flex;

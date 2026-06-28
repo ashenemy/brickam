@@ -20,8 +20,10 @@ import {
 import { catchError, map, of } from 'rxjs';
 import { CatalogApiService } from './catalog/catalog-api.service';
 import type { Category, ProductListItem } from './catalog/models';
+import { ProductPopupService } from './catalog/product-popup.service';
 import { CurrencyStore } from './currency/currency.store';
 import { SeoService } from './seo/seo.service';
+import { WishlistStore } from './wishlist/wishlist.store';
 
 /** Раскладка бенто «Shop by room»: первая плитка большая, остальные — сеткой. */
 const BENTO_AREAS = ['a', 'b', 'c', 'd', 'e'];
@@ -123,8 +125,11 @@ const BEST_DEALS_COUNT = 10;
                         @for (item of cards(); track item.slug) {
                             <bh-product-card
                                 [product]="item.card"
+                                [inWishlist]="wishlist.has(item.id)"
                                 (cardClick)="openProduct(item.slug)"
-                                (addToCart)="openProduct(item.slug)"
+                                (openGallery)="popup.openGallery(item.slug)"
+                                (openDetails)="popup.openDetails(item.slug)"
+                                (toggleWishlist)="wishlist.toggle(item.id)"
                             />
                         }
                     </div>
@@ -175,7 +180,11 @@ const BEST_DEALS_COUNT = 10;
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 16px;
-            align-items: start;
+        }
+        /* Карточки тянутся на всю высоту ячейки — одинаковая высота в ряду. */
+        .bh-product-grid bh-product-card {
+            display: block;
+            height: 100%;
         }
         @media (min-width: 640px) {
             .bh-product-grid {
@@ -190,6 +199,8 @@ export class HomeComponent implements OnInit {
     private readonly seo = inject(SeoService);
     private readonly api = inject(CatalogApiService);
     private readonly currencyStore = inject(CurrencyStore);
+    protected readonly wishlist = inject(WishlistStore);
+    protected readonly popup = inject(ProductPopupService);
     private readonly router = inject(Router);
 
     protected readonly lang = this.i18n.lang;
@@ -227,7 +238,11 @@ export class HomeComponent implements OnInit {
         this.currencyStore.selected();
         this.currencyStore.rates();
         this.lang();
-        return this.items().map((item) => ({ slug: item.slug, card: this.toCard(item) }));
+        return this.items().map((item) => ({
+            slug: item.slug,
+            id: item.id,
+            card: this.toCard(item),
+        }));
     });
 
     constructor() {
