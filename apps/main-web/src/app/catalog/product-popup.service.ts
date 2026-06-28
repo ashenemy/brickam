@@ -21,6 +21,7 @@ export class ProductPopupService {
             this.dialog.open(GalleryDialogComponent, {
                 data: { images: images.length ? images : [p.cover.url] },
                 panelClass: 'bh-dialog',
+                backdropClass: 'bh-dialog-backdrop',
                 maxWidth: '95vw',
             });
         });
@@ -32,6 +33,7 @@ export class ProductPopupService {
             this.dialog.open(ProductDialogComponent, {
                 data: p,
                 panelClass: 'bh-dialog',
+                backdropClass: 'bh-dialog-backdrop',
                 maxWidth: '95vw',
             });
         });

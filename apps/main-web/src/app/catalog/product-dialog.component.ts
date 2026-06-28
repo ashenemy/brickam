@@ -1,5 +1,4 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
-import { MatIconButton } from '@angular/material/button';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { MatIcon } from '@angular/material/icon';
 import type { ProductDetail } from './models';
@@ -10,18 +9,15 @@ import { ProductDetailsViewComponent } from './product-details-view.component';
     selector: 'app-product-dialog',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProductDetailsViewComponent, MatIconButton, MatIcon],
+    imports: [ProductDetailsViewComponent, MatIcon],
     template: `
-        <div class="relative max-h-[85vh] w-[90vw] max-w-[980px] overflow-y-auto bg-surface-card p-6">
-            <button
-                matIconButton
-                class="absolute right-2 top-2 z-10"
-                aria-label="Close"
-                (click)="ref.close()"
-            >
+        <div class="relative w-[90vw] max-w-[980px]">
+            <button type="button" class="bh-dialog-close" aria-label="Close" (click)="ref.close()">
                 <mat-icon>close</mat-icon>
             </button>
-            <app-product-details-view [product]="data" />
+            <div class="max-h-[85vh] overflow-y-auto rounded-lg bg-surface-card p-6">
+                <app-product-details-view [product]="data" />
+            </div>
         </div>
     `,
 })

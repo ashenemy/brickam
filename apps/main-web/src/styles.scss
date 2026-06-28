@@ -52,12 +52,36 @@ body {
     color: rgb(var(--color-text-primary)) !important;
 }
 
-/* Попапы товара/галереи: убрать дефолтные паддинги mat-dialog (контент несёт свои). */
+/* Попапы товара/галереи: без дефолтных паддингов; overflow visible — кнопка
+   закрытия выходит за границу попапа. */
 .bh-dialog .mat-mdc-dialog-surface {
     padding: 0;
-    border-radius: var(--radius-lg);
-    overflow: hidden;
+    overflow: visible;
     background: transparent;
+}
+/* Бэкдроп попапов — с блюром. */
+.bh-dialog-backdrop {
+    background: rgba(0, 0, 0, 0.45);
+    -webkit-backdrop-filter: blur(4px);
+    backdrop-filter: blur(4px);
+}
+/* Кнопка закрытия — кружок в правом верхнем углу, наполовину за границей попапа. */
+.bh-dialog-close {
+    position: absolute;
+    top: -20px;
+    right: -20px;
+    z-index: 30;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-pill);
+    border: 0;
+    background: rgb(var(--color-white));
+    color: rgb(var(--color-text-inverse));
+    box-shadow: var(--shadow-float);
+    cursor: pointer;
 }
 
 /* Иконки-кнопки шапки: бордер + полностью круглая форма, контент строго по центру. */
