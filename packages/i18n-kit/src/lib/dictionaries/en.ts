@@ -431,7 +431,7 @@ export const en: Dictionary = {
     'nav.refunds': 'Refunds',
 
     // Main-web: home
-    'home.shopByRoom': 'Shop by room',
+    'home.allCategories': 'All categories',
     'home.bestDeals': 'Best deals',
     'home.loading': 'Loading…',
     'home.noProducts': 'No products yet',

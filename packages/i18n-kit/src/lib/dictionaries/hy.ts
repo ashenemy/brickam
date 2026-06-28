@@ -431,7 +431,7 @@ export const hy: Dictionary = {
     'nav.refunds': 'Վերադարձ',
 
     // Main-web: home
-    'home.shopByRoom': 'Գնումներ ըստ սենյակի',
+    'home.allCategories': 'Բոլոր կատեգորիաները',
     'home.bestDeals': 'Լավագույն առաջարկներ',
     'home.loading': 'Բեռնվում է…',
     'home.noProducts': 'Դեռ ապրանքներ չկան',

@@ -431,7 +431,7 @@ export const ru: Dictionary = {
     'nav.refunds': 'Возвраты',
 
     // Main-web: home
-    'home.shopByRoom': 'Покупки по комнатам',
+    'home.allCategories': 'Все категории',
     'home.bestDeals': 'Лучшие предложения',
     'home.loading': 'Загрузка…',
     'home.noProducts': 'Пока нет товаров',
