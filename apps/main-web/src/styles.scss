@@ -33,6 +33,11 @@ body {
     border: 0;
 }
 
+/* Заполненная иконка Material Symbols (ось FILL) — напр. активное сердце вишлиста. */
+.bh-icon-fill.mat-icon {
+    font-variation-settings: "FILL" 1, "wght" 400, "GRAD" 0, "opsz" 24;
+}
+
 /* Снакбары вишлиста: успех (добавлено) / нейтральный (удалено). */
 .bh-snack-success .mdc-snackbar__surface {
     background: rgb(var(--color-success)) !important;
