@@ -58,13 +58,13 @@ export interface Product {
 
                 <!-- Ховер-оверлей: блюр + действия (галерея / открыть / в корзину / вишлист) -->
                 <div
-                    class="pointer-events-none absolute inset-0 z-20 flex flex-wrap content-center items-center justify-center gap-2 bg-black/35 p-3 opacity-0 backdrop-blur-sm transition-opacity duration-base group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
+                    class="pointer-events-none absolute inset-0 z-20 flex flex-wrap content-center items-center justify-center gap-2 bg-black/35 p-3 opacity-0 backdrop-blur-sm transition-opacity duration-slow ease-out group-hover:pointer-events-auto group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:opacity-100"
                 >
                     <button type="button" class="bh-ov-btn" aria-label="Gallery" (click)="onGallery($event)">
                         <mat-icon>collections</mat-icon>
                     </button>
                     <button type="button" class="bh-ov-btn" aria-label="Open product" (click)="onView($event)">
-                        <mat-icon>open_in_full</mat-icon>
+                        <mat-icon>visibility</mat-icon>
                     </button>
                     <button type="button" class="bh-ov-btn" aria-label="Add to cart" (click)="onDetails($event)">
                         <mat-icon>shopping_cart</mat-icon>
