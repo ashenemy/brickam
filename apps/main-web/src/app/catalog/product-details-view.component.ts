@@ -14,7 +14,7 @@ import {
     viewChild,
 } from '@angular/core';
 import { LanguageService } from '@brickam/i18n-kit/browser';
-import { ButtonComponent } from '@brickam/ui-kit';
+import { ButtonComponent, QuantityStepperComponent, RatingComponent } from '@brickam/ui-kit';
 import { CartStore } from '../cart/cart.store';
 import { CurrencyDisplayPipe } from '../currency/currency-display.pipe';
 import { WishlistHeartComponent } from '../wishlist/wishlist-heart.component';
@@ -30,7 +30,13 @@ import type { Media, ProductDetail } from './models';
     selector: 'app-product-details-view',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ButtonComponent, WishlistHeartComponent, CurrencyDisplayPipe],
+    imports: [
+        ButtonComponent,
+        QuantityStepperComponent,
+        RatingComponent,
+        WishlistHeartComponent,
+        CurrencyDisplayPipe,
+    ],
     template: `
         <div class="flex flex-col gap-8 lg:flex-row">
             <!-- Медиа -->
@@ -101,12 +107,14 @@ import type { Media, ProductDetail } from './models';
                     </span>
                 </div>
 
+                <bh-rating [value]="product().ratingAvg" [showValue]="true" [size]="18" />
+
                 <p class="max-w-content text-text-secondary" style="font: var(--type-product)">
                     {{ description() }}
                 </p>
 
                 @if (product().attributes.length) {
-                    <dl class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    <dl class="grid grid-cols-1 gap-2">
                         @for (attr of product().attributes; track attr.key) {
                             <div
                                 class="flex justify-between gap-3 border-b border-[var(--border-subtle)] pb-1"
@@ -122,7 +130,8 @@ import type { Media, ProductDetail } from './models';
                     </dl>
                 }
 
-                <div class="flex items-center gap-3 pt-2">
+                <div class="flex flex-wrap items-center gap-3 pt-2">
+                    <bh-quantity-stepper [(value)]="qty" [max]="99" />
                     <bh-button variant="primary" size="lg" (clicked)="addToCart()">
                         {{ ph('addToCart') }}
                     </bh-button>
@@ -142,6 +151,8 @@ export class ProductDetailsViewComponent implements OnDestroy {
     protected readonly lang = this.i18n.lang;
     protected readonly activeIndex = signal(0);
     protected readonly videoFailed = signal(false);
+    /** Выбранное количество для добавления в корзину. */
+    protected readonly qty = signal(1);
 
     private readonly coverVideo: Signal<ElementRef<HTMLVideoElement> | undefined> =
         viewChild('coverVideo');
@@ -187,7 +198,12 @@ export class ProductDetailsViewComponent implements OnDestroy {
     protected readonly description = computed(() => this.product().description[this.lang()]);
 
     protected addToCart(): void {
-        this.cart.addItem(this.product().id, 1);
+        const p = this.product();
+        this.cart.addItem(p.id, this.qty(), {
+            vendorId: p.vendorId,
+            priceSnapshot: p.finalPrice,
+            titleSnapshot: p.title,
+        });
     }
 
     protected ph(key: string): string {

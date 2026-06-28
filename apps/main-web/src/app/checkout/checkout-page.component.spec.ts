@@ -1,8 +1,10 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
+import { SessionStore } from '../auth/session.store';
 import { CartStore } from '../cart/cart.store';
 import { CheckoutPageComponent } from './checkout-page.component';
 
@@ -24,7 +26,10 @@ describe('CheckoutPageComponent', () => {
                 provideRouter([]),
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
+                // Оформление — для авторизованных: корзина грузится через API.
+                { provide: SessionStore, useValue: { isAuthenticated: () => true } },
             ],
         }).compileComponents();
 

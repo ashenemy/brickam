@@ -1,9 +1,11 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter, Router } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { LanguageService } from '@brickam/i18n-kit/browser';
+import { SessionStore } from '../auth/session.store';
 import { CartPageComponent } from './cart-page.component';
 
 const CONFIG: RuntimeConfig = {
@@ -40,7 +42,10 @@ describe('CartPageComponent', () => {
                 provideRouter([]),
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
+                // Страница корзины тестируется в авторизованном режиме (через API).
+                { provide: SessionStore, useValue: { isAuthenticated: () => true } },
             ],
         }).compileComponents();
 

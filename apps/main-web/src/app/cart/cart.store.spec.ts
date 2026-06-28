@@ -1,7 +1,9 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
+import { SessionStore } from '../auth/session.store';
 import { CartStore } from './cart.store';
 import type { Cart } from './models';
 
@@ -20,11 +22,15 @@ describe('CartStore', () => {
     let httpMock: HttpTestingController;
 
     beforeEach(() => {
+        localStorage.clear();
         TestBed.configureTestingModule({
             providers: [
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
+                // Корзина через API тестируется в авторизованном режиме.
+                { provide: SessionStore, useValue: { isAuthenticated: () => true } },
             ],
         });
         store = TestBed.inject(CartStore);

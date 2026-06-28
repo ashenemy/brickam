@@ -1,18 +1,34 @@
-import { computed, Injectable, inject, signal } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { computed, Injectable, inject, PLATFORM_ID, signal } from '@angular/core';
+import { MatSnackBar } from '@angular/material/snack-bar';
+import { LanguageService } from '@brickam/i18n-kit/browser';
 import { catchError, of } from 'rxjs';
+import { SessionStore } from '../auth/session.store';
 import { CartApiService } from './cart-api.service';
 import type { Cart, CartDiscountSnapshot, CartItem } from './models';
 
+const STORAGE_KEY = 'brickam.cart';
+
+/** Снимок для гостевой позиции (цена/продавец/название берём из карточки товара). */
+export interface CartItemSnapshot {
+    vendorId: string;
+    priceSnapshot: number;
+    titleSnapshot?: CartItem['titleSnapshot'];
+}
+
 /**
- * Глобальное состояние корзины (signals). Хранит позиции, производные счётчик/
- * суммы. Методы дёргают API и обновляют сигнал ответом сервера. SSR-безопасно:
- * load() глушит 401/ошибку через catchError (для бейджа в шапке у гостя — пусто).
- *
- * Все суммы — в AMD (как их хранит бэкенд); конвертация валюты — только на показе.
+ * Глобальное состояние корзины (signals). Работает для всех:
+ *  - гость → локально (localStorage), без API;
+ *  - авторизованный → API (ответ сервера применяется к сигналу).
+ * После добавления показывает снакбар. Суммы — в AMD; конвертация — только на показе.
  */
 @Injectable({ providedIn: 'root' })
 export class CartStore {
     private readonly api = inject(CartApiService);
+    private readonly session = inject(SessionStore);
+    private readonly snack = inject(MatSnackBar);
+    private readonly i18n = inject(LanguageService);
+    private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
     readonly items = signal<CartItem[]>([]);
     readonly loading = signal(false);
@@ -36,21 +52,62 @@ export class CartStore {
     /** Пуста ли корзина. */
     readonly isEmpty = computed(() => this.items().length === 0);
 
-    /** Загрузить корзину с сервера. Безопасно при SSR/без токена. */
-    load(): void {
-        this.api
-            .get()
-            .pipe(catchError(() => of(null)))
-            .subscribe((cart) => {
-                if (cart) {
-                    this.setFromCart(cart);
-                }
-            });
+    constructor() {
+        // Гость — восстановить локальную корзину сразу.
+        if (this.isBrowser && !this.session.isAuthenticated()) {
+            this.items.set(this.readLocal());
+        }
     }
 
-    /** Добавить товар и применить ответ сервера к сигналу. */
-    addItem(productId: string, qty = 1): void {
-        this.run(this.api.addItem(productId, qty));
+    private get guest(): boolean {
+        return !this.session.isAuthenticated();
+    }
+
+    /** Загрузить корзину: авторизованный — с сервера, гость — из localStorage. */
+    load(): void {
+        if (this.session.isAuthenticated()) {
+            this.api
+                .get()
+                .pipe(catchError(() => of(null)))
+                .subscribe((cart) => {
+                    if (cart) {
+                        this.setFromCart(cart);
+                    }
+                });
+        } else if (this.isBrowser) {
+            this.items.set(this.readLocal());
+        }
+    }
+
+    /** Добавить товар (+снакбар). Гость требует snapshot (цена/продавец/название). */
+    addItem(productId: string, qty = 1, snapshot?: CartItemSnapshot): void {
+        if (this.guest) {
+            this.items.update((items) => {
+                const existing = items.find((i) => i.productId === productId);
+                if (existing) {
+                    return items.map((i) =>
+                        i.productId === productId ? { ...i, qty: i.qty + qty } : i,
+                    );
+                }
+                if (!snapshot) {
+                    return items;
+                }
+                const item: CartItem = {
+                    productId,
+                    vendorId: snapshot.vendorId,
+                    qty,
+                    priceSnapshot: snapshot.priceSnapshot,
+                };
+                if (snapshot.titleSnapshot) {
+                    item.titleSnapshot = snapshot.titleSnapshot;
+                }
+                return [...items, item];
+            });
+            this.persistLocal();
+        } else {
+            this.run(this.api.addItem(productId, qty));
+        }
+        this.notifyAdded();
     }
 
     /** Изменить количество позиции. qty ≤ 0 трактуется как удаление. */
@@ -59,7 +116,14 @@ export class CartStore {
             this.removeItem(productId);
             return;
         }
-        this.run(this.api.updateQty(productId, qty));
+        if (this.guest) {
+            this.items.update((items) =>
+                items.map((i) => (i.productId === productId ? { ...i, qty } : i)),
+            );
+            this.persistLocal();
+        } else {
+            this.run(this.api.updateQty(productId, qty));
+        }
     }
 
     /** Увеличить количество позиции на 1. */
@@ -76,17 +140,64 @@ export class CartStore {
 
     /** Удалить позицию из корзины. */
     removeItem(productId: string): void {
-        this.run(this.api.removeItem(productId));
+        if (this.guest) {
+            this.items.update((items) => items.filter((i) => i.productId !== productId));
+            this.persistLocal();
+        } else {
+            this.run(this.api.removeItem(productId));
+        }
     }
 
-    /** Очистить корзину локально и на сервере. */
+    /** Очистить корзину. */
     clear(): void {
-        this.run(this.api.clear());
+        if (this.guest) {
+            this.items.set([]);
+            this.persistLocal();
+        } else {
+            this.run(this.api.clear());
+        }
     }
 
     /** Сбросить локальное состояние (например, после оформления). */
     reset(): void {
         this.items.set([]);
+        if (this.guest) {
+            this.persistLocal();
+        }
+    }
+
+    private notifyAdded(): void {
+        this.snack.open(this.tr('cart.added', 'Added to cart'), '', {
+            duration: 2500,
+            panelClass: 'bh-snack-success',
+            horizontalPosition: 'center',
+            verticalPosition: 'bottom',
+        });
+    }
+
+    private tr(key: string, fallback: string): string {
+        const value = this.i18n.t(key);
+        return value === key ? fallback : value;
+    }
+
+    private readLocal(): CartItem[] {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? (JSON.parse(raw) as CartItem[]) : [];
+        } catch {
+            return [];
+        }
+    }
+
+    private persistLocal(): void {
+        if (!this.isBrowser) {
+            return;
+        }
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(this.items()));
+        } catch {
+            // приватный режим/недоступный storage — игнорируем
+        }
     }
 
     private run(obs: ReturnType<CartApiService['get']>): void {

@@ -1,6 +1,7 @@
 import { provideHttpClient, withFetch } from '@angular/common/http';
 import { HttpTestingController, provideHttpClientTesting } from '@angular/common/http/testing';
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
+import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { provideRouter } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
 import { SessionStore } from '../auth/session.store';
@@ -42,6 +43,7 @@ describe('WishlistPageComponent', () => {
                 provideRouter([]),
                 provideHttpClient(withFetch()),
                 provideHttpClientTesting(),
+                provideNoopAnimations(),
                 { provide: RUNTIME_CONFIG, useValue: CONFIG },
                 // Страница вишлиста — для авторизованных: стор грузит вишлист через API.
                 { provide: SessionStore, useValue: { isAuthenticated: () => true } },
