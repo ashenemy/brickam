@@ -52,7 +52,7 @@ describe('RegisterPageComponent', () => {
         // Шаг 1: форма регистрации
         const inputs = el.querySelectorAll('input');
         type(inputs[0] as HTMLInputElement, 'Иван'); // name
-        type(inputs[1] as HTMLInputElement, '+37411'); // phone
+        type(inputs[1] as HTMLInputElement, '11'); // phone (нац. номер; +374 добавит phone-input)
         type(inputs[2] as HTMLInputElement, 'pass'); // password
         fixture.detectChanges();
 

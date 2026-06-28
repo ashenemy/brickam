@@ -3,6 +3,7 @@ import { Title } from '@angular/platform-browser';
 import { Router, RouterLink } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import { ButtonComponent, InputComponent } from '@brickam/ui-kit';
+import { PhoneInputComponent } from '../shared/phone-input.component';
 import { AuthApiService } from './auth-api.service';
 import { SessionStore } from './session.store';
 
@@ -15,7 +16,7 @@ import { SessionStore } from './session.store';
     selector: 'app-login',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [InputComponent, ButtonComponent, RouterLink],
+    imports: [InputComponent, PhoneInputComponent, ButtonComponent, RouterLink],
     template: `
         <section class="mx-auto flex w-full max-w-sm flex-col gap-6">
             <header>
@@ -25,12 +26,7 @@ import { SessionStore } from './session.store';
             </header>
 
             <form class="flex flex-col gap-4" (submit)="submit($event)">
-                <bh-input
-                    [label]="t('phone')"
-                    type="tel"
-                    [(value)]="phone"
-                    [disabled]="loading()"
-                />
+                <app-phone-input [label]="t('phone')" [(value)]="phone" [disabled]="loading()" />
                 <bh-input
                     [label]="t('password')"
                     type="password"

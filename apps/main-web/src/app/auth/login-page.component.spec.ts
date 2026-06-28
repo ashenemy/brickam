@@ -47,7 +47,8 @@ describe('LoginPageComponent', () => {
         const inputs = el.querySelectorAll('input');
         const phone = inputs[0] as HTMLInputElement;
         const password = inputs[1] as HTMLInputElement;
-        phone.value = '+37411';
+        // phone-input: нац. номер; код страны (+374, Армения по умолчанию) добавляется сам.
+        phone.value = '11';
         phone.dispatchEvent(new Event('input'));
         password.value = 'pass';
         password.dispatchEvent(new Event('input'));
