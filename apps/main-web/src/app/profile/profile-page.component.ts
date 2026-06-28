@@ -56,9 +56,13 @@ const LINKS: ProfileLink[] = [
                 @for (link of links; track link.route) {
                     <a
                         [routerLink]="link.route"
-                        class="brick-glass flex flex-col gap-3 p-6 transition-shadow duration-base ease-soft hover:shadow-glass-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                        class="flex flex-col gap-4 rounded-md bg-surface-card p-6 shadow-glass transition-shadow duration-base ease-soft hover:shadow-glass-hover focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                     >
-                        <mat-icon class="text-accent">{{ link.icon }}</mat-icon>
+                        <span
+                            class="inline-flex h-12 w-12 items-center justify-center rounded-md bg-surface-chip text-accent"
+                        >
+                            <mat-icon>{{ link.icon }}</mat-icon>
+                        </span>
                         <span class="text-text-primary" style="font: var(--type-label)">
                             {{ ph(link.key, link.fallback) }}
                         </span>

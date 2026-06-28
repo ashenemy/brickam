@@ -55,7 +55,7 @@ const PAGE_SIZE = 10;
                         <li>
                             <a
                                 [routerLink]="['/orders', order.id]"
-                                class="flex flex-col gap-2 rounded-xl bg-surface-card p-4 transition-colors hover:bg-surface-card-alt sm:flex-row sm:items-center sm:justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
+                                class="flex flex-col gap-2 rounded-md bg-surface-card p-4 shadow-glass transition-shadow duration-base ease-soft hover:shadow-glass-hover sm:flex-row sm:items-center sm:justify-between focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[rgb(var(--color-accent))]"
                                 data-testid="order-row"
                             >
                                 <div class="flex flex-col gap-1">

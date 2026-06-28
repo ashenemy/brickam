@@ -3,6 +3,7 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { type ComponentFixture, TestBed } from '@angular/core/testing';
 import { ActivatedRoute, convertToParamMap, provideRouter } from '@angular/router';
 import { RUNTIME_CONFIG, type RuntimeConfig } from '@brickam/config-kit/browser';
+import { LanguageService } from '@brickam/i18n-kit/browser';
 import { of } from 'rxjs';
 import { SeoService } from '../seo/seo.service';
 import type { CmsPage } from './models';
@@ -46,6 +47,9 @@ async function setup(): Promise<{
         ],
     }).compileComponents();
 
+    // Язык фиксируем явно (en) — спека проверяет английские значения и не должна
+    // зависеть от localStorage, который могли «загрязнить» другие спеки (setLang).
+    TestBed.inject(LanguageService).setLang('en');
     const fixture = TestBed.createComponent(PageViewComponent);
     const httpMock = TestBed.inject(HttpTestingController);
     return { fixture, httpMock, seoSet };

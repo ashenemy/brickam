@@ -54,7 +54,7 @@ import { OrdersApiService } from './orders-api.service';
                 </header>
 
                 <!-- Трекинг доставки -->
-                <div class="flex flex-col gap-3 rounded-xl bg-surface-card p-5" data-testid="order-track">
+                <div class="flex flex-col gap-3 rounded-md bg-surface-card p-5 shadow-glass" data-testid="order-track">
                     <h2 class="text-text-primary" style="font: var(--type-section)">
                         {{ ph('track') }}
                     </h2>
@@ -82,7 +82,7 @@ import { OrdersApiService } from './orders-api.service';
                 </div>
 
                 <!-- Итоги -->
-                <div class="flex flex-col gap-2 rounded-xl bg-surface-card p-5">
+                <div class="flex flex-col gap-2 rounded-md bg-surface-card p-5 shadow-glass">
                     <div class="flex justify-between text-text-secondary" style="font: var(--type-product)">
                         <span>{{ ph('subtotal') }}</span>
                         <span>{{ order()!.subtotal | currencyDisplay }}</span>
@@ -109,7 +109,7 @@ import { OrdersApiService } from './orders-api.service';
                 </div>
 
                 <!-- Адрес доставки -->
-                <div class="flex flex-col gap-2 rounded-xl bg-surface-card p-5" data-testid="order-address">
+                <div class="flex flex-col gap-2 rounded-md bg-surface-card p-5 shadow-glass" data-testid="order-address">
                     <h2 class="text-text-primary" style="font: var(--type-section)">
                         {{ ph('address') }}
                     </h2>
