@@ -13,6 +13,7 @@ import { type CategoryGroup, NavbarComponent, type SearchMode } from './navbar.c
             (nav)="navValue = $event"
             (search)="lastSearch = $event"
             (categoryNavigate)="lastCategory = $event"
+            (menuToggle)="menuToggled = true"
         >
             <span slot="actions" data-testid="actions">ACTIONS</span>
         </bh-navbar>
@@ -27,6 +28,7 @@ class HostComponent {
     navValue = '';
     lastSearch: { query: string; mode: SearchMode } | null = null;
     lastCategory = '';
+    menuToggled = false;
 }
 
 function byText(root: HTMLElement, sel: string, text: string): HTMLElement | undefined {
@@ -57,44 +59,25 @@ describe('NavbarComponent', () => {
         expect(fixture.componentInstance.navValue).toBe('About us');
     });
 
-    it('кнопка Categories раскрывает мега-меню; клик по подкатегории эмитит categoryNavigate', async () => {
+    it('бургер эмитит menuToggle (открытие мобильного меню)', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
         const el = fixture.nativeElement as HTMLElement;
-        expect(el.querySelector('.bh-mega')).toBeNull();
-
-        (byText(el, 'button', 'Categories') as HTMLButtonElement).click();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        const mega = el.querySelector('.bh-mega');
-        expect(mega).toBeTruthy();
-        expect(mega?.textContent).toContain('Building');
-
-        (byText(mega as HTMLElement, 'button', 'Cement') as HTMLButtonElement).click();
-        expect(fixture.componentInstance.lastCategory).toBe('cement');
+        expect(fixture.componentInstance.menuToggled).toBe(false);
+        (el.querySelector('[aria-label="Open menu"]') as HTMLButtonElement).click();
+        expect(fixture.componentInstance.menuToggled).toBe(true);
     });
 
-    it('бургер раскрывает полноширинный мобильный drawer', async () => {
+    it('сабмит поиска эмитит query и режим (по умолчанию ai — textarea)', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         await fixture.whenStable();
         const el = fixture.nativeElement as HTMLElement;
-        expect(el.querySelector('nav[aria-label="Primary mobile"]')).toBeNull();
-        (el.querySelector('[aria-label="Toggle menu"]') as HTMLButtonElement).click();
-        fixture.detectChanges();
-        await fixture.whenStable();
-        expect(el.querySelector('nav[aria-label="Primary mobile"]')).toBeTruthy();
-    });
-
-    it('сабмит поиска эмитит query и режим (по умолчанию normal)', async () => {
-        const fixture = TestBed.createComponent(HostComponent);
-        await fixture.whenStable();
-        const el = fixture.nativeElement as HTMLElement;
-        const input = el.querySelector('input') as HTMLInputElement;
+        const input = el.querySelector('textarea') as HTMLTextAreaElement;
         input.value = 'cement';
         input.dispatchEvent(new Event('input'));
         (el.querySelector('form') as HTMLFormElement).dispatchEvent(
             new Event('submit', { cancelable: true }),
         );
-        expect(fixture.componentInstance.lastSearch).toEqual({ query: 'cement', mode: 'normal' });
+        expect(fixture.componentInstance.lastSearch).toEqual({ query: 'cement', mode: 'ai' });
     });
 });
