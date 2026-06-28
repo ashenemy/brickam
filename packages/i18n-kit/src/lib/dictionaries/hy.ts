@@ -422,4 +422,33 @@ export const hy: Dictionary = {
     // CMS pages (main-web)
     'pages.loading': 'Բեռնում…',
     'pages.notFound': 'Էջը չի գտնվել',
+
+    // Main-web: навигация шапки
+    'nav.about': 'Մեր մասին',
+    'nav.partner': 'Դառնալ գործընկեր',
+    'nav.delivery': 'Առաքում',
+    'nav.payments': 'Վճարումներ',
+    'nav.refunds': 'Վերադարձ',
+
+    // Main-web: home
+    'home.shopByRoom': 'Գնումներ ըստ սենյակի',
+    'home.bestDeals': 'Լավագույն առաջարկներ',
+    'home.loading': 'Բեռնվում է…',
+    'home.noProducts': 'Դեռ ապրանքներ չկան',
+    'home.feature.delivery.title': 'Արագ առաքում',
+    'home.feature.delivery.subtitle': 'Առաքում 48 ժամում',
+    'home.feature.return.title': '24 ժամ վերադարձ',
+    'home.feature.return.subtitle': 'Գումարի 100% վերադարձ',
+    'home.feature.payment.title': 'Ապահով վճարում',
+    'home.feature.payment.subtitle': 'Ձեր գումարը ապահով է',
+    'home.feature.support.title': 'Աջակցություն 24/7',
+    'home.feature.support.subtitle': 'Կապ / հաղորդագրություն',
+
+    // Main-web: поиск + меню пользователя
+    'search.placeholder': 'Որոնել նյութեր, գործիքներ…',
+    'search.aiPlaceholder':
+        'Նկարագրեք ձեր բառերով, թե ինչ եք ուզում անել — մենք կընտրենք անհրաժեշտ ամեն ինչ',
+    'user.profile': 'Իմ էջը',
+    'user.orders': 'Պատվերների պատմություն',
+    'user.logout': 'Ելք',
 };

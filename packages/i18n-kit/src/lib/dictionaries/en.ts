@@ -422,4 +422,33 @@ export const en: Dictionary = {
     // CMS pages (main-web)
     'pages.loading': 'Loading…',
     'pages.notFound': 'Page not found',
+
+    // Main-web: навигация шапки
+    'nav.about': 'About us',
+    'nav.partner': 'Become a partner',
+    'nav.delivery': 'Delivery',
+    'nav.payments': 'Payments',
+    'nav.refunds': 'Refunds',
+
+    // Main-web: home
+    'home.shopByRoom': 'Shop by room',
+    'home.bestDeals': 'Best deals',
+    'home.loading': 'Loading…',
+    'home.noProducts': 'No products yet',
+    'home.feature.delivery.title': 'Fast Delivery',
+    'home.feature.delivery.subtitle': 'Delivery in 48 h',
+    'home.feature.return.title': '24 Hours Return',
+    'home.feature.return.subtitle': '100% money-back guarantee',
+    'home.feature.payment.title': 'Secure Payment',
+    'home.feature.payment.subtitle': 'Your money is safe',
+    'home.feature.support.title': 'Support 24/7',
+    'home.feature.support.subtitle': 'Live contact / message',
+
+    // Main-web: поиск + меню пользователя
+    'search.placeholder': 'Search materials, tools…',
+    'search.aiPlaceholder':
+        "Describe in your own words what you want to do — we'll find everything you need",
+    'user.profile': 'Profile',
+    'user.orders': 'Order history',
+    'user.logout': 'Log out',
 };

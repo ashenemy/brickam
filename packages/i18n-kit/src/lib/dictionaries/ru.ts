@@ -422,4 +422,33 @@ export const ru: Dictionary = {
     // CMS pages (main-web)
     'pages.loading': 'Загрузка…',
     'pages.notFound': 'Страница не найдена',
+
+    // Main-web: навигация шапки
+    'nav.about': 'О нас',
+    'nav.partner': 'Стать партнёром',
+    'nav.delivery': 'Доставка',
+    'nav.payments': 'Оплата',
+    'nav.refunds': 'Возвраты',
+
+    // Main-web: home
+    'home.shopByRoom': 'Покупки по комнатам',
+    'home.bestDeals': 'Лучшие предложения',
+    'home.loading': 'Загрузка…',
+    'home.noProducts': 'Пока нет товаров',
+    'home.feature.delivery.title': 'Быстрая доставка',
+    'home.feature.delivery.subtitle': 'Доставка за 48 ч',
+    'home.feature.return.title': 'Возврат 24 часа',
+    'home.feature.return.subtitle': '100% гарантия возврата',
+    'home.feature.payment.title': 'Безопасная оплата',
+    'home.feature.payment.subtitle': 'Ваши деньги в безопасности',
+    'home.feature.support.title': 'Поддержка 24/7',
+    'home.feature.support.subtitle': 'Связь / сообщение',
+
+    // Main-web: поиск + меню пользователя
+    'search.placeholder': 'Поиск материалов, инструментов…',
+    'search.aiPlaceholder':
+        'Опишите своими словами, что вы хотите сделать — мы подберём для вас всё необходимое',
+    'user.profile': 'Профиль',
+    'user.orders': 'История заказов',
+    'user.logout': 'Выход',
 };
