@@ -31,8 +31,8 @@ import { MatCard } from '@angular/material/card';
                 />
             }
             <span
-                class="absolute bottom-4 left-4 z-20 rounded-md bg-[var(--glass-fill)] px-[18px] py-3 text-white backdrop-blur-glass shadow-inset"
-                style="font: var(--type-section); font-family: var(--font-body)"
+                class="absolute bottom-4 left-4 z-20 rounded-md bg-[var(--glass-fill)] px-3 py-1.5 text-white backdrop-blur-glass shadow-inset"
+                style="font: var(--type-section); font-family: var(--font-body); font-size: var(--fs-14); font-weight: 400"
             >
                 {{ label() }}
             </span>
