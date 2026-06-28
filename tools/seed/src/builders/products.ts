@@ -190,6 +190,30 @@ export function buildProducts(): SeedRecord[] {
                     discount = { type: 'amount', value: Math.round(price * 0.05) };
                 }
 
+                // Демо-галерея для проверки лайтбокса (Цемент M400 «Pro» = cement-s1-pro):
+                // несколько различимых изображений, первое совпадает с обложкой.
+                const gallery: Array<{ mediaType: string; url: string }> =
+                    slug === 'cement-s1-pro'
+                        ? [
+                              {
+                                  mediaType: 'image',
+                                  url: svgCover(slug, `${enLabel} ${spec}`, brand),
+                              },
+                              {
+                                  mediaType: 'image',
+                                  url: svgCover(`${slug}-g2`, `${enLabel} ${spec}`, `${brand} · 2`),
+                              },
+                              {
+                                  mediaType: 'image',
+                                  url: svgCover(`${slug}-g3`, `${enLabel} ${spec}`, `${brand} · 3`),
+                              },
+                              {
+                                  mediaType: 'image',
+                                  url: svgCover(`${slug}-g4`, `${enLabel} ${spec}`, `${brand} · 4`),
+                              },
+                          ]
+                        : [];
+
                 const doc: Record<string, unknown> = {
                     _id: productId(slug),
                     vendorId: vendorId(vendor.slug),
@@ -201,7 +225,7 @@ export function buildProducts(): SeedRecord[] {
                         mediaType: 'image',
                         url: svgCover(slug, `${enLabel} ${spec}`, `${brand}`),
                     },
-                    gallery: [],
+                    gallery,
                     price,
                     unit: meta.unit,
                     stock: 10 + (h % 300),
