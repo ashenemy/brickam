@@ -40,6 +40,9 @@ const ROUNDED: Record<IconButtonRounded, string> = {
         }
         /* matIconButton по умолчанию круглый 40px — перекрываем под бренд. */
         .bh-iconbtn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
             border-radius: var(--radius-lg);
         }
         .bh-iconbtn.rounded-md {
