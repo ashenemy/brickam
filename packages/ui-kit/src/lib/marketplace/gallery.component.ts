@@ -15,7 +15,7 @@ import { ChangeDetectionStrategy, Component, input, signal } from '@angular/core
 
             @if (images().length > 1) {
                 <div
-                    class="absolute bottom-4 left-4 top-4 flex flex-col gap-4 overflow-y-auto rounded-xl bg-white/30 p-3 backdrop-blur-glass-sm"
+                    class="absolute bottom-4 left-4 top-4 flex flex-col gap-4 overflow-y-auto rounded-xl bg-white/30 p-3 opacity-30 backdrop-blur-glass-sm transition-opacity duration-base hover:opacity-100 focus-within:opacity-100"
                 >
                     @for (img of images(); track $index) {
                         <button
