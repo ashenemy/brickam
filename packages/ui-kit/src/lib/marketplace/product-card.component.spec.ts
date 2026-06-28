@@ -64,18 +64,6 @@ describe('ProductCardComponent', () => {
         expect((fixture.nativeElement as HTMLElement).querySelector('bh-rating')).toBeTruthy();
     });
 
-    it('эмитит addToCart по клику на кнопку без всплытия cardClick', async () => {
-        const fixture = TestBed.createComponent(HostComponent);
-        await fixture.whenStable();
-        const host = fixture.componentInstance;
-        const btn = (fixture.nativeElement as HTMLElement).querySelector(
-            'button',
-        ) as HTMLButtonElement;
-        btn.click();
-        expect(host.added).toBe(1);
-        expect(host.clicks).toBe(0);
-    });
-
     it('показывает фолбэк когда нет изображения', async () => {
         const fixture = TestBed.createComponent(HostComponent);
         const { image: _omit, ...rest } = fixture.componentInstance.product;

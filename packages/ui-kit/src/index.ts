@@ -21,6 +21,7 @@ export * from './lib/forms/switch.component';
 export * from './lib/marketplace/category-card.component';
 export * from './lib/marketplace/feature-bar.component';
 export * from './lib/marketplace/footer.component';
+export * from './lib/marketplace/gallery.component';
 export * from './lib/marketplace/navbar.component';
 // marketplace
 export * from './lib/marketplace/product-card.component';
