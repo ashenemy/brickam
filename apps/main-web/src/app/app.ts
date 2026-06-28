@@ -8,6 +8,7 @@ import {
     PLATFORM_ID,
     signal,
 } from '@angular/core';
+import { MatSidenav, MatSidenavContainer, MatSidenavContent } from '@angular/material/sidenav';
 import { Router, RouterModule } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import {
@@ -29,11 +30,13 @@ import { UserMenuComponent } from './shared/user-menu.component';
 import { WishlistStore } from './wishlist/wishlist.store';
 import { WishlistBadgeComponent } from './wishlist/wishlist-badge.component';
 
-/** Пункты основной навигации (label → маршрут). */
-const NAV: { label: string; route: string }[] = [
-    { label: 'Catalog', route: '/catalog' },
-    { label: 'Calculators', route: '/calculators' },
-    { label: 'Describe project', route: '/ai' },
+/** Пункты основной навигации (i18n-ключ + фолбэк → маршрут CMS-страницы). */
+const NAV: { key: string; fallback: string; route: string }[] = [
+    { key: 'nav.about', fallback: 'About us', route: '/p/about' },
+    { key: 'nav.partner', fallback: 'Become a partner', route: '/p/partner' },
+    { key: 'nav.delivery', fallback: 'Delivery', route: '/p/delivery' },
+    { key: 'nav.payments', fallback: 'Payments', route: '/p/payments' },
+    { key: 'nav.refunds', fallback: 'Refunds', route: '/p/refunds' },
 ];
 
 /** Слаги CMS-страниц для футера (label → /p/slug). */
@@ -46,6 +49,9 @@ const LEGAL: Record<string, string> = {
 @Component({
     imports: [
         RouterModule,
+        MatSidenavContainer,
+        MatSidenav,
+        MatSidenavContent,
         NavbarComponent,
         UiFooterComponent,
         WishlistBadgeComponent,
@@ -69,7 +75,26 @@ export class App implements OnInit {
     private readonly i18n = inject(LanguageService);
     private readonly isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
-    protected readonly navItems = NAV.map((n) => n.label);
+    /** Локализованные подписи навигации (реагируют на смену языка). */
+    protected readonly navItems = computed(() => NAV.map((n) => this.tr(n.key, n.fallback)));
+
+    /** Локализованные плейсхолдеры поиска (обычный / AI). */
+    protected readonly searchPlaceholder = computed(() =>
+        this.tr('search.placeholder', 'Search materials, tools…'),
+    );
+    protected readonly aiPlaceholder = computed(() =>
+        this.tr(
+            'search.aiPlaceholder',
+            "Describe in your own words what you want to do — we'll find everything you need",
+        ),
+    );
+
+    /** true при проскролле контента — шапка прижата к top:0, строка поиска свёрнута. */
+    protected readonly scrolled = signal(false);
+
+    protected onScroll(event: Event): void {
+        this.scrolled.set((event.target as HTMLElement).scrollTop > 8);
+    }
 
     private readonly categories = signal<Category[]>([]);
     protected readonly socials = signal<SocialLink[]>([]);
@@ -129,7 +154,8 @@ export class App implements OnInit {
     }
 
     protected onNav(label: string): void {
-        const route = NAV.find((n) => n.label === label)?.route ?? '/';
+        const idx = this.navItems().indexOf(label);
+        const route = NAV[idx]?.route ?? '/';
         void this.router.navigate([route]);
     }
 

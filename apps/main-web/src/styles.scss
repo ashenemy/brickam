@@ -8,8 +8,58 @@ html,
 body {
     margin: 0;
     min-height: 100%;
-    /* По дизайн-гайду самый тёмный фон приложения (#191C1F), карточки — на стекле. */
-    background: rgb(var(--color-bg-deep));
+    /* Общий фон страницы — #232625 (canvas, neutral-850). */
+    background: rgb(var(--color-bg-app));
     color: rgb(var(--color-text-primary));
     font-family: var(--font-body);
+    /* Декоративный glow под шапкой шире вьюпорта — гасим горизонтальный скролл. */
+    overflow-x: hidden;
+}
+
+/* Оболочка на mat-sidenav: фон страницы виден сквозь контейнер/контент,
+   контент скроллится внутри (height на контейнере) — sticky-шапка работает. */
+.bh-shell.mat-drawer-container {
+    background: transparent;
+    color: inherit;
+}
+.bh-shell .mat-drawer-content {
+    background: transparent;
+    overflow-x: hidden;
+}
+/* Боковое меню (drawer) — на тёмной карточной поверхности. */
+.bh-drawer.mat-drawer {
+    background: rgb(var(--color-surface-card));
+    color: rgb(var(--color-text-primary));
+    border: 0;
+}
+
+/* Иконки-кнопки шапки: бордер + полностью круглая форма, контент строго по центру. */
+.bh-icon-bordered.mat-mdc-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-pill);
+}
+.bh-icon-bordered .mat-icon {
+    margin: 0;
+}
+.bh-icon-bordered .mat-mdc-button-persistent-ripple,
+.bh-icon-bordered .mat-mdc-button-persistent-ripple::before,
+.bh-icon-bordered .mat-mdc-focus-indicator {
+    border-radius: var(--radius-pill);
+}
+
+/* Кнопка языка/валюты: бордер + скруглённая (pill), высота как у иконок.
+   Бордер только у самой кнопки; пункты меню — без обводок (подсветка фоном). */
+.bh-lang-btn.mat-mdc-button {
+    height: 40px;
+    border: 1px solid var(--border-default);
+    border-radius: var(--radius-pill);
+}
+
+/* Панель меню языка/валюты: без обрезки по ширине + скруглённые углы. */
+.bh-langmenu.mat-mdc-menu-panel {
+    max-width: none;
+    border-radius: var(--radius-lg);
 }

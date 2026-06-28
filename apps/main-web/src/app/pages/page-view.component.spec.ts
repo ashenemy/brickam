@@ -61,10 +61,8 @@ describe('PageViewComponent', () => {
         fixture.detectChanges();
 
         const el = fixture.nativeElement as HTMLElement;
-        expect(el.querySelector('h1')?.textContent).toContain('Մեր մասին');
-        expect(el.querySelector('[data-testid="page-content"]')?.textContent).toContain(
-            'Տեքստ ընկերության մասին',
-        );
+        expect(el.querySelector('h1')?.textContent).toContain('About');
+        expect(el.querySelector('[data-testid="page-content"]')?.textContent).toContain('Text');
         httpMock.verify();
     });
 
@@ -78,8 +76,8 @@ describe('PageViewComponent', () => {
 
         expect(seoSet).toHaveBeenCalled();
         const arg = seoSet.mock.calls.at(-1)?.[0];
-        expect(arg.title).toBe('SEO վերնագիր');
-        expect(arg.description).toBe('SEO նկարագրություն');
+        expect(arg.title).toBe('SEO title');
+        expect(arg.description).toBe('SEO desc');
         httpMock.verify();
     });
 

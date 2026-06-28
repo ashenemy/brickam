@@ -26,12 +26,42 @@ import { SeoService } from './seo/seo.service';
 /** Раскладка бенто «Shop by room»: первая плитка большая, остальные — сеткой. */
 const BENTO_AREAS = ['a', 'b', 'c', 'd', 'e'];
 
-/** Trust-бар — курируемый маркетинговый блок (не каталожные данные). */
-const FEATURES: FeatureItem[] = [
-    { icon: 'local_shipping', title: 'Fast Delivery', subtitle: 'Delivery in 48 h' },
-    { icon: 'autorenew', title: '24 Hours Return', subtitle: '100% money-back guarantee' },
-    { icon: 'shield', title: 'Secure Payment', subtitle: 'Your money is safe' },
-    { icon: 'support_agent', title: 'Support 24/7', subtitle: 'Live contact / message' },
+/** Trust-бар — курируемый маркетинговый блок (i18n-ключи + фолбэки). */
+const FEATURES: {
+    icon: string;
+    titleKey: string;
+    titleFb: string;
+    subKey: string;
+    subFb: string;
+}[] = [
+    {
+        icon: 'local_shipping',
+        titleKey: 'home.feature.delivery.title',
+        titleFb: 'Fast Delivery',
+        subKey: 'home.feature.delivery.subtitle',
+        subFb: 'Delivery in 48 h',
+    },
+    {
+        icon: 'autorenew',
+        titleKey: 'home.feature.return.title',
+        titleFb: '24 Hours Return',
+        subKey: 'home.feature.return.subtitle',
+        subFb: '100% money-back guarantee',
+    },
+    {
+        icon: 'shield',
+        titleKey: 'home.feature.payment.title',
+        titleFb: 'Secure Payment',
+        subKey: 'home.feature.payment.subtitle',
+        subFb: 'Your money is safe',
+    },
+    {
+        icon: 'support_agent',
+        titleKey: 'home.feature.support.title',
+        titleFb: 'Support 24/7',
+        subKey: 'home.feature.support.subtitle',
+        subFb: 'Live contact / message',
+    },
 ];
 
 const BEST_DEALS_COUNT = 10;
@@ -47,7 +77,7 @@ const BEST_DEALS_COUNT = 10;
             <section>
                 <header class="mb-5 flex items-center gap-3">
                     <h2 class="m-0 text-text-primary" style="font: var(--type-h1); font-size: 26px">
-                        Shop by room
+                        {{ tr('home.shopByRoom', 'Shop by room') }}
                     </h2>
                     <mat-icon class="text-accent">arrow_forward</mat-icon>
                 </header>
@@ -66,24 +96,24 @@ const BEST_DEALS_COUNT = 10;
                 }
             </section>
 
-            <bh-feature-bar [items]="features" />
+            <bh-feature-bar [items]="features()" />
 
             <!-- Best deals (реальные товары из API) -->
             <section>
                 <header class="mb-5 flex items-center gap-3">
                     <h2 class="m-0 text-text-primary" style="font: var(--type-h1); font-size: 26px">
-                        Best deals
+                        {{ tr('home.bestDeals', 'Best deals') }}
                     </h2>
                     <mat-icon class="text-accent">arrow_forward</mat-icon>
                 </header>
 
                 @if (loading()) {
                     <div class="py-12 text-center text-text-secondary" style="font: var(--type-product)">
-                        Loading…
+                        {{ tr('home.loading', 'Loading…') }}
                     </div>
                 } @else if (cards().length === 0) {
                     <div class="py-12 text-center text-text-secondary" style="font: var(--type-product)">
-                        No products yet
+                        {{ tr('home.noProducts', 'No products yet') }}
                     </div>
                 } @else {
                     <div class="bh-product-grid">
@@ -144,7 +174,14 @@ export class HomeComponent implements OnInit {
 
     protected readonly lang = this.i18n.lang;
 
-    protected readonly features = FEATURES;
+    /** Локализованный trust-бар (реагирует на смену языка). */
+    protected readonly features = computed<FeatureItem[]>(() =>
+        FEATURES.map((f) => ({
+            icon: f.icon,
+            title: this.tr(f.titleKey, f.titleFb),
+            subtitle: this.tr(f.subKey, f.subFb),
+        })),
+    );
 
     protected readonly loading = signal(true);
     private readonly items = signal<ProductListItem[]>([]);
@@ -233,7 +270,7 @@ export class HomeComponent implements OnInit {
         void this.router.navigate(['/product', slug]);
     }
 
-    private tr(key: string, fallback: string): string {
+    protected tr(key: string, fallback: string): string {
         const value = this.i18n.t(key);
         return value === key ? fallback : value;
     }

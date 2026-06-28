@@ -114,8 +114,8 @@ describe('ProductDetailComponent', () => {
 
         expect(seoSet).toHaveBeenCalled();
         const arg = seoSet.mock.calls.at(-1)?.[0];
-        // LanguageService по умолчанию hy (DEFAULT_LANG) — берётся title.hy = 'A'.
-        expect(arg.title).toBe('A');
+        // LanguageService по умолчанию en (DEFAULT_LANG) — берётся title.en = 'Item'.
+        expect(arg.title).toBe('Item');
         expect(arg.image).toBe('http://media/cover.jpg');
         expect(arg.type).toBe('product');
         httpMock.verify();

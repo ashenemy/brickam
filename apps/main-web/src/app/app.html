@@ -1,36 +1,87 @@
-<header class="sticky top-0 z-30 mx-auto w-full max-w-content px-4 pt-4 sm:px-6">
-    <bh-navbar
-        [navItems]="navItems"
-        logoSrc="/assets/logo.svg"
-        [groups]="categoryGroups()"
-        searchPlaceholder="Search materials, tools…"
-        (nav)="onNav($event)"
-        (search)="onSearch($event)"
-        (categoryNavigate)="onCategory($event)"
-    >
-        <div slot="actions" class="flex items-center gap-2 sm:gap-3">
-            <app-lang-currency />
-            <app-wishlist-badge />
-            <app-cart-badge />
-            <app-user-menu />
+<mat-sidenav-container class="bh-shell block h-[100dvh]" autosize>
+    <!-- Мобильное/планшетное меню: левый Material sidenav (открывается бургером в шапке) -->
+    <mat-sidenav #sidenav position="start" mode="over" fixedInViewport class="bh-drawer w-72">
+        <div class="flex h-full flex-col gap-4 p-4">
+            <!-- Логотип на всю ширину -->
+            <a href="/" routerLink="/" aria-label="Home" (click)="sidenav.close()">
+                <img src="/assets/logo.svg" alt="BRICK" class="block h-auto w-full" />
+            </a>
+
+            <!-- Навигация -->
+            <nav class="flex flex-col gap-1" aria-label="Primary mobile">
+                @for (item of navItems(); track item) {
+                    <button
+                        type="button"
+                        class="cursor-pointer rounded-sm px-3 py-2 text-left text-text-primary transition-colors duration-base hover:bg-surface-chip"
+                        style="font: var(--type-label)"
+                        [textContent]="item"
+                        (click)="onNav(item); sidenav.close()"
+                    ></button>
+                }
+            </nav>
+
+            <!-- Низ: копия кнопок шапки (язык/валюта · избранное · корзина · профиль) -->
+            <div
+                class="mt-auto flex items-center gap-3 border-t border-[color:var(--border-default)] pt-4"
+            >
+                <app-lang-currency />
+                <app-wishlist-badge />
+                <app-cart-badge />
+                <app-user-menu />
+            </div>
         </div>
-    </bh-navbar>
-</header>
+    </mat-sidenav>
 
-<main class="mx-auto w-full max-w-content px-4 py-8 sm:px-6">
-    <router-outlet />
-</main>
+    <mat-sidenav-content (scroll)="onScroll($event)">
+        <!-- Декоративное оранжевое свечение под шапкой (Rectangle 25). -->
+        <div
+            aria-hidden="true"
+            class="pointer-events-none"
+            style="position: absolute; z-index: 0; width: 2243.41px; height: 150px; left: calc(50% - 2243.41px / 2 - 0.32px); top: 110.9px; background: #ee7517; opacity: 0.54; filter: blur(100px); border-radius: 225.5px; transform: rotate(0.25deg)"
+        ></div>
 
-<bh-footer
-    [copyright]="footerCopyright()"
-    [legal]="footerLegal"
-    [socials]="socials()"
-    (legalClick)="onLegal($event)"
-/>
+        <div
+            class="sticky top-0 z-30 mx-auto w-full max-w-content px-4 sm:px-6"
+            [class.pt-4]="!scrolled()"
+        >
+            <bh-navbar
+                [navItems]="navItems()"
+                logoSrc="/assets/logo.svg"
+                [groups]="categoryGroups()"
+                [collapsed]="scrolled()"
+                [searchPlaceholder]="searchPlaceholder()"
+                [aiPlaceholder]="aiPlaceholder()"
+                (nav)="onNav($event)"
+                (search)="onSearch($event)"
+                (categoryNavigate)="onCategory($event)"
+                (menuToggle)="sidenav.toggle()"
+            >
+                <div slot="actions" class="flex items-center gap-2 sm:gap-3">
+                    <!-- Язык/валюта — на телефоне прячем (остаётся wishlist/cart/профиль). -->
+                    <app-lang-currency class="hidden lg:inline-flex" />
+                    <app-wishlist-badge />
+                    <app-cart-badge />
+                    <app-user-menu />
+                </div>
+            </bh-navbar>
+        </div>
 
-<!-- Небольшой брендовый градиент под футером. -->
-<div
-    aria-hidden="true"
-    class="h-24 w-full"
-    style="background: linear-gradient(to bottom, rgb(var(--color-bg-deep)), rgb(var(--color-accent) / 0.06))"
-></div>
+        <main class="relative z-10 mx-auto w-full max-w-content px-4 py-8 sm:px-6">
+            <router-outlet />
+        </main>
+
+        <bh-footer
+            [copyright]="footerCopyright()"
+            [legal]="footerLegal"
+            [socials]="socials()"
+            (legalClick)="onLegal($event)"
+        />
+
+        <!-- Небольшой брендовый градиент под футером. -->
+        <div
+            aria-hidden="true"
+            class="h-24 w-full"
+            style="background: linear-gradient(to bottom, rgb(var(--color-bg-deep)), rgb(var(--color-accent) / 0.06))"
+        ></div>
+    </mat-sidenav-content>
+</mat-sidenav-container>
