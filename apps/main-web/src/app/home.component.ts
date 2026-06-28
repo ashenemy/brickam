@@ -8,7 +8,7 @@ import {
     signal,
 } from '@angular/core';
 import { MatIcon } from '@angular/material/icon';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LanguageService } from '@brickam/i18n-kit/browser';
 import {
     FeatureBarComponent,
@@ -70,17 +70,20 @@ const BEST_DEALS_COUNT = 10;
     selector: 'app-home',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [MatIcon, RoomCardComponent, FeatureBarComponent, ProductCardComponent],
+    imports: [MatIcon, RouterLink, RoomCardComponent, FeatureBarComponent, ProductCardComponent],
     template: `
         <div class="flex flex-col gap-10 md:gap-14">
             <!-- Shop by room (курируемый блок) -->
             <section>
-                <header class="mb-5 flex items-center gap-3">
-                    <h2 class="m-0 text-text-primary" style="font: var(--type-h1); font-size: 26px">
-                        {{ tr('home.shopByRoom', 'Shop by room') }}
+                <a
+                    routerLink="/catalog"
+                    class="mb-5 inline-flex w-fit items-center gap-3 text-text-primary transition-colors duration-base hover:text-accent"
+                >
+                    <h2 class="m-0" style="font: var(--type-h1); font-size: 26px">
+                        {{ tr('home.allCategories', 'All categories') }}
                     </h2>
                     <mat-icon class="text-accent">arrow_forward</mat-icon>
-                </header>
+                </a>
                 @if (rooms().length) {
                     <div class="bh-bento">
                         @for (room of rooms(); track room.slug) {
@@ -130,19 +133,36 @@ const BEST_DEALS_COUNT = 10;
         </div>
     `,
     styles: `
+        /* < 500: одна плитка в ряд */
         .bh-bento {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            grid-template-rows: 240px 170px 170px;
-            grid-template-areas: 'a a' 'b c' 'd e';
+            grid-template-columns: 1fr;
+            grid-template-rows: repeat(5, 160px);
+            grid-template-areas: 'a' 'b' 'c' 'd' 'e';
             gap: 12px;
         }
+        /* ≥ 500: две колонки */
+        @media (min-width: 500px) {
+            .bh-bento {
+                grid-template-columns: 1fr 1fr;
+                grid-template-rows: 240px 170px 170px;
+                grid-template-areas: 'a a' 'b c' 'd e';
+            }
+        }
+        /* Планшет: 6×2 — a:2×2, b/c/d/e:2×1 */
         @media (min-width: 768px) {
             .bh-bento {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(6, 1fr);
                 grid-template-rows: 206px 206px;
-                grid-template-areas: 'a b c' 'a d e';
+                grid-template-areas: 'a a b b c c' 'a a d d e e';
                 gap: 16px;
+            }
+        }
+        /* Десктоп: 5×2 — a:2×2, b:1×1, c:2×1, d:2×1, e:1×1 */
+        @media (min-width: 1024px) {
+            .bh-bento {
+                grid-template-columns: repeat(5, 1fr);
+                grid-template-areas: 'a a b c c' 'a a d d e';
             }
         }
         .bh-bento bh-room-card,
