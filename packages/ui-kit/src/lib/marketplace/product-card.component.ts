@@ -76,7 +76,7 @@ export interface Product {
                         aria-label="Wishlist"
                         (click)="onWishlist($event)"
                     >
-                        <mat-icon>{{ inWishlist() ? 'favorite' : 'favorite_border' }}</mat-icon>
+                        <mat-icon [class.bh-icon-fill]="inWishlist()">favorite</mat-icon>
                     </button>
                 </div>
             </div>
