@@ -19,23 +19,22 @@ export interface FeatureItem {
     changeDetection: ChangeDetectionStrategy.OnPush,
     imports: [MatIcon],
     template: `
-        <ul
-            class="grid list-none gap-px rounded-md bg-accent p-0 m-0"
-            style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr))"
-        >
+        <ul class="bh-feature-grid grid list-none gap-px rounded-md bg-accent p-0 m-0">
             @for (item of items(); track item.title) {
                 <li
                     class="flex items-center gap-4 px-7 py-5 text-white border-l border-white/25 first:border-l-0"
                 >
                     @if (item.icon) {
-                        <mat-icon class="shrink-0 text-white" aria-hidden="true">{{ item.icon }}</mat-icon>
+                        <mat-icon class="bh-feature-icon shrink-0 text-white" aria-hidden="true">{{
+                            item.icon
+                        }}</mat-icon>
                     }
                     <div class="min-w-0">
-                        <div style="font: var(--type-label); font-size: var(--fs-16)">
+                        <div style="font: var(--type-label); font-size: var(--fs-20)">
                             {{ item.title }}
                         </div>
                         @if (item.subtitle) {
-                            <div class="mt-0.5 text-white/85" style="font: var(--type-caption)">
+                            <div class="mt-2 text-white/85" style="font: var(--type-caption)">
                                 {{ item.subtitle }}
                             </div>
                         }
@@ -43,6 +42,29 @@ export interface FeatureItem {
                 </li>
             }
         </ul>
+    `,
+    styles: `
+        /* < 400px — 1 в ряд; 400–1000px — 2 в ряд; ≥ 1000px — все 4 в строку. */
+        .bh-feature-grid {
+            grid-template-columns: 1fr;
+        }
+        @media (min-width: 400px) {
+            .bh-feature-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (min-width: 1000px) {
+            .bh-feature-grid {
+                grid-template-columns: repeat(4, 1fr);
+            }
+        }
+        /* Иконка преимущества — в 2 раза крупнее дефолтных 24px. */
+        .bh-feature-icon.mat-icon {
+            width: 48px;
+            height: 48px;
+            font-size: 48px;
+            line-height: 48px;
+        }
     `,
 })
 export class FeatureBarComponent {
