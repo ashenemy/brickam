@@ -423,6 +423,11 @@ export const en: Dictionary = {
     'pages.loading': 'Loading…',
     'pages.notFound': 'Page not found',
 
+    // Main-web: forbidden (403)
+    'forbidden.title': '403 — Access denied',
+    'forbidden.subtitle': 'This app is available for buyers.',
+    'forbidden.home': 'Go home',
+
     // Main-web: навигация шапки
     'nav.about': 'About us',
     'nav.partner': 'Become a partner',
@@ -453,5 +458,17 @@ export const en: Dictionary = {
     'user.logout': 'Log out',
     'wishlist.added': 'Added to wishlist',
     'wishlist.removed': 'Removed from wishlist',
+    'wishlist.browse': 'Browse catalog',
     'cart.added': 'Added to cart',
+
+    // Main-web: catalog filters (left sidebar)
+    'catalog.filters': 'Filters',
+    'catalog.clear': 'Clear',
+    'catalog.found': 'Found',
+    'catalog.category': 'Category',
+    'catalog.price': 'Price, ֏',
+    'catalog.minRating': 'Rating',
+    'catalog.anyRating': 'Any rating',
+    'catalog.inStock': 'In stock only',
+    'catalog.sort': 'Sort',
 };

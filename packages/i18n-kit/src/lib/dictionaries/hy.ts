@@ -423,6 +423,11 @@ export const hy: Dictionary = {
     'pages.loading': 'Բեռնում…',
     'pages.notFound': 'Էջը չի գտնվել',
 
+    // Main-web: forbidden (403)
+    'forbidden.title': '403 — մուտքն արգելված է',
+    'forbidden.subtitle': 'Այս հավելվածը հասանելի է գնորդների համար։',
+    'forbidden.home': 'Գլխավոր',
+
     // Main-web: навигация шапки
     'nav.about': 'Մեր մասին',
     'nav.partner': 'Դառնալ գործընկեր',
@@ -453,5 +458,17 @@ export const hy: Dictionary = {
     'user.logout': 'Ելք',
     'wishlist.added': 'Ավելացվեց ընտրանի',
     'wishlist.removed': 'Հեռացվեց ընտրանուց',
+    'wishlist.browse': 'Անցնել կատալոգ',
     'cart.added': 'Ավելացվեց զամբյուղ',
+
+    // Main-web: կատալոգի զտիչներ (ձախ վահանակ)
+    'catalog.filters': 'Զտիչներ',
+    'catalog.clear': 'Մաքրել',
+    'catalog.found': 'Գտնվեց',
+    'catalog.category': 'Կատեգորիա',
+    'catalog.price': 'Գին, ֏',
+    'catalog.minRating': 'Վարկանիշ',
+    'catalog.anyRating': 'Ցանկացած վարկանիշ',
+    'catalog.inStock': 'Միայն առկա',
+    'catalog.sort': 'Դասավորել',
 };

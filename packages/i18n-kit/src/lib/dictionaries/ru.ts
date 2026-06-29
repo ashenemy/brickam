@@ -423,6 +423,11 @@ export const ru: Dictionary = {
     'pages.loading': 'Загрузка…',
     'pages.notFound': 'Страница не найдена',
 
+    // Main-web: forbidden (403)
+    'forbidden.title': '403 — нет доступа',
+    'forbidden.subtitle': 'Это приложение доступно для покупателей.',
+    'forbidden.home': 'На главную',
+
     // Main-web: навигация шапки
     'nav.about': 'О нас',
     'nav.partner': 'Стать партнёром',
@@ -453,5 +458,17 @@ export const ru: Dictionary = {
     'user.logout': 'Выход',
     'wishlist.added': 'Добавлено в избранное',
     'wishlist.removed': 'Удалено из избранного',
+    'wishlist.browse': 'Перейти в каталог',
     'cart.added': 'Добавлено в корзину',
+
+    // Main-web: фильтры каталога (левая панель)
+    'catalog.filters': 'Фильтры',
+    'catalog.clear': 'Сбросить',
+    'catalog.found': 'Найдено',
+    'catalog.category': 'Категория',
+    'catalog.price': 'Цена, ֏',
+    'catalog.minRating': 'Рейтинг',
+    'catalog.anyRating': 'Любой рейтинг',
+    'catalog.inStock': 'Только в наличии',
+    'catalog.sort': 'Сортировка',
 };
