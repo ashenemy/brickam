@@ -1,4 +1,6 @@
+import { NotFoundException, UnauthorizedException } from '@brickam/core-kit';
 import { AccountType, Permission, Role, UserStatus } from '@brickam/domain-kit';
+import bcrypt from 'bcryptjs';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { UsersRepository } from './users.repository';
 import { UsersService } from './users.service';
@@ -129,6 +131,49 @@ describe('UsersService', () => {
         repo.updateById.mockResolvedValue(makeDoc({ passwordHash: 'new-hash' }));
         await service.updatePassword('u1', 'new-hash');
         expect(repo.updateById).toHaveBeenCalledWith('u1', { passwordHash: 'new-hash' });
+    });
+
+    it('updateProfile патчит только присланные поля и возвращает контракт', async () => {
+        repo.updateById.mockResolvedValue(makeDoc({ name: 'Նոր', lang: 'ru' }));
+        const user = await service.updateProfile('u1', { name: 'Նոր', lang: 'ru' });
+        expect(repo.updateById).toHaveBeenCalledWith('u1', { name: 'Նոր', lang: 'ru' });
+        expect(user.name).toBe('Նոր');
+        expect(user.lang).toBe('ru');
+    });
+
+    it('updateProfile бросает NotFound, если пользователя нет', async () => {
+        repo.updateById.mockResolvedValue(null);
+        await expect(service.updateProfile('missing', { name: 'X' })).rejects.toBeInstanceOf(
+            NotFoundException,
+        );
+    });
+
+    it('changePassword сверяет текущий пароль и пишет новый хеш', async () => {
+        const currentHash = await bcrypt.hash('oldsecret1', 10);
+        repo.findById.mockResolvedValue(makeDoc({ passwordHash: currentHash }));
+        repo.updateById.mockResolvedValue(makeDoc());
+        await service.changePassword('u1', {
+            currentPassword: 'oldsecret1',
+            newPassword: 'newsecret1',
+        });
+        expect(repo.updateById).toHaveBeenCalledWith('u1', {
+            passwordHash: expect.any(String),
+        });
+    });
+
+    it('changePassword бросает Unauthorized при неверном текущем пароле', async () => {
+        const currentHash = await bcrypt.hash('oldsecret1', 10);
+        repo.findById.mockResolvedValue(makeDoc({ passwordHash: currentHash }));
+        await expect(
+            service.changePassword('u1', { currentPassword: 'wrongpass1', newPassword: 'newsec1' }),
+        ).rejects.toBeInstanceOf(UnauthorizedException);
+    });
+
+    it('changePassword бросает NotFound, если пользователя нет', async () => {
+        repo.findById.mockResolvedValue(null);
+        await expect(
+            service.changePassword('missing', { currentPassword: 'x', newPassword: 'y' }),
+        ).rejects.toBeInstanceOf(NotFoundException);
     });
 
     it('getLoyaltyMetric: читает users.loyalty (с currentTierId)', async () => {

@@ -1,3 +1,4 @@
+import { NotFoundException, UnauthorizedException } from '@brickam/core-kit';
 import {
     type CreateUserContract,
     type LoyaltyMetric,
@@ -8,8 +9,13 @@ import {
 } from '@brickam/domain-kit';
 import { BaseCrudService } from '@brickam/server-kit';
 import { Injectable } from '@nestjs/common';
+import bcrypt from 'bcryptjs';
+import type { ChangePasswordDto } from './dto/change-password.dto';
+import type { UpdateProfileDto } from './dto/update-profile.dto';
 import type { User, UserDocument } from './user.schema';
 import { UsersRepository } from './users.repository';
+
+const BCRYPT_ROUNDS = 10;
 
 /**
  * Сервис пользователей. Наследует CRUD-инфраструктуру (BaseCrudService) и
@@ -72,6 +78,47 @@ export class UsersService
     }
 
     async updatePassword(id: string, passwordHash: string): Promise<void> {
+        await this.usersRepository.updateById(id, { passwordHash });
+    }
+
+    /**
+     * Патчит профиль покупателя (name/lang/accountType) и возвращает обновлённый
+     * контракт. undefined-поля пропускаются (exactOptionalPropertyTypes). Бросает
+     * NotFound, если пользователя нет.
+     */
+    async updateProfile(id: string, dto: UpdateProfileDto): Promise<UserContract> {
+        const patch: Partial<User> = {};
+        if (dto.name !== undefined) {
+            patch.name = dto.name;
+        }
+        if (dto.lang !== undefined) {
+            patch.lang = dto.lang;
+        }
+        if (dto.accountType !== undefined) {
+            patch.accountType = dto.accountType;
+        }
+        const doc = await this.usersRepository.updateById(id, patch);
+        if (!doc) {
+            throw new NotFoundException();
+        }
+        return this.toContract(doc);
+    }
+
+    /**
+     * Меняет пароль: сверяет текущий пароль с хешем и сохраняет новый хеш.
+     * Бросает NotFound, если пользователя нет, и Unauthorized — при неверном
+     * текущем пароле.
+     */
+    async changePassword(id: string, dto: ChangePasswordDto): Promise<void> {
+        const doc = await this.usersRepository.findById(id);
+        if (!doc) {
+            throw new NotFoundException();
+        }
+        const valid = await bcrypt.compare(dto.currentPassword, doc.passwordHash);
+        if (!valid) {
+            throw new UnauthorizedException('errors.auth.invalidCredentials');
+        }
+        const passwordHash = await bcrypt.hash(dto.newPassword, BCRYPT_ROUNDS);
         await this.usersRepository.updateById(id, { passwordHash });
     }
 
