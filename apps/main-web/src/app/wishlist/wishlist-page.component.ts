@@ -12,7 +12,7 @@ import { Title } from '@angular/platform-browser';
 import { Router } from '@angular/router';
 import { RUNTIME_CONFIG } from '@brickam/config-kit/browser';
 import { LanguageService } from '@brickam/i18n-kit/browser';
-import { type Product, ProductCardComponent } from '@brickam/ui-kit';
+import { ButtonComponent, type Product, ProductCardComponent } from '@brickam/ui-kit';
 import { CatalogApiService } from '../catalog/catalog-api.service';
 import type { ProductListItem } from '../catalog/models';
 import { CurrencyStore } from '../currency/currency.store';
@@ -27,11 +27,16 @@ import { WishlistHeartComponent } from './wishlist-heart.component';
     selector: 'app-wishlist',
     standalone: true,
     changeDetection: ChangeDetectionStrategy.OnPush,
-    imports: [ProductCardComponent, WishlistHeartComponent],
+    imports: [ProductCardComponent, WishlistHeartComponent, ButtonComponent],
     template: `
         <section class="flex flex-col gap-6">
-            <header class="flex flex-col gap-2">
-                <h1 class="text-text-primary" style="font: var(--type-hero)">{{ heading() }}</h1>
+            <header class="flex flex-wrap items-baseline gap-3">
+                <h1 class="m-0 text-text-primary" style="font: var(--type-hero)">{{ heading() }}</h1>
+                @if (cards().length > 0) {
+                    <span class="text-text-secondary" style="font: var(--type-caption)">
+                        {{ cards().length }}
+                    </span>
+                }
             </header>
 
             @if (loading()) {
@@ -39,8 +44,19 @@ import { WishlistHeartComponent } from './wishlist-heart.component';
                     {{ ph('loading') }}
                 </div>
             } @else if (cards().length === 0) {
-                <div class="py-16 text-center text-text-secondary" style="font: var(--type-product)">
-                    {{ ph('empty') }}
+                <div
+                    class="flex flex-col items-center gap-4 py-20 text-center"
+                    data-testid="wishlist-empty"
+                >
+                    <span
+                        class="inline-flex h-16 w-16 items-center justify-center rounded-full bg-surface-chip text-accent"
+                        style="font-size: 32px"
+                        >♡</span
+                    >
+                    <p class="m-0 text-text-secondary" style="font: var(--type-product)">
+                        {{ ph('empty') }}
+                    </p>
+                    <bh-button variant="primary" (clicked)="goCatalog()">{{ ph('browse') }}</bh-button>
                 </div>
             } @else {
                 <div
@@ -152,6 +168,11 @@ export class WishlistPageComponent implements OnInit {
         void this.router.navigate(['/product', slug]);
     }
 
+    /** Перейти в каталог из пустого состояния. */
+    protected goCatalog(): void {
+        void this.router.navigate(['/catalog']);
+    }
+
     /** В корзину: POST /cart/items, затем убрать из вишлиста. */
     protected addToCart(productId: string): void {
         const base = this.config.apiBaseUrl.replace(/\/$/, '');
@@ -177,5 +198,6 @@ const DEFAULTS: Record<string, string> = {
     title: 'Wishlist',
     loading: 'Loading…',
     empty: 'Your wishlist is empty',
+    browse: 'Browse catalog',
     addToCart: 'Add to cart',
 };

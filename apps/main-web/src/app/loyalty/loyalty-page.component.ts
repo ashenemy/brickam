@@ -30,7 +30,7 @@ import type { LoyaltyTier } from './models';
 
             @if (status(); as s) {
                 <article
-                    class="flex flex-col gap-6 rounded-lg bg-bg-surface p-6 shadow-sm"
+                    class="flex flex-col gap-6 rounded-lg bg-surface-card p-6 shadow-glass"
                     data-testid="loyalty-card"
                 >
                     <div class="flex flex-wrap items-center gap-3">
@@ -127,7 +127,7 @@ import type { LoyaltyTier } from './models';
                             <li
                                 class="flex flex-wrap items-center justify-between gap-3 rounded-md border p-4"
                                 [class.border-accent]="isCurrent(tier)"
-                                [class.bg-bg-surface]="isCurrent(tier)"
+                                [class.bg-surface-card]="isCurrent(tier)"
                                 [class.border-transparent]="!isCurrent(tier)"
                                 [class.bg-bg-app]="!isCurrent(tier)"
                                 [attr.data-current]="isCurrent(tier) ? 'true' : null"
