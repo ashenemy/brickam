@@ -89,10 +89,18 @@ describe('легальные CMS-страницы', () => {
         await runSeed(store);
 
         const pages = store.documents(COLLECTIONS.pages);
-        expect(pages).toHaveLength(3);
+        expect(pages).toHaveLength(7);
 
         const bySlug = new Map(pages.map((p) => [p['slug'] as string, p]));
-        for (const slug of ['about', 'terms', 'privacy']) {
+        for (const slug of [
+            'about',
+            'terms',
+            'privacy',
+            'partner',
+            'delivery',
+            'payments',
+            'refunds',
+        ]) {
             const page = bySlug.get(slug);
             expect(page).toBeDefined();
             expect(page?.['status']).toBe('published');
@@ -110,7 +118,7 @@ describe('легальные CMS-страницы', () => {
         const store = new InMemorySeedStore();
         await runSeed(store);
         await runSeed(store);
-        expect(store.count(COLLECTIONS.pages)).toBe(3);
+        expect(store.count(COLLECTIONS.pages)).toBe(7);
     });
 });
 

@@ -106,6 +106,134 @@ const PAGES: PageTemplate[] = [
             en: 'How Brickam processes personal data.',
         },
     },
+    {
+        slug: 'partner',
+        title: { hy: 'Դառնալ գործընկեր', ru: 'Стать партнёром', en: 'Become a partner' },
+        content: {
+            hy:
+                'Վաճառեք ձեր շինանյութերը Brickam-ում և հասեք հազարավոր գնորդների ողջ Հայաստանում։\n\n' +
+                'Գրանցվեք որպես վաճառող, ավելացրեք ապրանքներ և ստացեք պատվերներ ' +
+                'միասնական հարթակից։ Հանձնաժողովը գանձվում է միայն վաճառքից։\n\n' +
+                'Տեքստը նախնական է և կթարմացվի սեփականատիրոջ կողմից։',
+            ru:
+                'Продавайте свои стройматериалы на Brickam и получайте доступ к тысячам покупателей ' +
+                'по всей Армении.\n\n' +
+                'Зарегистрируйтесь как продавец, добавьте товары и принимайте заказы на единой ' +
+                'платформе. Комиссия берётся только с продаж.\n\n' +
+                'Этот текст является заготовкой и будет обновлён владельцем.',
+            en:
+                'Sell your construction materials on Brickam and reach thousands of buyers across ' +
+                'Armenia.\n\n' +
+                'Register as a seller, add products and accept orders on a single platform. ' +
+                'Commission is charged only on sales.\n\n' +
+                'This text is a placeholder and will be updated by the owner.',
+        },
+        seoTitle: {
+            hy: 'Դառնալ գործընկեր — Brickam',
+            ru: 'Стать партнёром — Brickam',
+            en: 'Become a partner — Brickam',
+        },
+        seoDescription: {
+            hy: 'Վաճառեք շինանյութեր Brickam-ում որպես գործընկեր։',
+            ru: 'Продавайте стройматериалы на Brickam как партнёр.',
+            en: 'Sell construction materials on Brickam as a partner.',
+        },
+    },
+    {
+        slug: 'delivery',
+        title: { hy: 'Առաքում', ru: 'Доставка', en: 'Delivery' },
+        content: {
+            hy:
+                'Առաքումն իրականացվում է ողջ Հայաստանում սովորաբար 48 ժամվա ընթացքում։\n\n' +
+                'Արժեքն ու ժամկետները կախված են վաճառողից, ծավալից և տարածաշրջանից և ' +
+                'ցուցադրվում են պատվերը ձևակերպելիս։\n\n' +
+                'Տեքստը նախնական է և կթարմացվի սեփականատիրոջ կողմից։',
+            ru:
+                'Доставка осуществляется по всей Армении, как правило, в течение 48 часов.\n\n' +
+                'Стоимость и сроки зависят от продавца, объёма и региона и показываются ' +
+                'при оформлении заказа.\n\n' +
+                'Этот текст является заготовкой и будет обновлён владельцем.',
+            en:
+                'Delivery is available across Armenia, usually within 48 hours.\n\n' +
+                'Cost and timing depend on the seller, volume and region and are shown ' +
+                'at checkout.\n\n' +
+                'This text is a placeholder and will be updated by the owner.',
+        },
+        seoTitle: {
+            hy: 'Առաքում — Brickam',
+            ru: 'Доставка — Brickam',
+            en: 'Delivery — Brickam',
+        },
+        seoDescription: {
+            hy: 'Brickam-ի առաքման պայմաններն ու ժամկետները։',
+            ru: 'Условия и сроки доставки Brickam.',
+            en: 'Brickam delivery terms and timing.',
+        },
+    },
+    {
+        slug: 'payments',
+        title: { hy: 'Վճարում', ru: 'Оплата', en: 'Payments' },
+        content: {
+            hy:
+                'Վճարումն իրականացվում է անվտանգ եղանակով՝ քարտով կամ տեղական վճարային ' +
+                'համակարգերով (Idram, Telcell, ArCa)։\n\n' +
+                'Մեկ վճարումը ավտոմատ բաշխվում է վաճառողների միջև։ Գումարները պաշտպանված են։\n\n' +
+                'Տեքստը նախնական է և կթարմացվի սեփականատիրոջ կողմից։',
+            ru:
+                'Оплата проходит безопасно — картой или местными платёжными системами ' +
+                '(Idram, Telcell, ArCa).\n\n' +
+                'Один платёж автоматически распределяется между продавцами. Средства защищены.\n\n' +
+                'Этот текст является заготовкой и будет обновлён владельцем.',
+            en:
+                'Payments are secure — by card or local payment systems (Idram, Telcell, ArCa).\n\n' +
+                'A single payment is automatically split between sellers. Funds are protected.\n\n' +
+                'This text is a placeholder and will be updated by the owner.',
+        },
+        seoTitle: {
+            hy: 'Վճարում — Brickam',
+            ru: 'Оплата — Brickam',
+            en: 'Payments — Brickam',
+        },
+        seoDescription: {
+            hy: 'Brickam-ում վճարման եղանակներն ու անվտանգությունը։',
+            ru: 'Способы оплаты и безопасность на Brickam.',
+            en: 'Payment methods and security on Brickam.',
+        },
+    },
+    {
+        slug: 'refunds',
+        title: { hy: 'Վերադարձ', ru: 'Возвраты', en: 'Returns' },
+        content: {
+            hy:
+                'Ապրանքը կարող եք վերադարձնել ստանալուց հետո 24 ժամվա ընթացքում՝ պահպանված ' +
+                'տեսքի դեպքում։\n\n' +
+                'Վերադարձի համար դիմեք վաճառողին պատվերի էջից։ Գումարը վերադարձվում է ' +
+                'նույն վճարման եղանակով։\n\n' +
+                'Տեքստը նախնական է և կթարմացվի սեփականատիրոջ կողմից։',
+            ru:
+                'Вы можете вернуть товар в течение 24 часов после получения при сохранении ' +
+                'товарного вида.\n\n' +
+                'Для возврата обратитесь к продавцу со страницы заказа. Деньги возвращаются ' +
+                'тем же способом оплаты.\n\n' +
+                'Этот текст является заготовкой и будет обновлён владельцем.',
+            en:
+                'You can return an item within 24 hours of receipt if it keeps its original ' +
+                'condition.\n\n' +
+                'To request a return, contact the seller from the order page. Refunds are issued ' +
+                'to the original payment method.\n\n' +
+                'This text is a placeholder and will be updated by the owner.',
+        },
+        seoTitle: {
+            hy: 'Վերադարձ — Brickam',
+            ru: 'Возвраты — Brickam',
+            en: 'Returns — Brickam',
+        },
+        seoDescription: {
+            hy: 'Brickam-ում ապրանքների վերադարձի պայմանները։',
+            ru: 'Условия возврата товаров на Brickam.',
+            en: 'Return policy for products on Brickam.',
+        },
+    },
 ];
 
 /**
